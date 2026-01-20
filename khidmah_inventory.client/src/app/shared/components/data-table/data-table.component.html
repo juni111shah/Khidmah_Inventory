@@ -1,0 +1,195 @@
+<div class="data-table-container">
+  <!-- Reusable Listing Header -->
+  <app-listing-header
+    *ngIf="effectiveConfig.showSearch || effectiveConfig.showFilters || effectiveConfig.showColumnToggle"
+    [searchPlaceholder]="searchPlaceholderText"
+    [(searchTerm)]="searchTerm"
+    [showFilters]="effectiveConfig.showFilters || false"
+    [filterCount]="filterRequest.filters?.length || 0"
+    [hasActiveFilters]="(filterRequest.filters?.length || 0) > 0"
+    [showColumnToggle]="effectiveConfig.showColumnToggle || false"
+    [totalColumnsCount]="columns.length"
+    [visibleColumnsCount]="visibleColumns.length"
+    [columns]="columns"
+    [showColumnDropdown]="showColumnToggle"
+    (search)="onSearch()"
+    (filterClicked)="openFilterDrawer()"
+    (toggleColumns)="showColumnToggle = !showColumnToggle"
+    (closeColumns)="showColumnToggle = false"
+    (columnToggle)="toggleColumnVisibility($event)">
+    <ng-content extra-actions select="[table-actions]"></ng-content>
+    <ng-content export-actions select="[table-export]"></ng-content>
+  </app-listing-header>
+
+  <!-- Filter Panel -->
+  <div *ngIf="showFilters" class="card mb-4 shadow-sm border-0">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+      <h6 class="mb-0 fw-bold"><i class="bi bi-filter me-2 text-primary"></i>Advanced Filters</h6>
+      <button type="button" class="btn-close" (click)="showFilters = false"></button>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div *ngFor="let column of filterableColumns" class="col-md-4 col-lg-3">
+          <app-filter-field
+            [label]="column.label"
+            [type]="column.filterType === 'select' ? 'select' : 'text'"
+            [options]="column.filterOptions || []"
+            [ngModel]="getFilterValue(column.key)"
+            (ngModelChange)="onColumnFilter(column, $event)">
+          </app-filter-field>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer bg-light d-flex justify-content-end gap-2 py-3 px-4">
+      <app-unified-button variant="primary" [outlined]="true" (clicked)="clearFilters()">
+        <i class="bi bi-x-circle me-2"></i>Clear
+      </app-unified-button>
+      <app-unified-button variant="primary" (clicked)="applyFilters()">
+        <i class="bi bi-check-circle me-2"></i>Apply Filters
+      </app-unified-button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-responsive border shadow-sm mb-3">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <!-- Checkbox Column -->
+          <th *ngIf="effectiveConfig.showCheckbox" style="width: 40px;">
+            <app-unified-checkbox
+              [checked]="isAllSelected()"
+              [indeterminate]="selectedRows.size > 0 && !isAllSelected()"
+              (change)="toggleAllSelection()">
+            </app-unified-checkbox>
+          </th>
+
+          <!-- Data Columns -->
+          <th *ngFor="let column of visibleColumns"
+            (click)="onSort(column)"
+            [class.cursor-pointer]="column.sortable"
+            [style.width]="column.width"
+            [style.text-align]="column.align || 'left'">
+            <div class="d-flex align-items-center" [style.justify-content]="column.align === 'center' ? 'center' : column.align === 'right' ? 'flex-end' : 'flex-start'">
+              {{ column.label }}
+              <i *ngIf="column.sortable" [class]="getSortIcon(column)"></i>
+            </div>
+          </th>
+
+          <!-- Actions Column -->
+          <th *ngIf="effectiveConfig.showActions && actions.length > 0" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <!-- Loading State -->
+        <tr *ngIf="loading">
+          <td [attr.colspan]="visibleColumns.length + (effectiveConfig.showCheckbox ? 1 : 0) + (effectiveConfig.showActions ? 1 : 0)" class="p-0">
+            <app-skeleton-table
+              [showHeader]="false"
+              [headers]="getSkeletonHeaders()"
+              [rowCount]="getDefaultPageSize()"
+              [animation]="'shimmer'">
+            </app-skeleton-table>
+          </td>
+        </tr>
+
+        <!-- No Data -->
+        <tr *ngIf="!loading && data.length === 0">
+          <td [attr.colspan]="visibleColumns.length + (effectiveConfig.showCheckbox ? 1 : 0) + (effectiveConfig.showActions ? 1 : 0)" class="text-center py-5">
+            <app-empty-state [message]="effectiveConfig.emptyMessage || 'No data available'"></app-empty-state>
+          </td>
+        </tr>
+
+        <!-- Data Rows -->
+        <tr *ngFor="let row of data; trackBy: trackByFn" 
+          (click)="onRowClick(row)" 
+          [class.table-primary]="isRowSelected(row)"
+          class="cursor-pointer">
+          
+          <td *ngIf="effectiveConfig.showCheckbox" (click)="$event.stopPropagation()">
+            <app-unified-checkbox
+              [checked]="isRowSelected(row)"
+              (change)="toggleRowSelection(row)">
+            </app-unified-checkbox>
+          </td>
+
+          <td *ngFor="let column of visibleColumns" [style.text-align]="column.align || 'left'">
+            <ng-container [ngSwitch]="column.type">
+              <!-- Badge Type -->
+              <span *ngSwitchCase="'badge'" class="badge" 
+                [class.badge-active]="getCellValue(row, column).toLowerCase() === 'active' || getCellValue(row, column).toLowerCase() === 'completed'"
+                [class.badge-pending]="getCellValue(row, column).toLowerCase() === 'pending' || getCellValue(row, column).toLowerCase() === 'processing'"
+                [class.badge-error]="getCellValue(row, column).toLowerCase() === 'inactive' || getCellValue(row, column).toLowerCase() === 'cancelled'"
+                [class.badge-inactive]="getCellValue(row, column).toLowerCase() === 'draft'">
+                {{ getCellValue(row, column) }}
+              </span>
+              <!-- Boolean Type -->
+              <span *ngSwitchCase="'boolean'" class="d-flex align-items-center gap-1" [style.justify-content]="column.align === 'center' ? 'center' : column.align === 'right' ? 'flex-end' : 'flex-start'">
+                <i class="bi" [class]="getCellBooleanValue(row, column) ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'"></i>
+                <span class="small">{{ getCellValue(row, column) }}</span>
+              </span>
+              <!-- Default -->
+              <span *ngSwitchDefault>{{ getCellValue(row, column) }}</span>
+            </ng-container>
+          </td>
+
+          <!-- Actions -->
+          <td *ngIf="effectiveConfig.showActions && actions.length > 0" class="text-end" (click)="$event.stopPropagation()">
+            <!-- Single Action Button -->
+            <button *ngIf="getVisibleActions(row).length === 1"
+              class="btn btn-icon btn-sm action-btn"
+              [class.btn-outline-primary]="!getVisibleActions(row)[0].class"
+              [class.btn-outline-danger]="getVisibleActions(row)[0].class === 'danger'"
+              [class.btn-outline-success]="getVisibleActions(row)[0].class === 'success'"
+              [title]="getVisibleActions(row)[0].tooltip || getVisibleActions(row)[0].label"
+              (click)="onActionClick(getVisibleActions(row)[0], row, $event)">
+              <app-icon [name]="getActionIcon(getVisibleActions(row)[0])" size="sm"></app-icon>
+            </button>
+
+            <!-- Multiple Actions Dropdown -->
+            <div *ngIf="getVisibleActions(row).length > 1" class="dropdown-container">
+              <button class="btn btn-sm dropdown-toggle action-menu-trigger"
+                type="button"
+                [title]="'More actions'"
+                (click)="toggleActionDropdown(row, $event)">
+                <app-icon name="three-dots-vertical" size="sm"></app-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Global Action Dropdown (positioned outside table to avoid layout issues) -->
+  <div class="action-dropdown-overlay" *ngIf="hasOpenActionDropdown() && dropdownPosition">
+    <div class="dropdown-menu shadow-sm border-0 action-dropdown-menu show"
+         [style.position]="'absolute'"
+         [style.top.px]="dropdownPosition.top"
+         [style.left.px]="dropdownPosition.left"
+         [style.z-index]="9999">
+      <button *ngFor="let action of getCurrentDropdownActions()"
+        class="dropdown-item px-3 py-2"
+        [class.text-danger]="action.class === 'danger'"
+        [class.text-success]="action.class === 'success'"
+        (click)="onActionClick(action, getCurrentDropdownRow(), $event)">
+        <app-icon [name]="getActionIcon(action)" class="me-2" size="sm"></app-icon>
+        {{ action.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="effectiveConfig.showPagination && pagedResult" class="mt-4">
+    <app-pagination
+      [totalItems]="pagedResult.totalCount"
+      [pageSize]="pagedResult.pageSize"
+      [currentPage]="pagedResult.pageNo"
+      [totalPages]="pagedResult.totalPages"
+      [pageSizeOptions]="effectiveConfig.pageSizeOptions || [5, 10, 25, 50, 100]"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+    </app-pagination>
+  </div>
+</div>

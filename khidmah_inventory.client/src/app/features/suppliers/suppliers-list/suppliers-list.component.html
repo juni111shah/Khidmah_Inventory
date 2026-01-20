@@ -1,0 +1,67 @@
+<app-listing-container
+  [searchPlaceholder]="config.searchPlaceholder || 'Search suppliers...'"
+  [searchTerm]="searchTerm"
+  [totalColumnsCount]="columns.length"
+  [visibleColumnsCount]="visibleColumnsCount"
+  [columns]="columns"
+  [showColumnDropdown]="showColumnToggle"
+  [showFilters]="true"
+  [showFilterPanel]="showFilterPanel"
+  [filterCount]="filterRequest.filters?.length || 0"
+  [hasActiveFilters]="(filterRequest.filters?.length || 0) > 0 || isActiveFilter !== null || !!searchTerm"
+  (search)="onSearch($event)"
+  (filterClicked)="onFilterToggle()"
+  (toggleColumns)="onColumnsToggle()"
+  (closeColumns)="showColumnToggle = false"
+  (columnToggle)="onColumnToggle($event)">
+  
+  <div listing-actions class="d-flex gap-2">
+    <app-unified-button variant="primary" (clicked)="addSupplier()" *appHasPermission="'Suppliers:Create'">
+      <app-icon name="person-plus" size="sm" customClass="me-2"></app-icon>
+      Add Supplier
+    </app-unified-button>
+  </div>
+
+  <div listing-export>
+    <app-export
+      [data]="suppliers"
+      [columns]="columns"
+      [title]="'Suppliers Export'"
+      [filename]="'suppliers'"
+      [includeFilters]="true"
+      [filters]="filterRequest.filters || []">
+    </app-export>
+  </div>
+
+  <div filter-panel>
+    <app-filter-panel
+      [config]="filterPanelConfig"
+      [filterValues]="filterPanelValues"
+      (filterApplied)="onFilterApplied($event)"
+      (filterReset)="onFilterReset()"
+      (filterClose)="onFilterClose()">
+    </app-filter-panel>
+  </div>
+
+  <app-data-table
+    [columns]="columns"
+    [data]="suppliers"
+    [loading]="loading"
+    [config]="config"
+    [actions]="actions"
+    [pagedResult]="pagedResult"
+    [filterRequest]="filterRequest"
+    (filterChange)="onFilterChange($event)"
+    (pageChange)="onPageChange($event)"
+    (sortChange)="onSortChange($event)">
+  </app-data-table>
+</app-listing-container>
+
+<app-toast
+  *ngIf="showToast"
+  [message]="toastMessage"
+  [type]="toastType"
+  (close)="showToast = false"
+></app-toast>
+
+

@@ -1,0 +1,38 @@
+<div class="dropdown position-relative d-inline-block">
+  <!-- Export Button -->
+  <app-unified-button
+    variant="secondary"
+    [outlined]="true"
+    [disabled]="disabled || isExporting || !hasData"
+    (clicked)="toggleDropdown(); $event.stopPropagation()"
+    class="export-button">
+    <i class="bi bi-download me-2" *ngIf="!isExporting"></i>
+    <i class="bi bi-hourglass-split me-2" *ngIf="isExporting"></i>
+    {{ buttonText }}
+    <i class="bi bi-chevron-down ms-2" [class.rotate-180]="showDropdown"></i>
+  </app-unified-button>
+
+  <!-- Export Options Dropdown -->
+  <div class="dropdown-menu shadow-sm border-0 mt-2 p-0 export-dropdown-menu"
+       [class.show]="showDropdown"
+       (click)="$event.stopPropagation()"
+       style="min-width: 200px;">
+    <div class="export-options">
+      <div *ngFor="let option of exportOptions"
+           class="dropdown-item px-3 py-2 cursor-pointer"
+           [class.disabled]="option.disabled"
+           [class.text-muted]="option.disabled"
+           (click)="!option.disabled && exportData(option.format)">
+        <div class="d-flex align-items-center">
+          <app-icon [name]="option.icon" class="me-3 text-primary"></app-icon>
+          <span>{{ option.label }}</span>
+          <i class="bi bi-check-circle-fill text-success ms-auto" *ngIf="isExporting && !option.disabled"></i>
+        </div>
+      </div>
+
+      <div *ngIf="!hasData" class="px-3 py-2 text-muted small text-center border-top">
+        No data available to export
+      </div>
+    </div>
+  </div>
+</div>

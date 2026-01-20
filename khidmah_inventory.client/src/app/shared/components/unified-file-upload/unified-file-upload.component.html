@@ -1,0 +1,64 @@
+<div [class]="fileUploadClasses + ' mb-3'">
+  <label *ngIf="label" class="form-label">
+    {{ label }}
+    <span *ngIf="required" class="text-danger">*</span>
+  </label>
+  
+  <div class="file-upload-controls d-flex gap-2 align-items-center mb-2">
+    <input
+      type="file"
+      [accept]="accept"
+      [multiple]="multiple"
+      [disabled]="disabled"
+      [required]="required"
+      (change)="onFileSelected($event)"
+      #fileInput
+      class="d-none" />
+    
+    <app-unified-button
+      [variant]="buttonVariant"
+      [size]="buttonSize"
+      [disabled]="disabled"
+      icon="bi-upload"
+      iconLibrary="bi"
+      (clicked)="fileInput.click()">
+      Choose File{{ multiple ? 's' : '' }}
+    </app-unified-button>
+    
+    <span *ngIf="selectedFiles.length === 0" class="text-muted small">No file selected</span>
+    <span *ngIf="selectedFiles.length > 0" class="text-primary small fw-bold">{{ selectedFiles.length }} file(s) selected</span>
+  </div>
+  
+  <div *ngIf="hint && !error" class="form-text small mb-2">{{ hint }}</div>
+  <div *ngIf="error" class="text-danger small mb-2">{{ error }}</div>
+  
+  <div *ngIf="selectedFiles.length > 0" class="file-list row g-2">
+    <div *ngFor="let file of selectedFiles; let i = index" class="col-md-6 col-lg-4">
+      <div class="file-item card p-2 d-flex flex-row align-items-center gap-2 shadow-sm border-0 bg-light">
+        <div *ngIf="showPreview && previewType === 'image' && file.type.startsWith('image/')" class="flex-shrink-0">
+          <img [src]="previewUrls[i]" [alt]="file.name" class="rounded shadow-sm" style="width: 40px; height: 40px; object-fit: cover;" />
+        </div>
+        <div *ngIf="!(showPreview && previewType === 'image' && file.type.startsWith('image/'))" class="flex-shrink-0">
+          <i class="bi bi-file-earmark-text fs-4 text-secondary"></i>
+        </div>
+        
+        <div class="file-info overflow-hidden flex-grow-1">
+          <div class="file-name text-truncate small fw-bold">{{ file.name }}</div>
+          <div class="file-size x-small text-muted">{{ formatFileSize(file.size) }}</div>
+        </div>
+        
+        <button
+          type="button"
+          class="btn btn-sm btn-link text-danger p-0"
+          (click)="removeFile(i)"
+          [disabled]="disabled">
+          <i class="bi bi-x-circle-fill"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div *ngIf="isUploading" class="progress mt-2" style="height: 4px;">
+    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+  </div>
+</div>

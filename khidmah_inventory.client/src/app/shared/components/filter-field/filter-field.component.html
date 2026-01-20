@@ -1,0 +1,40 @@
+<div [ngSwitch]="type" [class]="customClass">
+  <!-- Select Filter -->
+  <app-unified-select
+    *ngSwitchCase="'select'"
+    [label]="label"
+    [placeholder]="placeholder"
+    [options]="filterOptions"
+    [disabled]="disabled"
+    [required]="required"
+    size="md"
+    [(ngModel)]="value"
+    (ngModelChange)="onValueChange($event)">
+  </app-unified-select>
+
+  <!-- Default Input Filter -->
+  <div *ngSwitchDefault class="position-relative">
+    <app-unified-input
+      [type]="type"
+      [label]="label"
+      [placeholder]="placeholder"
+      [disabled]="disabled"
+      [required]="required"
+      size="md"
+      [icon]="icon"
+      [iconLibrary]="icon.startsWith('bi-') ? 'bi' : 'material'"
+      [(ngModel)]="value"
+      (ngModelChange)="onValueChange($event)"
+      (keyup)="onKeyUp($event)">
+    </app-unified-input>
+    
+    <button 
+      *ngIf="showClear && value" 
+      type="button" 
+      class="btn btn-sm btn-link position-absolute end-0 pt-0 me-2 text-decoration-none text-muted d-flex align-items-center" 
+      (click)="onClear()"
+      style="z-index: 5; height: 100%; top: 0;">
+      <i class="bi bi-x-circle-fill"></i>
+    </button>
+  </div>
+</div>

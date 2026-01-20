@@ -1,0 +1,55 @@
+<!-- Auth pages (login, register) - no layout -->
+<div *ngIf="isAuthRoute" class="auth-pages-wrapper">
+  <div class="auth-bg-blob auth-bg-blob-1"></div>
+  <div class="auth-bg-blob auth-bg-blob-2"></div>
+  <div class="container d-flex justify-content-center py-5">
+    <router-outlet></router-outlet>
+  </div>
+</div>
+
+<!-- Main app layout for authenticated pages -->
+<app-main-layout *ngIf="!isAuthRoute" [sidebarCollapsed]="sidebarCollapsed">
+  <div sidebar>
+    <app-sidebar
+      [menuItems]="menuItems"
+      [collapsed]="sidebarCollapsed"
+      [mobileMenuOpen]="mobileMenuOpen"
+      (collapsedChange)="onSidebarToggle($event)"
+      (menuItemClick)="onMenuItemClick($event)">
+      <div logo>
+        <div class="sidebar-logo-content" *ngIf="themeService.getTheme().logoUrl">
+          <img 
+            [src]="themeService.getTheme().logoUrl" 
+            [style.height]="themeService.getTheme().logoHeight"
+            alt="Logo" />
+        </div>
+        <div *ngIf="!themeService.getTheme().logoUrl" class="sidebar-logo-initials" [class.collapsed]="sidebarCollapsed">
+          <span class="logo-initials-text">{{ getLogoInitials() }}</span>
+          <h2 class="sidebar-logo-text">{{ title }}</h2>
+        </div>
+      </div>
+    </app-sidebar>
+  </div>
+
+  <div header>
+    <app-app-header
+      [showMenuToggle]="true"
+      [sidebarCollapsed]="sidebarCollapsed"
+      (menuToggle)="onMenuToggle()">
+      <div user-menu>
+        <app-user-menu></app-user-menu>
+      </div>
+    </app-app-header>
+  </div>
+
+  <main class="app-main-content">
+    <router-outlet></router-outlet>
+    
+    <!-- Default home content -->
+    <!-- Dashboard content will be shown via router -->
+  </main>
+
+  <div footer>
+    <app-app-footer [copyright]="copyrightText"></app-app-footer>
+  </div>
+</app-main-layout>

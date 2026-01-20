@@ -1,0 +1,23 @@
+<div class="input-field" [class.has-error]="error" [class.has-icon]="icon">
+  <label *ngIf="label" class="input-label">
+    {{ label }}
+    <span *ngIf="required" class="required">*</span>
+  </label>
+  
+  <div class="input-wrapper">
+    <span class="input-icon" *ngIf="icon">{{ icon }}</span>
+    <input
+      [type]="type"
+      [value]="value"
+      [placeholder]="placeholder"
+      [required]="required"
+      [disabled]="disabled"
+      (input)="onInput($event)"
+      (blur)="onBlur()"
+      class="input"
+      [class.has-icon]="icon" />
+  </div>
+  
+  <span class="input-hint" *ngIf="hint && !error">{{ hint }}</span>
+  <span class="input-error" *ngIf="error">{{ error }}</span>
+</div>

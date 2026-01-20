@@ -1,0 +1,201 @@
+<div class="role-form-container py-4">
+  <style>
+    .permissions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .action-card {
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      transition: box-shadow 0.2s ease-in-out;
+    }
+
+    .action-card:hover {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .action-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .action-permissions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .permission-item {
+      padding: 0.5rem;
+      border-radius: 4px;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .permission-item:hover {
+      background-color: rgba(255,255,255,0.5);
+    }
+
+    .permission-name {
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 0.25rem;
+    }
+
+    .permission-desc {
+      font-size: 0.75rem;
+      color: #6c757d;
+      line-height: 1.3;
+    }
+
+    .module-checkbox {
+      transform: scale(1.2);
+      margin-right: 0.5rem;
+    }
+
+    .form-check-input:checked {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+
+    .form-check-input:focus {
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+  </style>
+  <div *ngIf="loading" class="loading-container">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading" class="form-content">
+    <div class="d-flex justify-content-start mb-4">
+      <app-unified-button variant="secondary" [outlined]="true" (clicked)="router.navigate(['/roles'])">
+        <app-icon name="arrow-left" customClass="me-2"></app-icon>
+        Back to Roles
+      </app-unified-button>
+    </div>
+
+    <app-unified-card header="Role Information" class="mb-4">
+      <div class="row">
+        <div class="col-md-6">
+          <app-form-field
+            label="Role Name"
+            type="text"
+            [(ngModel)]="formData.name"
+            [disabled]="(role?.isSystemRole || false)"
+            placeholder="Enter role name"
+            [required]="true">
+          </app-form-field>
+        </div>
+        <div class="col-md-6">
+          <app-form-field
+            label="Description"
+            type="textarea"
+            [(ngModel)]="formData.description"
+            [disabled]="(role?.isSystemRole || false)"
+            placeholder="Enter role description"
+            [rows]="3">
+          </app-form-field>
+        </div>
+      </div>
+    </app-unified-card>
+
+    <app-unified-card header="Permissions" class="mb-4">
+      <div class="mb-3">
+        <p class="text-muted small mb-3">
+          Configure what actions users with this role can perform. Select individual permissions or use module checkboxes to select all permissions for a module.
+        </p>
+      </div>
+
+      <div class="permissions-container">
+        <div *ngFor="let module of modules" class="permission-module mb-4">
+          <div class="module-header d-flex align-items-center mb-3 p-3 bg-light rounded">
+            <div class="form-check mb-0">
+              <input
+                type="checkbox"
+                [id]="'module-' + module"
+                [checked]="isModuleSelected(module)"
+                [indeterminate]="isModulePartiallySelected(module)"
+                (change)="toggleModule(module)"
+                [disabled]="(role?.isSystemRole || false)"
+                class="form-check-input module-checkbox">
+              <label [for]="'module-' + module" class="form-check-label fw-bold fs-5 mb-0">
+                {{ module }}
+                <span class="badge bg-secondary ms-2">{{ getModulePermissionCount(module) }}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="permissions-grid">
+            <div *ngFor="let action of getActionsForModule(module)" class="action-card mb-3">
+              <div class="action-header d-flex align-items-center mb-2">
+                <app-badge
+                  [value]="getActionDisplayName(action)"
+                  [color]="getActionBadgeColor(action)"
+                  size="small"
+                  class="me-2">
+                </app-badge>
+                <small class="text-muted">{{ getActionPermissionsCount(module, action) }} permission(s)</small>
+              </div>
+
+              <div class="action-permissions">
+                <div *ngFor="let permission of permissionsByModuleAndAction[module][action]" class="permission-item mb-2">
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      [id]="'perm-' + permission.id"
+                      [(ngModel)]="permissionStates[permission.id]"
+                      (ngModelChange)="onPermissionChange(permission.id, $event)"
+                      [disabled]="(role?.isSystemRole || false)"
+                      class="form-check-input">
+                    <label [for]="'perm-' + permission.id" class="form-check-label">
+                      <div class="permission-info">
+                        <div class="permission-name">{{ getPermissionDisplayName(permission) }}</div>
+                        <div *ngIf="permission.description" class="permission-desc text-muted small">
+                          {{ permission.description }}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-unified-card>
+
+    <div class="d-flex justify-content-end gap-3 mt-4">
+      <app-unified-button
+        variant="secondary"
+        [outlined]="true"
+        (clicked)="router.navigate(['/roles'])">
+        <app-icon name="close" customClass="me-2"></app-icon>
+        Cancel
+      </app-unified-button>
+      <app-unified-button
+        *appHasPermission="isEditMode ? 'Roles:Update' : 'Roles:Create'"
+        variant="primary"
+        (clicked)="save()"
+        [disabled]="saving || (role?.isSystemRole || false)"
+        [loading]="saving">
+        <app-icon name="save" customClass="me-2"></app-icon>
+        {{ isEditMode ? 'Update' : 'Create' }} Role
+      </app-unified-button>
+    </div>
+  </div>
+
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false"
+  ></app-toast>
+</div>
+

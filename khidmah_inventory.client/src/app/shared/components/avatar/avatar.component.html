@@ -1,0 +1,6 @@
+<div class="avatar" [class]="'size-' + size + ' shape-' + shape">
+  <img *ngIf="src" [src]="src" [alt]="alt" class="avatar-img" />
+  <div *ngIf="!src && initials" class="avatar-initials">{{ initials }}</div>
+  <app-icon *ngIf="!src && !initials" name="person" size="md" customClass="avatar-placeholder"></app-icon>
+  <span class="avatar-status" *ngIf="status" [class]="'status-' + status"></span>
+</div>

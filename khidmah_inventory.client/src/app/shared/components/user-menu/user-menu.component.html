@@ -1,0 +1,62 @@
+<div class="user-menu-container" (clickOutside)="closeMenu()">
+  <button class="user-menu-trigger" (click)="toggleMenu()" [attr.aria-expanded]="showMenu">
+    <div class="user-avatar">
+      <span *ngIf="user">{{ user.firstName[0] }}{{ user.lastName[0] }}</span>
+      <span *ngIf="!user">U</span>
+    </div>
+    <div class="user-info" *ngIf="user">
+      <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+      <span class="user-email">{{ user.email }}</span>
+    </div>
+    <app-icon name="chevron-down" size="sm" class="chevron-icon"></app-icon>
+  </button>
+
+  <div class="user-menu-dropdown" *ngIf="showMenu">
+    <div class="user-menu-header">
+      <div class="user-avatar-large">
+        <span *ngIf="user">{{ user.firstName[0] }}{{ user.lastName[0] }}</span>
+        <span *ngIf="!user">U</span>
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ user?.firstName }} {{ user?.lastName }}</div>
+        <div class="user-email">{{ user?.email }}</div>
+        <div class="user-roles" *ngIf="user?.roles && user.roles.length > 0">
+          <span *ngFor="let role of user.roles" class="role-badge">{{ role }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-menu-divider"></div>
+
+    <div class="user-menu-items">
+      <a 
+        *appHasPermission="'Users:Read'"
+        (click)="viewProfile(); $event.preventDefault()" 
+        class="menu-item"
+      >
+        <app-icon name="user" size="sm"></app-icon>
+        <span>My Profile</span>
+      </a>
+
+      <a 
+        *appHasPermission="['Settings:User:Read', 'Settings:Company:Read']"
+        (click)="goToSettings(); $event.preventDefault()" 
+        class="menu-item"
+      >
+        <app-icon name="settings" size="sm"></app-icon>
+        <span>Settings</span>
+      </a>
+
+      <div class="user-menu-divider"></div>
+
+      <a 
+        (click)="logout(); $event.preventDefault()" 
+        class="menu-item menu-item-danger"
+      >
+        <app-icon name="logout" size="sm"></app-icon>
+        <span>Logout</span>
+      </a>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,170 @@
+<div class="stock-transfer-container py-4">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <app-unified-button
+      variant="secondary"
+      [outlined]="true"
+      (clicked)="router.navigate(['/inventory/stock-levels'])">
+      <app-icon name="arrow-left" customClass="me-2"></app-icon>
+      Back to Stock Levels
+    </app-unified-button>
+
+    <div class="transfer-info">
+      <h5 class="mb-1">Stock Transfer</h5>
+      <p class="text-muted mb-0 small">Move inventory between warehouses</p>
+    </div>
+  </div>
+
+  <!-- Main Form Card -->
+  <app-unified-card variant="default" [elevation]="2" class="transfer-form-card">
+    <div class="row g-4">
+      <!-- Product Selection -->
+      <div class="col-lg-6 col-md-12">
+        <app-unified-select
+          label="Product *"
+          placeholder="Select a product to transfer"
+          [options]="productOptions"
+          [(ngModel)]="formData.productId"
+          (selectionChange)="onProductChange()"
+          [required]="true">
+        </app-unified-select>
+      </div>
+
+      <!-- From Warehouse -->
+      <div class="col-lg-6 col-md-12">
+        <app-unified-select
+          label="From Warehouse *"
+          placeholder="Select source warehouse"
+          [options]="warehouseOptions"
+          [(ngModel)]="formData.fromWarehouseId"
+          (selectionChange)="onFromWarehouseChange()"
+          [required]="true">
+        </app-unified-select>
+
+        <!-- Stock Information -->
+        <div *ngIf="formData.fromWarehouseId && formData.productId" class="stock-indicator mt-2">
+          <div class="d-flex align-items-center">
+            <app-icon name="info-circle" size="sm" customClass="text-info me-2"></app-icon>
+            <span class="small">
+              <strong>Available Stock:</strong> {{ availableStock }} units
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- To Warehouse -->
+      <div class="col-lg-6 col-md-12">
+        <app-unified-select
+          label="To Warehouse *"
+          placeholder="Select destination warehouse"
+          [options]="warehouseOptions"
+          [(ngModel)]="formData.toWarehouseId"
+          [required]="true">
+        </app-unified-select>
+      </div>
+
+      <!-- Quantity -->
+      <div class="col-lg-6 col-md-12">
+        <app-unified-input
+          label="Quantity *"
+          type="number"
+          placeholder="Enter quantity to transfer"
+          [(ngModel)]="formData.quantity"
+          [required]="true">
+        </app-unified-input>
+
+        <!-- Validation -->
+        <div *ngIf="formData.quantity && formData.quantity > availableStock && availableStock > 0"
+             class="invalid-feedback d-block mt-2">
+          <app-icon name="exclamation-triangle" size="sm" customClass="me-1"></app-icon>
+          Quantity exceeds available stock ({{ availableStock }} units)
+        </div>
+      </div>
+
+      <!-- Batch Number -->
+      <div class="col-lg-6 col-md-12">
+        <app-unified-input
+          label="Batch Number"
+          placeholder="Enter batch number (optional)"
+          [(ngModel)]="formData.batchNumber">
+        </app-unified-input>
+      </div>
+
+      <!-- Expiry Date -->
+      <div class="col-lg-6 col-md-12">
+        <app-unified-date-picker
+          label="Expiry Date"
+          placeholder="Select expiry date (optional)"
+          [(ngModel)]="formData.expiryDate">
+        </app-unified-date-picker>
+      </div>
+
+      <!-- Notes -->
+      <div class="col-12">
+        <app-unified-textarea
+          label="Transfer Notes"
+          placeholder="Add any additional notes for this transfer (optional)"
+          [(ngModel)]="formData.notes"
+          [rows]="3">
+        </app-unified-textarea>
+      </div>
+    </div>
+
+    <!-- Transfer Summary -->
+    <div *ngIf="formData.productId && formData.fromWarehouseId && formData.toWarehouseId && formData.quantity"
+         class="transfer-summary mt-4 p-3 bg-light rounded">
+      <h6 class="text-primary mb-2">
+        <app-icon name="clipboard-check" customClass="me-2"></app-icon>
+        Transfer Summary
+      </h6>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <small class="text-muted">Product:</small>
+          <div>{{ getSelectedProduct()?.name }}</div>
+        </div>
+        <div class="col-md-6">
+          <small class="text-muted">Quantity:</small>
+          <div>{{ formData.quantity }} units</div>
+        </div>
+        <div class="col-md-6">
+          <small class="text-muted">From:</small>
+          <div>{{ getSelectedWarehouse(formData.fromWarehouseId)?.name }}</div>
+        </div>
+        <div class="col-md-6">
+          <small class="text-muted">To:</small>
+          <div>{{ getSelectedWarehouse(formData.toWarehouseId)?.name }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+      <app-unified-button
+        variant="secondary"
+        [outlined]="true"
+        (clicked)="router.navigate(['/inventory/stock-levels'])">
+        <app-icon name="x" customClass="me-2"></app-icon>
+        Cancel
+      </app-unified-button>
+
+      <app-unified-button
+        variant="primary"
+        (clicked)="transfer()"
+        [disabled]="transferring || !isFormValid()"
+        *appHasPermission="'Inventory:StockTransaction:Create'">
+        <app-icon name="arrow-right" customClass="me-2" *ngIf="!transferring"></app-icon>
+        <app-loading-spinner size="small" *ngIf="transferring"></app-loading-spinner>
+        {{ transferring ? 'Transferring Stock...' : 'Transfer Stock' }}
+      </app-unified-button>
+    </div>
+  </app-unified-card>
+
+  <!-- Toast Notification -->
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false">
+  </app-toast>
+</div>
+

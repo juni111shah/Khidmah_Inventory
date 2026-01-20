@@ -1,0 +1,129 @@
+<div class="card auth-card auth-card-wide">
+  <div class="auth-header">
+    <h1 class="h3 mb-2 fw-bold text-dark">Create Account</h1>
+    <p class="text-muted">Sign up to get started with Khidmah Inventory</p>
+  </div>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+    <div class="row ">
+      <div class="col-md-6">
+        <app-unified-input
+          label="First Name"
+          formControlName="firstName"
+          placeholder="First name"
+          [required]="true"
+          [error]="getErrorMessage('firstName')">
+        </app-unified-input>
+      </div>
+
+      <div class="col-md-6">
+        <app-unified-input
+          label="Last Name"
+          formControlName="lastName"
+          placeholder="Last name"
+          [required]="true"
+          [error]="getErrorMessage('lastName')">
+        </app-unified-input>
+      </div>
+
+      <div class="col-12">
+        <app-unified-input
+          label="Email Address"
+          type="email"
+          formControlName="email"
+          placeholder="awesome@user.com"
+          icon="bi-envelope"
+          iconLibrary="bi"
+          [required]="true"
+          [error]="getErrorMessage('email')">
+        </app-unified-input>
+      </div>
+
+      <div class="col-md-6">
+        <app-unified-input
+          label="Username"
+          formControlName="userName"
+          placeholder="Choose a username"
+          icon="bi-person"
+          iconLibrary="bi"
+          [required]="true"
+          [error]="getErrorMessage('userName')">
+        </app-unified-input>
+      </div>
+
+      <div class="col-md-6">
+        <app-unified-input
+          label="Phone Number"
+          type="tel"
+          formControlName="phoneNumber"
+          placeholder="Optional"
+          icon="bi-telephone"
+          iconLibrary="bi">
+        </app-unified-input>
+      </div>
+
+      <div class="col-12">
+        <app-unified-input
+          label="Company ID"
+          formControlName="companyId"
+          placeholder="Enter company ID"
+          icon="bi-building"
+          iconLibrary="bi"
+          [required]="true"
+          [error]="getErrorMessage('companyId')">
+        </app-unified-input>
+      </div>
+
+      <div class="col-md-6">
+        <app-unified-input
+          label="Password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          icon="bi-lock"
+          iconLibrary="bi"
+          [required]="true"
+          [showPasswordToggle]="true"
+          [error]="getErrorMessage('password')">
+        </app-unified-input>
+      </div>
+
+      <div class="col-md-6">
+        <app-unified-input
+          label="Confirm Password"
+          type="password"
+          formControlName="confirmPassword"
+          placeholder="Repeat password"
+          icon="bi-lock-fill"
+          iconLibrary="bi"
+          [required]="true"
+          [showPasswordToggle]="true"
+          [error]="getErrorMessage('confirmPassword')">
+        </app-unified-input>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <app-unified-button
+        variant="primary"
+        type="submit"
+        [disabled]="registerForm.invalid || loading"
+        [loading]="loading"
+        [fullWidth]="true"
+        customClass="shadow-sm">
+        Create Account
+      </app-unified-button>
+    </div>
+
+    <div class="text-center mt-4">
+      <p class="small text-muted mb-0">Already have an account? <a routerLink="/login" class="text-primary text-decoration-none fw-bold">Sign in</a></p>
+    </div>
+  </form>
+</div>
+
+<app-toast
+  *ngIf="showToast"
+  [message]="toastMessage"
+  [type]="toastType"
+  (close)="showToast = false">
+</app-toast>

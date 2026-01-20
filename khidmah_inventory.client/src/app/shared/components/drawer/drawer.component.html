@@ -1,0 +1,23 @@
+<div class="drawer-overlay" *ngIf="isOpen" (click)="onBackdropClick()" [class.show]="isOpen">
+  <div 
+    class="drawer" 
+    [class]="'drawer-' + position"
+    [style.width]="position === 'left' || position === 'right' ? width : '100%'"
+    [style.height]="position === 'top' || position === 'bottom' ? height : '100%'"
+    (click)="onContentClick($event)"
+  >
+    <div class="drawer-header" *ngIf="title || closable">
+      <h3 class="drawer-title" *ngIf="title">{{ title }}</h3>
+      <button class="drawer-close" *ngIf="closable" (click)="closeDrawer()" aria-label="Close">
+        <app-icon name="close" size="sm"></app-icon>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <ng-content></ng-content>
+    </div>
+    <div class="drawer-footer">
+      <ng-content select="[footer]"></ng-content>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,79 @@
+<div class="theme-panel-toggle" (click)="togglePanel()" *ngIf="!isOpen">
+  <app-icon name="palette" size="md"></app-icon>
+</div>
+
+<div class="theme-panel" [class.open]="isOpen" *ngIf="isOpen">
+  <div class="theme-panel-header">
+    <h3>Quick Theme</h3>
+    <button class="close-btn" (click)="closePanel()" aria-label="Close theme panel">
+      <app-icon name="close" size="sm"></app-icon>
+    </button>
+  </div>
+
+  <div class="theme-panel-content">
+    <div class="quick-controls">
+      <div class="control-group mb-3">
+        <label class="form-label">Primary Color</label>
+        <div class="input-group">
+          <span class="input-group-text p-1">
+            <input 
+              type="color" 
+              class="form-control form-control-color border-0 w-100"
+              [value]="theme.primaryColor"
+              (input)="onColorChange('primaryColor', $any($event.target).value)" />
+          </span>
+          <input 
+            type="text" 
+            [value]="theme.primaryColor"
+            (input)="onColorChange('primaryColor', $any($event.target).value)"
+            class="form-control border-start-0" />
+        </div>
+      </div>
+
+      <div class="control-group mb-3 d-flex justify-content-between align-items-center">
+        <label class="form-label mb-0">Animations</label>
+        <div class="form-check form-switch">
+          <input 
+            class="form-check-input"
+            type="checkbox" 
+            role="switch"
+            [checked]="theme.animationsEnabled"
+            (change)="onToggleChange('animationsEnabled', $any($event.target).checked)" />
+        </div>
+      </div>
+
+      <div class="control-group mb-3">
+        <label class="form-label">Button Style</label>
+        <select 
+          class="form-select"
+          [value]="theme.buttonStyle"
+          (change)="onSelectChange('buttonStyle', $any($event.target).value)">
+          <option value="flat">Flat</option>
+          <option value="raised">Raised</option>
+          <option value="outlined">Outlined</option>
+          <option value="gradient">Gradient</option>
+        </select>
+      </div>
+
+      <div class="control-group mb-4">
+        <label class="form-label">Card Style</label>
+        <select 
+          class="form-select"
+          [value]="theme.cardStyle"
+          (change)="onSelectChange('cardStyle', $any($event.target).value)">
+          <option value="flat">Flat</option>
+          <option value="elevated">Elevated</option>
+          <option value="outlined">Outlined</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="theme-panel-footer">
+      <app-unified-button variant="primary" [fullWidth]="true" routerLink="/settings">
+        Full Settings
+      </app-unified-button>
+    </div>
+  </div>
+</div>
+
+<div class="theme-panel-overlay" [class.active]="isOpen" (click)="closePanel()" *ngIf="isOpen"></div>

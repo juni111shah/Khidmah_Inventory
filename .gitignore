@@ -1,0 +1,160 @@
+# .NET Core
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.svcmap
+
+# .NET Core Build Directories
+[Kk]hidmah_[Ii]nventory*/bin/
+[Kk]hidmah_[Ii]nventory*/obj/
+[Gg]enerate[Hh]ash[Aa]pp/bin/
+[Gg]enerate[Hh]ash[Aa]pp/obj/
+
+# Visual Studio
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Visual Studio Code
+.vscode/
+
+# Node.js (for client-side project)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Angular/TypeScript
+dist/
+.tmp/
+coverage/
+*.tsbuildinfo
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.mdf
+*.ldf
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+log.txt
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.idea/
+*.sln.iml
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Build artifacts
+publish/
+*.publishproj
+
+# Entity Framework
+*.jfm
+
+# Rider
+.idea/
+
+# User-specific files
+*.user
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.nuget.cache
+*.nuget.props
+*.nuget.targets
+
+# Testing
+TestResults/
+*.trx
+*.testsettings
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# JetBrains Rider
+.idea/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# StyleCop
+StyleCop.Cache
+
+# Azure
+appsettings.Development.json
+
+# Application Insights
+ApplicationInsights.config
+
+# Backup files
+*.bak
+*.backup
+
+# Certificate files
+*.pfx
+*.cer
+*.p12
+
+# Local database
+appsettings.Local.json

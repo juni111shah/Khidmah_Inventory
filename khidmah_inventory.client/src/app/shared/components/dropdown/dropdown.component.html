@@ -1,0 +1,21 @@
+<div class="dropdown" [class.open]="isOpen" [class.disabled]="disabled">
+  <button 
+    class="dropdown-toggle" 
+    (click)="toggleDropdown()"
+    [disabled]="disabled">
+    <span class="dropdown-label">{{ getSelectedLabel() }}</span>
+    <app-icon name="arrow_drop_down" size="sm" customClass="dropdown-arrow"></app-icon>
+  </button>
+  
+  <div class="dropdown-menu" *ngIf="isOpen">
+    <button
+      *ngFor="let option of options"
+      class="dropdown-option"
+      [class.disabled]="option.disabled"
+      [class.divider]="option.divider"
+      (click)="selectOption(option)">
+      <span class="option-icon" *ngIf="option.icon">{{ option.icon }}</span>
+      <span class="option-label">{{ option.label }}</span>
+    </button>
+  </div>
+</div>

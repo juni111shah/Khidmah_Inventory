@@ -1,0 +1,91 @@
+<!-- Applied Filters Display -->
+<div class="applied-filters mb-3" *ngIf="hasActiveFilters()">
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <span class="text-muted small fw-bold me-2">Active Filters:</span>
+    <div
+      *ngFor="let filter of appliedFilters"
+      class="badge bg-primary d-flex align-items-center gap-1 px-2 py-1"
+      style="font-size: 0.75rem;">
+      <span>{{ filter.label }}: {{ getDisplayValue(filter) }}</span>
+      <button
+        type="button"
+        class="btn btn-sm btn-link text-white p-0 ms-1"
+        (click)="removeFilter(filter.key)"
+        style="font-size: 0.75rem; line-height: 1;">
+        <app-icon name="x" size="xs"></app-icon>
+      </button>
+    </div>
+    <button
+      *ngIf="showResetButton"
+      type="button"
+      class="btn btn-sm btn-link text-muted p-0 ms-2"
+      (click)="resetFilters()"
+      style="font-size: 0.75rem;">
+      <app-icon name="arrow-counterclockwise" size="xs" customClass="me-1"></app-icon>
+      Clear All
+    </button>
+  </div>
+</div>
+
+<!-- Filter Panel -->
+<div
+  class="generic-filter-panel card border-0 shadow-sm"
+  [class.show]="isOpen"
+  clickOutside
+  (clickOutside)="onClickOutside()">
+
+  <div class="card-body p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h6 class="card-title mb-0 fw-bold">
+        <app-icon name="filter" size="sm" customClass="me-2"></app-icon>
+        Filters
+      </h6>
+      <button
+        type="button"
+        class="btn btn-sm btn-link text-muted p-0"
+        (click)="closeFilter()">
+        <app-icon name="x" size="lg"></app-icon>
+      </button>
+    </div>
+
+    <!-- Filter Fields -->
+    <div class="filter-fields">
+      <div class="row g-3">
+        <div
+          *ngFor="let field of fields"
+          [class]="getFieldColumnClass(field)">
+          <label class="form-label small fw-bold">{{ field.label }}</label>
+          <app-filter-field
+            [type]="field.type"
+            [placeholder]="field.placeholder || 'Select ' + field.label.toLowerCase()"
+            [options]="field.options ?? []"
+            [disabled]="field.disabled ?? false"
+            [required]="field.required ?? false"
+            [(ngModel)]="filterValues[field.key]"
+            (ngModelChange)="onFilterValueChange(field.key, $event)">
+          </app-filter-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+      <app-unified-button
+        *ngIf="showResetButton"
+        variant="primary"
+        [outlined]="true"
+        (clicked)="resetFilters()">
+        <app-icon name="arrow-counterclockwise" customClass="me-1"></app-icon>
+        {{ resetButtonText }}
+      </app-unified-button>
+      <app-unified-button
+        *ngIf="showApplyButton"
+        variant="primary"
+        (clicked)="applyFilters()">
+        <app-icon name="check-circle" customClass="me-1"></app-icon>
+        {{ applyButtonText }}
+      </app-unified-button>
+    </div>
+  </div>
+</div>

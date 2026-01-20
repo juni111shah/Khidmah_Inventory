@@ -1,0 +1,16 @@
+<div class="modal-overlay" *ngIf="show" (click)="onBackdropClick()" [class.show]="show">
+  <div class="modal" [class]="'size-' + size" (click)="onContentClick($event)">
+    <div class="modal-header" *ngIf="title || closable">
+      <h2 class="modal-title" *ngIf="title">{{ title }}</h2>
+      <button class="modal-close" *ngIf="closable" (click)="closeModal()" aria-label="Close">
+        <app-icon name="close" size="sm"></app-icon>
+      </button>
+    </div>
+    <div class="modal-body">
+      <ng-content></ng-content>
+    </div>
+    <div class="modal-footer">
+      <ng-content select="[footer]"></ng-content>
+    </div>
+  </div>
+</div>

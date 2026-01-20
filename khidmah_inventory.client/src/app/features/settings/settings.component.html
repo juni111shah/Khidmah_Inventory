@@ -1,0 +1,119 @@
+<div class="settings-container container-fluid py-4">
+  <!-- Toast Notification -->
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false">
+  </app-toast>
+
+  <div class="d-flex justify-content-end mb-4 gap-2">
+    <app-unified-button variant="secondary" [outlined]="true" (clicked)="resetSettings()" [disabled]="saving" icon="bi-arrow-counterclockwise" iconLibrary="bi">
+      Reset
+    </app-unified-button>
+    <app-unified-button variant="primary" (clicked)="saveSettings()" [loading]="saving" icon="bi-check-lg" iconLibrary="bi">
+      Save Changes
+    </app-unified-button>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeSection === 'colors'" (click)="setActiveSection('colors')">
+        <i class="bi bi-palette-fill me-2"></i>Colors
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeSection === 'components'" (click)="setActiveSection('components')">
+        <i class="bi bi-sliders me-2"></i>Components
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Colors Section -->
+    <div *ngIf="activeSection === 'colors'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Color Customization" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div *ngFor="let color of ['primaryColor', 'secondaryColor', 'accentColor', 'successColor', 'warningColor', 'dangerColor', 'infoColor']" class="col-md-6">
+                <label class="form-label text-capitalize">{{ color.replace('Color', '') }} Color</label>
+                <div class="input-group">
+                  <input type="color" class="form-control form-control-color" [value]="$any(settings)[color]" (input)="updateColor($any(color), $any($event.target).value)" style="width: 50px;">
+                  <input type="text" class="form-control" [value]="$any(settings)[color]" (input)="updateColor($any(color), $any($event.target).value)">
+                </div>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Live Preview" customClass="border-0 shadow-sm h-100">
+            <p class="text-muted small mb-4">This is how your colors will look in the application.</p>
+            
+            <div class="card mb-4" [style.border-color]="settings.primaryColor">
+              <div class="card-header fw-bold" [style.background-color]="settings.primaryColor + '10'" [style.color]="settings.primaryColor">Sample Card</div>
+              <div class="card-body">
+                <p class="small">Interactive elements will use your chosen palette.</p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <button class="btn btn-sm text-white" [style.background-color]="settings.primaryColor">Primary</button>
+                  <button class="btn btn-sm btn-outline-secondary" [style.border-color]="settings.secondaryColor" [style.color]="settings.secondaryColor">Secondary</button>
+                </div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="badge" [style.background-color]="settings.successColor">Success</span>
+                  <span class="badge" [style.background-color]="settings.warningColor">Warning</span>
+                  <span class="badge" [style.background-color]="settings.dangerColor">Danger</span>
+                  <span class="badge" [style.background-color]="settings.infoColor">Info</span>
+                </div>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- Components Section -->
+    <div *ngIf="activeSection === 'components'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Component Styles" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field label="Border Radius" type="text" [(ngModel)]="settings.borderRadius" (ngModelChange)="updateComponentStyle('borderRadius', $event)" placeholder="8px"></app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field label="Button Style" type="select" [options]="buttonStyleOptions" [(ngModel)]="settings.buttonStyle" (ngModelChange)="updateComponentStyle('buttonStyle', $event)"></app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field label="Card Style" type="select" [options]="cardStyleOptions" [(ngModel)]="settings.cardStyle" (ngModelChange)="updateComponentStyle('cardStyle', $event)"></app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field label="Card Elevation" type="number" [(ngModel)]="settings.cardElevation" (ngModelChange)="updateComponentStyle('cardElevation', $event)"></app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-unified-checkbox label="Enable Animations" [(ngModel)]="settings.animationsEnabled" (ngModelChange)="updateComponentStyle('animationsEnabled', $event)"></app-unified-checkbox>
+              </div>
+              <div class="col-md-6">
+                <app-form-field label="Animation Speed" type="select" [options]="animationSpeedOptions" [(ngModel)]="settings.animationSpeed" (ngModelChange)="updateComponentStyle('animationSpeed', $event)"></app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Component Preview" customClass="border-0 shadow-sm h-100">
+            <div class="card p-3 shadow-sm mb-3" [style.border-radius]="settings.borderRadius" [class.shadow]="settings.cardStyle === 'elevated'">
+              <h6 class="fw-bold">Card Preview</h6>
+              <p class="small text-muted">This card demonstrates the current card style and border radius settings.</p>
+              <div class="d-flex gap-2">
+                <button class="btn btn-primary btn-sm" [style.border-radius]="settings.borderRadius" [class.shadow-sm]="settings.buttonStyle === 'raised'">Button Preview</button>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

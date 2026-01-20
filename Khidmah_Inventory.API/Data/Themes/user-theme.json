@@ -1,0 +1,23 @@
+{
+  "LogoUrl": "",
+  "LogoHeight": "40px",
+  "PrimaryColor": "#2196F3",
+  "SecondaryColor": "#FF9800",
+  "AccentColor": "#4CAF50",
+  "BackgroundColor": "#F5F5F5",
+  "SurfaceColor": "#FFFFFF",
+  "TextColor": "#212121",
+  "TextSecondaryColor": "#757575",
+  "AnimationsEnabled": true,
+  "AnimationSpeed": "normal",
+  "TransitionDuration": 300,
+  "ButtonStyle": "gradient",
+  "ButtonBorderRadius": "8px",
+  "ButtonPadding": "12px 24px",
+  "CardStyle": "elevated",
+  "CardBorderRadius": "12px",
+  "CardElevation": 2,
+  "CardShadow": "0 2px 8px rgba(0,0,0,0.1)",
+  "BorderRadius": "8px",
+  "Spacing": "16px"
+}

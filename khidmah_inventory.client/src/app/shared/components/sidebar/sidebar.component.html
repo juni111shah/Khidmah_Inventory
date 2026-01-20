@@ -1,0 +1,113 @@
+<div class="sidebar-overlay" *ngIf="!collapsed" (click)="toggleSidebar()"></div>
+<aside class="sidebar" #sidebarElement [class.collapsed]="collapsed" [class.mobile-open]="mobileMenuOpen">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <ng-content select="[logo]"></ng-content>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul class="nav-list ps-0">
+      <li *ngFor="let item of displayMenuItems; let i = index"
+          class="nav-item"
+          [class.active]="isActive(item)"
+          [class.has-children]="item.children && item.children.length > 0"
+          [class.expanded]="isExpanded(item)"
+          [attr.data-item-index]="i"
+          (mouseenter)="onItemHover(item)"
+          (mouseleave)="onItemLeave()"
+          #navItem>
+        <a
+          *appHasPermission="item.permission || ''"
+          class="nav-link"
+          [routerLink]="item.route && (!item.children || !collapsed || isTopNavigationLayout()) ? item.route : null"
+          [routerLinkActive]="item.route && (!item.children || !collapsed || isTopNavigationLayout()) ? 'active' : ''"
+          (click)="onItemClick(item, $event)"
+          [class.disabled]="!item.route && !item.children">
+          <app-icon [name]="item.icon || 'circle'" size="sm" customClass="nav-icon"></app-icon>
+          <span class="nav-label">{{ item.label }}</span>
+          <span class="nav-badge" *ngIf="item.badge">
+            <app-badge [value]="item.badge" [color]="item.badgeColor || 'primary'"></app-badge>
+          </span>
+          <app-icon *ngIf="item.children && item.children.length > 0 && !collapsed && !isTopNavigationLayout()"
+                    [name]="isExpanded(item) ? 'caret-down' : 'caret-right'"
+                    size="sm"
+                    customClass="nav-arrow">
+          </app-icon>
+          <app-icon *ngIf="item.children && item.children.length > 0 && isTopNavigationLayout()"
+                    [name]="isExpanded(item) ? 'caret-down' : 'caret-right'"
+                    size="sm"
+                    customClass="nav-arrow">
+          </app-icon>
+        </a>
+        <!-- Tooltip for collapsed state -->
+        <div class="nav-tooltip"
+             *ngIf="shouldShowTooltip(item)"
+             [style.top.px]="getSubmenuTop(item) + 22"> <!-- +22 to center vertically (44px/2) -->
+          {{ item.label }}
+        </div>
+        <!-- Regular submenu for expanded state -->
+        <ul class="submenu" *ngIf="item.children && item.children.length > 0 && isExpanded(item) && !collapsed && !isTopNavigationLayout()">
+          <li *ngFor="let child of item.children" class="submenu-item" [class.active]="isActive(child)">
+            <a
+              *appHasPermission="child.permission || ''"
+              class="submenu-link"
+              [class.active]="isActive(child)"
+              (click)="onItemClick(child); $event.preventDefault()"
+              [routerLink]="child.route || null">
+              <app-icon [name]="child.icon || 'circle'" size="sm" customClass="submenu-icon"></app-icon>
+              <span class="submenu-label">{{ child.label }}</span>
+              <span class="submenu-badge" *ngIf="child.badge">
+                <app-badge [value]="child.badge" [color]="child.badgeColor || 'primary'"></app-badge>
+              </span>
+            </a>
+          </li>
+        </ul>
+        <!-- Pop-out submenu for collapsed state -->
+        <ul class="submenu-popout"
+            *ngIf="shouldShowPopoutSubmenu(item)"
+            [style.top.px]="getSubmenuTop(item)"
+            [style.left.px]="getSubmenuLeft()"
+            (mouseenter)="onItemHover(item)"
+            (mouseleave)="onSubmenuLeave()"
+            #submenuPopout>
+          <li *ngFor="let child of item.children" class="submenu-item" [class.active]="isActive(child)">
+            <a
+              *appHasPermission="child.permission || ''"
+              class="submenu-link"
+              [class.active]="isActive(child)"
+              (click)="onItemClick(child); $event.preventDefault()"
+              [routerLink]="child.route || null">
+              <app-icon [name]="child.icon || 'circle'" size="sm" customClass="submenu-icon"></app-icon>
+              <span class="submenu-label">{{ child.label }}</span>
+              <span class="submenu-badge" *ngIf="child.badge">
+                <app-badge [value]="child.badge" [color]="child.badgeColor || 'primary'"></app-badge>
+              </span>
+            </a>
+          </li>
+        </ul>
+        <!-- Top navigation submenu -->
+        <ul class="submenu" *ngIf="item.children && item.children.length > 0 && isExpanded(item) && isTopNavigationLayout()">
+          <li *ngFor="let child of item.children" class="submenu-item" [class.active]="isActive(child)">
+            <a
+              *appHasPermission="child.permission || ''"
+              class="submenu-link"
+              [class.active]="isActive(child)"
+              (click)="onItemClick(child); $event.preventDefault()"
+              [routerLink]="child.route || null">
+              <app-icon [name]="child.icon || 'circle'" size="sm" customClass="submenu-icon"></app-icon>
+              <span class="submenu-label">{{ child.label }}</span>
+              <span class="submenu-badge" *ngIf="child.badge">
+                <app-badge [value]="child.badge" [color]="child.badgeColor || 'primary'"></app-badge>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer" *ngIf="!collapsed">
+    <ng-content select="[footer]"></ng-content>
+  </div>
+</aside>

@@ -1,0 +1,26 @@
+using MediatR;
+using Khidmah_Inventory.Application.Common.Models;
+using Khidmah_Inventory.Application.Features.PurchaseOrders.Models;
+
+namespace Khidmah_Inventory.Application.Features.PurchaseOrders.Commands.CreatePurchaseOrder;
+
+public class CreatePurchaseOrderCommand : IRequest<Result<PurchaseOrderDto>>
+{
+    public Guid SupplierId { get; set; }
+    public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+    public DateTime? ExpectedDeliveryDate { get; set; }
+    public string? Notes { get; set; }
+    public string? TermsAndConditions { get; set; }
+    public List<CreatePurchaseOrderItemDto> Items { get; set; } = new();
+}
+
+public class CreatePurchaseOrderItemDto
+{
+    public Guid ProductId { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal DiscountPercent { get; set; } = 0;
+    public decimal TaxPercent { get; set; } = 0;
+    public string? Notes { get; set; }
+}
+

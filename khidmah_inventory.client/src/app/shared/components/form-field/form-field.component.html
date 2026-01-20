@@ -1,0 +1,63 @@
+<div [ngSwitch]="type" [class]="'mb-3 ' + customClass">
+  <!-- Select Field -->
+  <app-unified-select
+    *ngSwitchCase="'select'"
+    [label]="label"
+    [placeholder]="placeholder"
+    [options]="options"
+    [disabled]="disabled"
+    [required]="required"
+    [error]="error"
+    [hint]="hint"
+    [icon]="icon"
+    [iconLibrary]="icon.startsWith('bi-') ? 'bi' : 'material'"
+    [(ngModel)]="value"
+    (ngModelChange)="onValueChange($event)">
+  </app-unified-select>
+
+  <!-- Textarea Field -->
+  <app-unified-textarea
+    *ngSwitchCase="'textarea'"
+    [label]="label"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    [required]="required"
+    [error]="error"
+    [hint]="hint"
+    [rows]="rows"
+    [icon]="icon"
+    [iconLibrary]="icon.startsWith('bi-') ? 'bi' : 'material'"
+    [(ngModel)]="value"
+    (ngModelChange)="onValueChange($event)">
+  </app-unified-textarea>
+
+  <!-- Date Field -->
+  <app-unified-date-picker
+    *ngSwitchCase="'date'"
+    [label]="label"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    [required]="required"
+    [error]="error"
+    [hint]="hint"
+    [(ngModel)]="value"
+    (ngModelChange)="onValueChange($event)">
+  </app-unified-date-picker>
+
+  <!-- Default Input (text, number, email, tel, password) -->
+  <app-unified-input
+    *ngSwitchDefault
+    [type]="type"
+    [label]="label"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    [required]="required"
+    [error]="error"
+    [hint]="hint"
+    [icon]="icon"
+    [iconPosition]="iconPosition"
+    [iconLibrary]="icon.startsWith('bi-') ? 'bi' : 'material'"
+    [(ngModel)]="value"
+    (ngModelChange)="onValueChange($event)">
+  </app-unified-input>
+</div>

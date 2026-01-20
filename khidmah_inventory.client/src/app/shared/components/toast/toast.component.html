@@ -1,0 +1,11 @@
+<div class="toast" *ngIf="show" [class]="'type-' + type" [class.show]="show">
+  <div class="toast-icon">
+    <app-icon [name]="getIcon()" size="md"></app-icon>
+  </div>
+  <div class="toast-content">
+    <p class="toast-message">{{ message }}</p>
+  </div>
+  <button class="toast-close" (click)="closeToast()" aria-label="Close">
+    <app-icon name="close" size="sm"></app-icon>
+  </button>
+</div>

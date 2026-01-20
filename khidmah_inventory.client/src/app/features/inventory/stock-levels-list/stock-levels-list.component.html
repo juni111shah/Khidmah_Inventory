@@ -1,0 +1,66 @@
+<app-listing-container
+  [searchPlaceholder]="config.searchPlaceholder || 'Search stock levels...'"
+  [searchTerm]="searchTerm"
+  [totalColumnsCount]="columns.length"
+  [visibleColumnsCount]="visibleColumnsCount"
+  [columns]="columns"
+  [showColumnDropdown]="showColumnToggle"
+  [showFilters]="true"
+  [showFilterPanel]="showFilterPanel"
+  [filterCount]="(lowStockOnly ? 1 : 0)"
+  [hasActiveFilters]="lowStockOnly || !!searchTerm"
+  (search)="onSearch($event)"
+  (filterClicked)="onFilterToggle()"
+  (toggleColumns)="onColumnsToggle()"
+  (closeColumns)="showColumnToggle = false"
+  (columnToggle)="onColumnToggle($event)">
+  
+  <div listing-actions class="d-flex gap-2">
+    <app-unified-button variant="secondary" [outlined]="true" (clicked)="router.navigate(['/inventory/transfer'])" *appHasPermission="'Inventory:StockTransaction:Create'">
+      <app-icon name="arrow-left-right" size="sm" customClass="me-2"></app-icon>
+      Transfer Stock
+    </app-unified-button>
+  </div>
+
+  <div listing-export>
+    <app-export
+      [data]="stockLevels"
+      [columns]="columns"
+      [title]="'Stock Levels Export'"
+      [filename]="'stock_levels'"
+      [includeFilters]="true"
+      [filters]="filterRequest.filters || []">
+    </app-export>
+  </div>
+
+  <div filter-panel>
+    <app-filter-panel
+      [config]="filterPanelConfig"
+      [filterValues]="filterPanelValues"
+      (filterApplied)="onFilterApplied($event)"
+      (filterReset)="onFilterReset()"
+      (filterClose)="onFilterClose()">
+    </app-filter-panel>
+  </div>
+
+  <app-data-table
+    [columns]="columns"
+    [data]="stockLevels"
+    [loading]="loading"
+    [config]="config"
+    [pagedResult]="pagedResult"
+    [filterRequest]="filterRequest"
+    (filterChange)="onFilterChange($event)"
+    (pageChange)="onPageChange($event)"
+    (sortChange)="onSortChange($event)">
+  </app-data-table>
+</app-listing-container>
+
+<app-toast
+  *ngIf="showToast"
+  [message]="toastMessage"
+  [type]="toastType"
+  (close)="showToast = false"
+></app-toast>
+
+

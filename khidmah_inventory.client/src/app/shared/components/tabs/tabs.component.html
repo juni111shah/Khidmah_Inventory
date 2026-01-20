@@ -1,0 +1,16 @@
+<div class="tabs">
+  <div class="tabs-header" [attr.data-tab-style]="tabStyle">
+    <button
+      *ngFor="let tab of tabs?.toArray(); let i = index"
+      class="tab-button"
+      [class.active]="i === activeTab"
+      [class.disabled]="tab.disabled"
+      (click)="!tab.disabled && selectTab(i)">
+      <span class="tab-icon" *ngIf="tab.icon">{{ tab.icon }}</span>
+      <span class="tab-label">{{ tab.label }}</span>
+    </button>
+  </div>
+  <div class="tabs-content">
+    <ng-content></ng-content>
+  </div>
+</div>

@@ -1,0 +1,212 @@
+<div class="reports-container container-fluid py-4">
+  <div class="tabs-header mb-4">
+    <button
+      [class.active]="activeTab === 'sales'"
+      (click)="onTabChange('sales')"
+      *appHasPermission="'Reports:Sales:Read'"
+      class="tab-button"
+    >
+      <i class="bi bi-graph-up me-2"></i>
+      Sales Report
+    </button>
+    <button
+      [class.active]="activeTab === 'inventory'"
+      (click)="onTabChange('inventory')"
+      *appHasPermission="'Reports:Inventory:Read'"
+      class="tab-button"
+    >
+      <i class="bi bi-box-seam me-2"></i>
+      Inventory Report
+    </button>
+    <button
+      [class.active]="activeTab === 'purchase'"
+      (click)="onTabChange('purchase')"
+      *appHasPermission="'Reports:Purchase:Read'"
+      class="tab-button"
+    >
+      <i class="bi bi-cart me-2"></i>
+      Purchase Report
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="d-flex justify-content-center py-5">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <!-- Sales Report -->
+  <div *ngIf="!loading && activeTab === 'sales' && salesReport" class="report-content">
+    <div class="card p-4 border-0 shadow-sm mb-4">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">From Date</label>
+          <input type="date" [(ngModel)]="salesFromDate" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">To Date</label>
+          <input type="date" [(ngModel)]="salesToDate" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadSalesReport()">
+            <i class="bi bi-file-earmark-arrow-down me-2"></i>
+            Generate Report
+          </app-unified-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL SALES</div>
+          <h4 class="mb-0 fw-bold">{{ formatCurrency(salesReport.totalSales) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL COST</div>
+          <h4 class="mb-0 fw-bold">{{ formatCurrency(salesReport.totalCost) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL PROFIT</div>
+          <h4 class="mb-0 fw-bold text-success">{{ formatCurrency(salesReport.totalProfit) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">PROFIT MARGIN</div>
+          <h4 class="mb-0 fw-bold">{{ formatPercent(salesReport.profitMargin) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL ORDERS</div>
+          <h4 class="mb-0 fw-bold">{{ formatNumber(salesReport.totalOrders) }}</h4>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <app-data-table
+        *ngIf="salesReport?.items"
+        [columns]="salesReportColumns"
+        [data]="salesReport.items"
+        [config]="tableConfig"
+        [loading]="false"
+      ></app-data-table>
+    </div>
+  </div>
+
+  <!-- Inventory Report -->
+  <div *ngIf="!loading && activeTab === 'inventory' && inventoryReport" class="report-content">
+    <div class="card p-4 border-0 shadow-sm mb-4">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-8">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="lowStockOnly" [(ngModel)]="lowStockOnly" (change)="loadInventoryReport()">
+            <label class="form-check-label fw-bold" for="lowStockOnly">Show Low Stock Only</label>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadInventoryReport()">
+            <i class="bi bi-file-earmark-arrow-down me-2"></i>
+            Generate Report
+          </app-unified-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">STOCK VALUE</div>
+          <h4 class="mb-0 fw-bold">{{ formatCurrency(inventoryReport.totalStockValue) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-3">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">PRODUCTS</div>
+          <h4 class="mb-0 fw-bold">{{ formatNumber(inventoryReport.totalProducts) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-3">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">LOW STOCK</div>
+          <h4 class="mb-0 fw-bold text-warning">{{ formatNumber(inventoryReport.lowStockItems) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-3">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">OUT OF STOCK</div>
+          <h4 class="mb-0 fw-bold text-danger">{{ formatNumber(inventoryReport.outOfStockItems) }}</h4>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <app-data-table
+        *ngIf="inventoryReport?.items"
+        [columns]="inventoryReportColumns"
+        [data]="inventoryReport.items"
+        [config]="tableConfig"
+        [loading]="false"
+      ></app-data-table>
+    </div>
+  </div>
+
+  <!-- Purchase Report -->
+  <div *ngIf="!loading && activeTab === 'purchase' && purchaseReport" class="report-content">
+    <div class="card p-4 border-0 shadow-sm mb-4">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">From Date</label>
+          <input type="date" [(ngModel)]="purchaseFromDate" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">To Date</label>
+          <input type="date" [(ngModel)]="purchaseToDate" class="form-control" />
+        </div>
+        <div class="col-md-4">
+          <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadPurchaseReport()">
+            <i class="bi bi-file-earmark-arrow-down me-2"></i>
+            Generate Report
+          </app-unified-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL PURCHASES</div>
+          <h4 class="mb-0 fw-bold">{{ formatCurrency(purchaseReport.totalPurchases) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-6">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL ORDERS</div>
+          <h4 class="mb-0 fw-bold">{{ formatNumber(purchaseReport.totalOrders) }}</h4>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <app-data-table
+        *ngIf="purchaseReport?.items"
+        [columns]="purchaseReportColumns"
+        [data]="purchaseReport.items"
+        [config]="tableConfig"
+        [loading]="false"
+      ></app-data-table>
+    </div>
+  </div>
+
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false"
+  ></app-toast>
+</div>
+

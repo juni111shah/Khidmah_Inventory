@@ -1,0 +1,67 @@
+<div class="stat-card">
+  <!-- Header -->
+  <div class="stat-card-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h3 class="stat-title">{{ title }}</h3>
+        <app-icon 
+          *ngIf="icon" 
+          [name]="icon" 
+          [style.color]="iconColor"
+          class="title-icon">
+        </app-icon>
+      </div>
+      <p class="stat-source" *ngIf="source">Source: {{ source }}</p>
+    </div>
+    <button class="menu-button" (click)="onMenuClick()" type="button" aria-label="Menu">
+      <app-icon name="more_vert"></app-icon>
+    </button>
+  </div>
+
+  <!-- Timeframe Navigation -->
+  <div class="timeframe-nav">
+    <button 
+      class="timeframe-btn" 
+      [class.active]="selectedTimeFrame === 'day'"
+      (click)="selectTimeFrame('day')">
+      Day
+    </button>
+    <button 
+      class="timeframe-btn" 
+      [class.active]="selectedTimeFrame === 'week'"
+      (click)="selectTimeFrame('week')">
+      Week
+    </button>
+    <button 
+      class="timeframe-btn" 
+      [class.active]="selectedTimeFrame === 'month'"
+      (click)="selectTimeFrame('month')">
+      Month
+    </button>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="stat-summary">
+    <div class="stat-range" *ngIf="range">{{ range }}</div>
+    <div class="stat-period" *ngIf="period">{{ period }}</div>
+  </div>
+
+  <!-- ApexCharts Bar Chart -->
+  <div class="stat-chart" *ngIf="chartData">
+    <app-chart
+      type="bar"
+      [data]="chartData"
+      [options]="chartOptions"
+      [height]="180">
+    </app-chart>
+  </div>
+
+  <!-- Footer -->
+  <div class="stat-footer" *ngIf="showFullStats">
+    <button class="full-stats-link" (click)="onFullStatsClick()" type="button">
+      <span>Full Stats</span>
+      <app-icon name="arrow_forward" class="arrow-icon"></app-icon>
+    </button>
+  </div>
+</div>
+

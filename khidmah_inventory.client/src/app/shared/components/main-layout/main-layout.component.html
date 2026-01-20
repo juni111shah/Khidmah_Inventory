@@ -1,0 +1,15 @@
+<div class="main-layout" [ngClass]="layoutClasses">
+  <ng-content select="[sidebar]"></ng-content>
+  
+  <div class="layout-content">
+    <ng-content select="[header]"></ng-content>
+    
+    <main class="layout-main">
+      <div [class.layout-container]="layout && (layout.contentStyle === 'boxed' || layout.contentStyle === 'centered')">
+        <ng-content></ng-content>
+      </div>
+    </main>
+    
+    <ng-content select="[footer]"></ng-content>
+  </div>
+</div>

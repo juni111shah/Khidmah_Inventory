@@ -1,0 +1,23 @@
+<div class="users-list-container list-page-container">
+  <app-data-table
+    [columns]="columns"
+    [data]="users"
+    [loading]="loading"
+    [config]="config"
+    [actions]="actions"
+    [pagedResult]="pagedResult"
+    [filterRequest]="filterRequest"
+    (filterChange)="onFilterChange($event)"
+    (pageChange)="onPageChange($event)"
+    (sortChange)="onSortChange($event)"
+    (rowClick)="onRowClick($event)"
+  ></app-data-table>
+
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false"
+  ></app-toast>
+</div>
+

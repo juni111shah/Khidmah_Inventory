@@ -1,0 +1,20 @@
+<div class="time-range-filter">
+  <div class="filter-group">
+    <label>Time Range</label>
+    <select [(ngModel)]="selectedRange" (change)="onRangeChange()" class="form-control">
+      <option *ngFor="let range of timeRanges" [value]="range.value">{{ range.label }}</option>
+    </select>
+  </div>
+
+  <div *ngIf="showCustomDates" class="custom-dates">
+    <div class="filter-group">
+      <label>From Date</label>
+      <input type="date" [(ngModel)]="customFromDate" (change)="onCustomDateChange()" class="form-control" />
+    </div>
+    <div class="filter-group">
+      <label>To Date</label>
+      <input type="date" [(ngModel)]="customToDate" (change)="onCustomDateChange()" class="form-control" />
+    </div>
+  </div>
+</div>
+

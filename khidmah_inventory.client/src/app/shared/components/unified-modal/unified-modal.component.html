@@ -1,0 +1,33 @@
+<div *ngIf="isOpen" class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+  <div [class]="modalDialogClasses" role="document">
+    <div class="modal-content border-0 shadow-lg">
+      <!-- Header -->
+      <div *ngIf="showHeader" class="modal-header bg-light">
+        <h5 class="modal-title fw-bold">{{ headerTitle }}</h5>
+        <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
+      </div>
+      
+      <!-- Body -->
+      <div class="modal-body">
+        <ng-content></ng-content>
+      </div>
+      
+      <!-- Footer -->
+      <div *ngIf="showFooter" class="modal-footer bg-light">
+        <ng-container *ngIf="footerButtons.length > 0; else customFooter">
+          <app-unified-button
+            *ngFor="let button of footerButtons"
+            [variant]="button.variant"
+            [icon]="button.icon || ''"
+            [iconLibrary]="button.iconLibrary || 'bi'"
+            (clicked)="close()">
+            {{ button.tooltip || 'Button' }}
+          </app-unified-button>
+        </ng-container>
+        <ng-template #customFooter>
+          <ng-content select="[slot=footer]"></ng-content>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

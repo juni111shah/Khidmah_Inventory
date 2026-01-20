@@ -1,0 +1,70 @@
+<div class="card auth-card">
+  <div class="auth-header">
+    <div class="auth-logo-animated">
+      <!-- Animated SVG Inventory Icon -->
+      <svg viewBox="0 0 100 100" class="svg-box-animated">
+        <circle cx="50" cy="50" r="40" class="pulse-circle" />
+        <path d="M20,35 L50,20 L80,35 L80,65 L50,80 L20,65 Z" class="svg-box-path" fill="none" stroke-width="2" />
+        <path d="M20,35 L50,50 L80,35 M50,50 L50,80" class="svg-box-path" fill="none" stroke-width="2" />
+      </svg>
+    </div>
+    <h1 class="h3 mb-2 fw-bold text-dark">Welcome Back</h1>
+    <p class="text-muted">Sign in to your account</p>
+  </div>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+    <app-unified-input
+      label="Email Address"
+      type="email"
+      formControlName="email"
+      placeholder="awesome@user.com"
+      icon="bi-person"
+      iconLibrary="bi"
+      [required]="true"
+      [error]="(email?.invalid && email?.touched) ? getEmailErrorMessage() : ''">
+    </app-unified-input>
+
+    <app-unified-input
+      label="Password"
+      type="password"
+      formControlName="password"
+      placeholder="••••••••••••••••"
+      icon="bi-lock"
+      iconLibrary="bi"
+      [required]="true"
+      [showPasswordToggle]="true"
+      [error]="(password?.invalid && password?.touched) ? getPasswordErrorMessage() : ''">
+    </app-unified-input>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-1">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="rememberMe">
+        <label class="form-check-label small text-muted cursor-pointer" for="rememberMe">
+          Remember me
+        </label>
+      </div>
+      <a href="javascript:void(0)" class="small text-primary text-decoration-none fw-bold">Forgot password?</a>
+    </div>
+
+    <app-unified-button
+      variant="primary"
+      type="submit"
+      [disabled]="loginForm.invalid || loading"
+      [loading]="loading"
+      [fullWidth]="true"
+      customClass="shadow-sm">
+      Sign In
+    </app-unified-button>
+
+    <div class="text-center mt-4">
+      <p class="small text-muted mb-0">Don't have an account? <a routerLink="/register" class="text-primary text-decoration-none fw-bold">Create one</a></p>
+    </div>
+  </form>
+</div>
+
+<app-toast
+  *ngIf="showToast"
+  [message]="toastMessage"
+  [type]="toastType"
+  (close)="showToast = false"
+></app-toast>

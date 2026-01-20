@@ -1,0 +1,24 @@
+<div class="mb-3">
+  <label *ngIf="label" class="form-label d-block">
+    {{ label }}
+    <span *ngIf="required" class="text-danger">*</span>
+  </label>
+  
+  <div [class]="radioClasses">
+    <div *ngFor="let option of options; let i = index" class="form-check" [class.form-check-inline]="layout === 'horizontal'">
+      <input
+        class="form-check-input"
+        type="radio"
+        [name]="name"
+        [id]="name + '-' + i"
+        [value]="option.value"
+        [checked]="value === option.value"
+        [disabled]="option.disabled || disabled"
+        [required]="required"
+        (change)="onRadioChange(option.value)">
+      <label class="form-check-label" [for]="name + '-' + i">
+        {{ option.label }}
+      </label>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,9 @@
+<footer class="app-footer">
+  <div class="footer-content">
+    <ng-content></ng-content>
+    
+    <div class="footer-copyright" *ngIf="showCopyright">
+      <p>{{ copyright || defaultCopyright }}</p>
+    </div>
+  </div>
+</footer>

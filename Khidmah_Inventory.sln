@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "khidmah_inventory.client", "khidmah_inventory.client\khidmah_inventory.client.esproj", "{7A3CEEBB-221C-4B46-8099-C8726B550382}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Khidmah_Inventory.Domain", "Khidmah_Inventory.Domain\Khidmah_Inventory.Domain.csproj", "{BB2A1716-FCA6-4867-AF74-4B61633C5B33}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Khidmah_Inventory.Application", "Khidmah_Inventory.Application\Khidmah_Inventory.Application.csproj", "{D59DB77E-4386-4D35-A48B-94B04BFBF202}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Khidmah_Inventory.Infrastructure", "Khidmah_Inventory.Infrastructure\Khidmah_Inventory.Infrastructure.csproj", "{64F17E89-842C-4553-A2D8-68E76F12341B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Khidmah_Inventory.API", "Khidmah_Inventory.API\Khidmah_Inventory.API.csproj", "{5CA57FBE-1F97-4FB1-86C9-773837BEA98E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7A3CEEBB-221C-4B46-8099-C8726B550382}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3CEEBB-221C-4B46-8099-C8726B550382}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3CEEBB-221C-4B46-8099-C8726B550382}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{7A3CEEBB-221C-4B46-8099-C8726B550382}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3CEEBB-221C-4B46-8099-C8726B550382}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A3CEEBB-221C-4B46-8099-C8726B550382}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{BB2A1716-FCA6-4867-AF74-4B61633C5B33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB2A1716-FCA6-4867-AF74-4B61633C5B33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB2A1716-FCA6-4867-AF74-4B61633C5B33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB2A1716-FCA6-4867-AF74-4B61633C5B33}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D59DB77E-4386-4D35-A48B-94B04BFBF202}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D59DB77E-4386-4D35-A48B-94B04BFBF202}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D59DB77E-4386-4D35-A48B-94B04BFBF202}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D59DB77E-4386-4D35-A48B-94B04BFBF202}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64F17E89-842C-4553-A2D8-68E76F12341B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64F17E89-842C-4553-A2D8-68E76F12341B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64F17E89-842C-4553-A2D8-68E76F12341B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64F17E89-842C-4553-A2D8-68E76F12341B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CA57FBE-1F97-4FB1-86C9-773837BEA98E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CA57FBE-1F97-4FB1-86C9-773837BEA98E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CA57FBE-1F97-4FB1-86C9-773837BEA98E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CA57FBE-1F97-4FB1-86C9-773837BEA98E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E3740CCC-2DC2-4ADE-9687-8161B61AE241}
+	EndGlobalSection
+EndGlobal

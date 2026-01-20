@@ -1,0 +1,116 @@
+<div class="analytics-container container-fluid py-4">
+  <div class="d-flex justify-content-end mb-4">
+    <app-time-range-filter
+      [selectedRange]="selectedRange"
+      [customFromDate]="customFromDate"
+      [customToDate]="customToDate"
+      (rangeChange)="onRangeChange($event)"
+    ></app-time-range-filter>
+  </div>
+
+  <div *ngIf="loading" class="d-flex justify-content-center py-5">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading && analytics" class="analytics-content">
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4 col-lg-2">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL SALES</div>
+          <h4 class="mb-0 fw-bold">{{ formatCurrency(analytics.totalSales) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL COST</div>
+          <h4 class="mb-0 fw-bold">{{ formatCurrency(analytics.totalCost) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL PROFIT</div>
+          <h4 class="mb-0 fw-bold text-success">{{ formatCurrency(analytics.totalProfit) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">PROFIT MARGIN</div>
+          <h4 class="mb-0 fw-bold">{{ formatPercent(analytics.profitMargin) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">TOTAL ORDERS</div>
+          <h4 class="mb-0 fw-bold">{{ formatNumber(analytics.totalOrders) }}</h4>
+        </app-unified-card>
+      </div>
+      <div class="col-md-4 col-lg-2">
+        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
+          <div class="text-muted small fw-bold mb-1">AVG ORDER</div>
+          <h4 class="mb-0 fw-bold">{{ formatCurrency(analytics.averageOrderValue) }}</h4>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-8">
+        <app-unified-card header="Sales Trend" customClass="border-0 shadow-sm h-100">
+          <app-chart
+            *ngIf="salesChartData"
+            type="line"
+            [data]="salesChartData"
+            [options]="chartOptions"
+          ></app-chart>
+        </app-unified-card>
+      </div>
+
+      <div class="col-lg-4">
+        <app-unified-card header="Sales by Category" customClass="border-0 shadow-sm h-100">
+          <app-chart
+            *ngIf="categoryChartData"
+            type="bar"
+            [data]="categoryChartData"
+            [options]="chartOptions"
+          ></app-chart>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <!-- Top Lists -->
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <app-unified-card header="Top Products" customClass="border-0 shadow-sm h-100">
+          <app-data-table
+            *ngIf="analytics.topProducts"
+            [columns]="topProductsColumns"
+            [data]="analytics.topProducts"
+            [config]="topProductsConfig"
+            [loading]="false"
+          ></app-data-table>
+        </app-unified-card>
+      </div>
+
+      <div class="col-lg-6">
+        <app-unified-card header="Top Customers" customClass="border-0 shadow-sm h-100">
+          <app-data-table
+            *ngIf="analytics.topCustomers"
+            [columns]="topCustomersColumns"
+            [data]="analytics.topCustomers"
+            [config]="topCustomersConfig"
+            [loading]="false"
+          ></app-data-table>
+        </app-unified-card>
+      </div>
+    </div>
+  </div>
+
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false"
+  ></app-toast>
+</div>
+

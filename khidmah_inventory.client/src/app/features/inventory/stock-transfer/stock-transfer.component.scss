@@ -1,0 +1,170 @@
+.stock-transfer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .transfer-info {
+    text-align: center;
+
+    h5 {
+      color: var(--text-color);
+      font-weight: 600;
+    }
+
+    p {
+      color: var(--text-muted);
+    }
+  }
+
+  .transfer-form-card {
+    border-radius: 16px;
+    overflow: hidden;
+
+    .row {
+      margin: 0;
+    }
+
+    .col-lg-6, .col-md-12, .col-12 {
+      padding: 0 15px;
+    }
+
+    @media (max-width: 991px) {
+      .col-lg-6 {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+
+  .stock-indicator {
+    padding: 8px 12px;
+    background-color: #e3f2fd;
+    border-radius: 8px;
+    border: 1px solid #bbdefb;
+
+    .text-info {
+      color: #1976d2 !important;
+    }
+  }
+
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+
+    app-icon {
+      vertical-align: middle;
+    }
+  }
+
+  .transfer-summary {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+
+    h6 {
+      color: var(--primary-color);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+
+      app-icon {
+        vertical-align: middle;
+      }
+    }
+
+    .row {
+      .col-md-6 {
+        margin-bottom: 0.5rem;
+
+        small {
+          color: var(--text-muted);
+          display: block;
+          font-weight: 500;
+          margin-bottom: 2px;
+        }
+
+        div {
+          color: var(--text-color);
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  // Enhanced responsive design
+  @media (max-width: 768px) {
+    .d-flex.justify-content-between {
+      flex-direction: column;
+      gap: 1rem;
+
+      .transfer-info {
+        text-align: left;
+      }
+    }
+
+    .transfer-form-card {
+      .col-lg-6, .col-md-12, .col-12 {
+        padding: 0;
+        margin-bottom: 1rem;
+      }
+    }
+
+    .transfer-summary {
+      .row {
+        .col-md-6 {
+          width: 50%;
+          float: left;
+        }
+      }
+    }
+
+    .d-flex.justify-content-end {
+      flex-direction: column;
+      gap: 0.75rem;
+
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+
+  @media (max-width: 576px) {
+    .transfer-summary {
+      .row {
+        .col-md-6 {
+          width: 100%;
+          float: none;
+          margin-bottom: 0.75rem;
+        }
+      }
+    }
+  }
+
+  // Loading states
+  .transferring {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  // Form validation styles
+  .ng-invalid.ng-touched {
+    border-color: #dc3545;
+  }
+
+  .ng-valid.ng-touched {
+    border-color: #28a745;
+  }
+}
+
+// Custom animations for better UX
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.transfer-form-card {
+  animation: slideInFromBottom 0.3s ease-out;
+}

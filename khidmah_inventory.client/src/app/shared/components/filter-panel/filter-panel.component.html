@@ -1,0 +1,38 @@
+<div class="filter-panel" [ngClass]="layout === 'grid' ? 'filter-panel-grid' : 'filter-panel-row'">
+  <!-- Filter Fields -->
+  <div class="filter-fields" [ngClass]="layout === 'grid' ? 'row g-3' : 'd-flex flex-wrap gap-3 align-items-end'">
+    <div
+      *ngFor="let field of config.fields"
+      [ngClass]="layout === 'grid' ? getFieldColumnClass(field) : 'flex-fill'">
+      <label class="form-label small fw-bold" *ngIf="field.label">{{ field.label }}</label>
+      <app-filter-field
+        [type]="field.type"
+        [placeholder]="field.placeholder || 'Select ' + field.label.toLowerCase()"
+        [options]="field.options ?? []"
+        [disabled]="field.disabled ?? false"
+        [required]="field.required ?? false"
+        [(ngModel)]="filterValues[field.key]"
+        (ngModelChange)="onFilterValueChange(field.key, $event)">
+      </app-filter-field>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="filter-actions mt-3 d-flex gap-2 justify-content-end" *ngIf="showResetButton || showApplyButton">
+    <app-unified-button
+      *ngIf="showResetButton"
+      variant="primary"
+      [outlined]="true"
+      (clicked)="resetFilters()">
+      <app-icon name="arrow-counterclockwise" customClass="me-1"></app-icon>
+      {{ resetButtonText }}
+    </app-unified-button>
+    <app-unified-button
+      *ngIf="showApplyButton"
+      variant="primary"
+      (clicked)="applyFilters()">
+      <app-icon name="check-circle" customClass="me-1"></app-icon>
+      {{ applyButtonText }}
+    </app-unified-button>
+  </div>
+</div>

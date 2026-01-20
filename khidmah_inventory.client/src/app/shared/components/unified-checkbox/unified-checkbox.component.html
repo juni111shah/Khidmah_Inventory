@@ -1,0 +1,17 @@
+<div [class]="checkboxClasses">
+  <input
+    [id]="id"
+    type="checkbox"
+    class="form-check-input"
+    [checked]="value"
+    [disabled]="disabled"
+    [required]="required"
+    [indeterminate]="indeterminate"
+    (change)="onCheckboxChange($event)" />
+  
+  <label *ngIf="label" [for]="id" class="form-check-label ms-1">
+    {{ label }}
+    <span *ngIf="required" class="text-danger">*</span>
+    <ng-content></ng-content>
+  </label>
+</div>

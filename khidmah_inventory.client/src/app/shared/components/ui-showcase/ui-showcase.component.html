@@ -1,0 +1,113 @@
+<div class="container-fluid py-4">
+  <h1 class="mb-4 fw-bold">UI Framework Showcase</h1>
+  <p class="text-muted mb-4">Demonstrating modern Bootstrap-based design with custom themes</p>
+
+  <!-- Theme Controls -->
+  <app-unified-card header="Theme Customization" class="mb-4 border-0 shadow-sm">
+    <p>Dynamically change the theme using the ThemeService:</p>
+    <div class="d-flex gap-2 flex-wrap">
+      <app-unified-button variant="primary" (clicked)="onChangeTheme()" icon="bi-palette" iconLibrary="bi">
+        Change Theme
+      </app-unified-button>
+      <app-unified-button variant="secondary" (clicked)="onResetTheme()" icon="bi-arrow-counterclockwise" iconLibrary="bi">
+        Reset Theme
+      </app-unified-button>
+    </div>
+  </app-unified-card>
+
+  <!-- Buttons Showcase -->
+  <app-unified-card header="Unified Buttons" class="mb-4 border-0 shadow-sm">
+    <h5 class="mb-3 small fw-bold text-muted text-uppercase">Standard Variants</h5>
+    <div class="d-flex gap-2 flex-wrap mb-4">
+      <app-unified-button variant="primary" icon="bi-save" iconLibrary="bi">Save</app-unified-button>
+      <app-unified-button variant="secondary" icon="bi-pencil" iconLibrary="bi">Edit</app-unified-button>
+      <app-unified-button variant="success" icon="bi-check-lg" iconLibrary="bi">Success</app-unified-button>
+      <app-unified-button variant="danger" icon="bi-trash" iconLibrary="bi">Delete</app-unified-button>
+      <app-unified-button variant="warning" icon="bi-exclamation-triangle" iconLibrary="bi">Warning</app-unified-button>
+      <app-unified-button variant="info" icon="bi-info-circle" iconLibrary="bi">Info</app-unified-button>
+    </div>
+
+    <h5 class="mb-3 small fw-bold text-muted text-uppercase">Outlined Style</h5>
+    <div class="d-flex gap-2 flex-wrap mb-4">
+      <app-unified-button variant="primary" [outlined]="true" icon="bi-save" iconLibrary="bi">Save</app-unified-button>
+      <app-unified-button variant="success" [outlined]="true" icon="bi-check-lg" iconLibrary="bi">Submit</app-unified-button>
+      <app-unified-button variant="danger" [outlined]="true" icon="bi-trash" iconLibrary="bi">Delete</app-unified-button>
+    </div>
+
+    <h5 class="mb-3 small fw-bold text-muted text-uppercase">Loading State</h5>
+    <app-unified-button
+      variant="primary"
+      [loading]="isLoading"
+      (clicked)="onSave()">
+      Save Changes
+    </app-unified-button>
+  </app-unified-card>
+
+  <!-- Inputs Showcase -->
+  <app-unified-card header="Unified Form Inputs" class="mb-4 border-0 shadow-sm">
+    <div class="row">
+      <div class="col-md-6">
+        <app-unified-input
+          label="Email"
+          type="email"
+          icon="bi-envelope"
+          iconLibrary="bi"
+          [(ngModel)]="email"
+          placeholder="Enter your email"
+          [required]="true">
+        </app-unified-input>
+      </div>
+      <div class="col-md-6">
+        <app-unified-input
+          label="Password"
+          type="password"
+          icon="bi-lock"
+          iconLibrary="bi"
+          [(ngModel)]="password"
+          placeholder="Enter your password"
+          [required]="true">
+        </app-unified-input>
+      </div>
+    </div>
+  </app-unified-card>
+
+  <!-- Cards Showcase -->
+  <div class="row mb-4">
+    <div class="col-md-4 mb-3">
+      <app-unified-card header="Default Card" [hoverable]="true">
+        <p>This is a standard card with a subtle shadow and hover effect.</p>
+      </app-unified-card>
+    </div>
+    <div class="col-md-4 mb-3">
+      <app-unified-card variant="primary" header="Primary Variant">
+        <p>This card uses the primary color for its background.</p>
+      </app-unified-card>
+    </div>
+    <div class="col-md-4 mb-3">
+      <app-unified-card variant="success" [hoverable]="true" [clickable]="true" header="Success Clickable">
+        <p>This is a success-styled card that is both hoverable and clickable.</p>
+      </app-unified-card>
+    </div>
+  </div>
+
+  <!-- Icon Showcase -->
+  <app-unified-card header="Icons Support" class="mb-4 border-0 shadow-sm">
+    <h5 class="mb-3 small fw-bold text-muted text-uppercase">Bootstrap Icons (Standard)</h5>
+    <div class="d-flex gap-4 mb-4">
+      <i class="bi bi-house fs-3 text-primary"></i>
+      <i class="bi bi-person fs-3 text-success"></i>
+      <i class="bi bi-gear fs-3 text-warning"></i>
+      <i class="bi bi-trash fs-3 text-danger"></i>
+      <i class="bi bi-check-circle fs-3 text-info"></i>
+    </div>
+
+    <h5 class="mb-3 small fw-bold text-muted text-uppercase">Font Awesome Icons</h5>
+    <div class="d-flex gap-4">
+      <i class="fas fa-home fs-3 text-primary"></i>
+      <i class="fas fa-user fs-3 text-success"></i>
+      <i class="fas fa-cog fs-3 text-warning"></i>
+      <i class="fas fa-trash fs-3 text-danger"></i>
+      <i class="fas fa-check-circle fs-3 text-info"></i>
+    </div>
+  </app-unified-card>
+</div>

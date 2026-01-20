@@ -1,0 +1,68 @@
+<div class="pagination-container d-flex justify-content-between align-items-center flex-wrap gap-3 w-100">
+  <!-- Entries Info -->
+  <div class="entries-info text-muted small">
+    Showing <span class="fw-bold text-dark">{{ startItem }}</span> to <span class="fw-bold text-dark">{{ endItem }}</span> of <span class="fw-bold text-dark">{{ totalItems }}</span> entries
+  </div>
+
+  <div class="d-flex align-items-center flex-wrap gap-4">
+    <!-- Page Size Options -->
+    <div class="page-size-options d-flex align-items-center gap-2" *ngIf="showPageSizeOptions">
+      <span class="small text-muted text-nowrap">Items per page:</span>
+      <select 
+        class="form-select form-select-sm w-auto" 
+        [ngModel]="pageSize" 
+        (ngModelChange)="onPageSizeChange($event)">
+        <option *ngFor="let option of pageSizeOptions" [value]="option">{{ option }}</option>
+      </select>
+    </div>
+
+    <!-- Pagination Controls -->
+    <ul class="pagination mb-0">
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <button
+        class="page-link"
+        (click)="goToFirst()"
+        *ngIf="showFirstLast"
+        aria-label="First page">
+        <i class="bi bi-chevron-double-left"></i>
+      </button>
+    </li>
+    
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <button
+        class="page-link"
+        (click)="goToPrevious()"
+        aria-label="Previous page">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    </li>
+    
+    <li *ngFor="let page of pages" class="page-item" [class.active]="page === currentPage">
+      <button
+        class="page-link"
+        (click)="goToPage(page)">
+        {{ page }}
+      </button>
+    </li>
+    
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <button
+        class="page-link"
+        (click)="goToNext()"
+        aria-label="Next page">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </li>
+    
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <button
+        class="page-link"
+        (click)="goToLast()"
+        *ngIf="showFirstLast"
+        aria-label="Last page">
+        <i class="bi bi-chevron-double-right"></i>
+      </button>
+    </li>
+  </ul>
+  </div>
+</div>

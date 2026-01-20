@@ -1,0 +1,50 @@
+<div [class]="'mb-0 ' + customClass">
+  <label *ngIf="label" [for]="id" class="form-label">
+    {{ label }}
+    <span *ngIf="required" class="text-danger">*</span>
+  </label>
+
+  <div [class.input-group]="icon" [class]="(icon ? groupSizeClass : '') + (error ? ' is-invalid' : '')">
+    <!-- Icon Prefix -->
+    <span *ngIf="icon" class="input-group-text">
+      <i *ngIf="iconLibrary !== 'material'" [class]="iconClass"></i>
+      <span *ngIf="iconLibrary === 'material'">{{ icon }}</span>
+    </span>
+
+    <select
+      [id]="id"
+      class="form-select"
+      [class.is-invalid]="error"
+      [class]="controlSizeClass"
+      [value]="value"
+      [multiple]="multiple"
+      [disabled]="disabled"
+      [required]="required"
+      (change)="onSelectionChange($event)">
+      
+      <option *ngIf="placeholder && !multiple" value="" disabled selected>{{ placeholder }}</option>
+      
+      <ng-container *ngIf="hasGroups">
+        <optgroup *ngFor="let group of groupedOptions | keyvalue" [label]="$any(group.key)">
+          <option *ngFor="let option of $any(group.value)" [value]="option.value" [disabled]="option.disabled">
+            {{ option.label }}
+          </option>
+        </optgroup>
+      </ng-container>
+      
+      <ng-container *ngIf="!hasGroups">
+        <option *ngFor="let option of options" [value]="option.value" [disabled]="option.disabled">
+          {{ option.label }}
+          </option>
+      </ng-container>
+    </select>
+  </div>
+
+  <div *ngIf="error" class="invalid-feedback d-block mt-1 px-3">
+    {{ error }}
+  </div>
+
+  <div *ngIf="hint && !error" class="form-text">
+    {{ hint }}
+  </div>
+</div>

@@ -1,0 +1,98 @@
+<div class="barcode-scanner-container">
+  <div class="header">
+    <button (click)="router.navigate(['/products'])" class="back-btn">
+      <app-icon name="arrow-left"></app-icon>
+      Back to Products
+    </button>
+    <h1>Barcode Scanner</h1>
+  </div>
+
+  <div class="scanner-section">
+    <div class="scanner-input-container">
+      <div class="input-wrapper">
+        <app-icon name="search" class="input-icon"></app-icon>
+        <input
+          #barcodeInput
+          type="text"
+          [(ngModel)]="barcodeInputValue"
+          (keyup.enter)="onBarcodeEnter()"
+          placeholder="Scan or enter barcode/SKU..."
+          class="barcode-input"
+          autofocus
+        />
+        <button (click)="onBarcodeEnter()" class="scan-btn" [disabled]="loading || !barcodeInputValue.trim()">
+          <app-icon name="search"></app-icon>
+        </button>
+      </div>
+      <p class="hint">Press Enter or click search to scan</p>
+    </div>
+
+    <div *ngIf="loading" class="loading-container">
+      <app-loading-spinner></app-loading-spinner>
+      <p>Searching...</p>
+    </div>
+
+    <div *ngIf="!loading && scannedProduct" class="product-result">
+      <div class="product-card">
+        <div class="product-header">
+          <h2>{{ scannedProduct.name }}</h2>
+          <div class="product-badges">
+            <span class="badge">SKU: {{ scannedProduct.sku }}</span>
+            <span *ngIf="scannedProduct.barcode" class="badge">Barcode: {{ scannedProduct.barcode }}</span>
+            <span class="badge" [class.active]="scannedProduct.isActive" [class.inactive]="!scannedProduct.isActive">
+              {{ scannedProduct.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="product-details">
+          <div class="detail-row">
+            <span class="label">Category:</span>
+            <span class="value">{{ scannedProduct.categoryName || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Brand:</span>
+            <span class="value">{{ scannedProduct.brandName || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Purchase Price:</span>
+            <span class="value">{{ scannedProduct.purchasePrice | currency:'USD' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Sale Price:</span>
+            <span class="value">{{ scannedProduct.salePrice | currency:'USD' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="scannedProduct.description">
+            <span class="label">Description:</span>
+            <span class="value">{{ scannedProduct.description }}</span>
+          </div>
+        </div>
+
+        <div class="product-actions">
+          <button (click)="viewProduct()" class="btn btn-primary">
+            <app-icon name="eye"></app-icon>
+            View Details
+          </button>
+          <button (click)="editProduct()" class="btn btn-secondary">
+            <app-icon name="edit"></app-icon>
+            Edit Product
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && !scannedProduct && barcodeInputValue" class="no-result">
+      <app-icon name="search" class="no-result-icon"></app-icon>
+      <p>No product found with this barcode/SKU</p>
+      <p class="hint">Try scanning again or check the barcode</p>
+    </div>
+  </div>
+
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false"
+  ></app-toast>
+</div>
+

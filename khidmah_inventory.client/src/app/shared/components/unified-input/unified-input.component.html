@@ -1,0 +1,52 @@
+<div [class]="'mb-0 ' + customClass">
+  <label *ngIf="label" [for]="id" class="form-label">
+    {{ label }}
+    <span *ngIf="required" class="text-danger">*</span>
+  </label>
+
+  <div [class.input-group]="icon" [class]="(icon ? groupSizeClass : '') + (error ? ' is-invalid' : '')">
+    <!-- Left Icon -->
+    <span *ngIf="icon && iconPosition === 'left'" class="input-group-text">
+      <i *ngIf="iconLibrary !== 'material'" [class]="iconClass"></i>
+      <!-- Fallback for material icons if they were just strings -->
+      <span *ngIf="iconLibrary === 'material'">{{ icon }}</span>
+    </span>
+
+    <input
+      [id]="id"
+      [type]="type"
+      class="form-control"
+      [class.is-invalid]="error"
+      [class]="controlSizeClass"
+      [placeholder]="placeholder"
+      [value]="value"
+      [disabled]="disabled"
+      [required]="required"
+      [autocomplete]="autocomplete"
+      (input)="onInput($event)"
+      (blur)="onBlur()" />
+
+    <!-- Right Icon -->
+    <span *ngIf="icon && iconPosition === 'right' && !showPasswordToggle" class="input-group-text">
+      <i *ngIf="iconLibrary !== 'material'" [class]="iconClass"></i>
+      <span *ngIf="iconLibrary === 'material'">{{ icon }}</span>
+    </span>
+
+    <!-- Password Toggle Button -->
+    <button *ngIf="showPasswordToggle" 
+            type="button" 
+            class="btn btn-link text-decoration-none text-muted" 
+            (click)="togglePasswordVisibility()"
+            tabindex="-1">
+      <i class="bi" [class]="isPasswordVisible ? 'bi-eye-slash' : 'bi-eye'"></i>
+    </button>
+  </div>
+
+  <div *ngIf="error" class="invalid-feedback d-block mt-1 px-3">
+    {{ error }}
+  </div>
+
+  <div *ngIf="hint && !error" class="form-text">
+    {{ hint }}
+  </div>
+</div>

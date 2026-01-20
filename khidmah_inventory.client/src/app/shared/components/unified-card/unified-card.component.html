@@ -1,0 +1,13 @@
+<div [class]="cardClasses">
+  <div *ngIf="header" class="card-header">
+    <h5 class="card-title mb-0">{{ header }}</h5>
+  </div>
+  
+  <div class="card-body">
+    <ng-content></ng-content>
+  </div>
+  
+  <div *ngIf="footer" class="card-footer text-muted">
+    {{ footer }}
+  </div>
+</div>
