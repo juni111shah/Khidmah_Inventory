@@ -68,7 +68,7 @@
           <th *ngFor="let column of visibleColumns"
             (click)="onSort(column)"
             [class.cursor-pointer]="column.sortable"
-            [style.width]="column.width"
+            [style.min-width]="column.width"
             [style.text-align]="column.align || 'left'">
             <div class="d-flex align-items-center" [style.justify-content]="column.align === 'center' ? 'center' : column.align === 'right' ? 'flex-end' : 'flex-start'">
               {{ column.label }}
@@ -77,10 +77,10 @@
           </th>
 
           <!-- Actions Column -->
-          <th *ngIf="effectiveConfig.showActions && actions.length > 0" class="text-end">Actions</th>
+          <th *ngIf="effectiveConfig.showActions && actions.length > 0" class="text-end" style="width: 100px;">Actions</th>
         </tr>
       </thead>
-      
+
       <tbody>
         <!-- Loading State -->
         <tr *ngIf="loading">
@@ -102,11 +102,11 @@
         </tr>
 
         <!-- Data Rows -->
-        <tr *ngFor="let row of data; trackBy: trackByFn" 
-          (click)="onRowClick(row)" 
+        <tr *ngFor="let row of data; trackBy: trackByFn"
+          (click)="onRowClick(row)"
           [class.table-primary]="isRowSelected(row)"
           class="cursor-pointer">
-          
+
           <td *ngIf="effectiveConfig.showCheckbox" (click)="$event.stopPropagation()">
             <app-unified-checkbox
               [checked]="isRowSelected(row)"
@@ -114,14 +114,16 @@
             </app-unified-checkbox>
           </td>
 
-          <td *ngFor="let column of visibleColumns" [style.text-align]="column.align || 'left'">
+          <td *ngFor="let column of visibleColumns"
+              [style.text-align]="column.align || 'left'"
+              [style.min-width]="column.width">
             <ng-container [ngSwitch]="column.type">
               <!-- Badge Type -->
-              <span *ngSwitchCase="'badge'" class="badge" 
-                [class.badge-active]="getCellValue(row, column).toLowerCase() === 'active' || getCellValue(row, column).toLowerCase() === 'completed'"
-                [class.badge-pending]="getCellValue(row, column).toLowerCase() === 'pending' || getCellValue(row, column).toLowerCase() === 'processing'"
-                [class.badge-error]="getCellValue(row, column).toLowerCase() === 'inactive' || getCellValue(row, column).toLowerCase() === 'cancelled'"
-                [class.badge-inactive]="getCellValue(row, column).toLowerCase() === 'draft'">
+              <span *ngSwitchCase="'badge'" class="badge"
+                [class.badge-active]="getCellValue(row, column).toLowerCase() === 'active' || getCellValue(row, column).toLowerCase() === 'completed' || getCellValue(row, column).toLowerCase() === 'success'"
+                [class.badge-pending]="getCellValue(row, column).toLowerCase() === 'pending' || getCellValue(row, column).toLowerCase() === 'processing' || getCellValue(row, column).toLowerCase() === 'warning'"
+                [class.badge-error]="getCellValue(row, column).toLowerCase() === 'error' || getCellValue(row, column).toLowerCase() === 'cancelled' || getCellValue(row, column).toLowerCase() === 'failed'"
+                [class.badge-inactive]="getCellValue(row, column).toLowerCase() === 'inactive' || getCellValue(row, column).toLowerCase() === 'draft' || getCellValue(row, column).toLowerCase() === 'disabled'">
                 {{ getCellValue(row, column) }}
               </span>
               <!-- Boolean Type -->
@@ -138,10 +140,11 @@
           <td *ngIf="effectiveConfig.showActions && actions.length > 0" class="text-end" (click)="$event.stopPropagation()">
             <!-- Single Action Button -->
             <button *ngIf="getVisibleActions(row).length === 1"
-              class="btn btn-icon btn-sm action-btn"
-              [class.btn-outline-primary]="!getVisibleActions(row)[0].class"
-              [class.btn-outline-danger]="getVisibleActions(row)[0].class === 'danger'"
-              [class.btn-outline-success]="getVisibleActions(row)[0].class === 'success'"
+              type="button"
+              class="btn btn-icon btn-sm action-btn border-0 bg-transparent"
+              [class.text-primary]="!getVisibleActions(row)[0].class"
+              [class.text-danger]="getVisibleActions(row)[0].class === 'danger'"
+              [class.text-success]="getVisibleActions(row)[0].class === 'success'"
               [title]="getVisibleActions(row)[0].tooltip || getVisibleActions(row)[0].label"
               (click)="onActionClick(getVisibleActions(row)[0], row, $event)">
               <app-icon [name]="getActionIcon(getVisibleActions(row)[0])" size="sm"></app-icon>
@@ -149,7 +152,7 @@
 
             <!-- Multiple Actions Dropdown -->
             <div *ngIf="getVisibleActions(row).length > 1" class="dropdown-container">
-              <button class="btn btn-sm dropdown-toggle action-menu-trigger"
+              <button class="btn btn-sm btn-icon action-menu-trigger border-0 bg-transparent text-secondary"
                 type="button"
                 [title]="'More actions'"
                 (click)="toggleActionDropdown(row, $event)">
@@ -163,13 +166,14 @@
   </div>
 
   <!-- Global Action Dropdown (positioned outside table to avoid layout issues) -->
-  <div class="action-dropdown-overlay" *ngIf="hasOpenActionDropdown() && dropdownPosition">
-    <div class="dropdown-menu shadow-sm border-0 action-dropdown-menu show"
-         [style.position]="'absolute'"
+  <div class="action-dropdown-overlay" *ngIf="hasOpenActionDropdown() && dropdownPosition" (click)="closeActionDropdown()">
+    <div class="dropdown-menu action-dropdown-menu show"
          [style.top.px]="dropdownPosition.top"
-         [style.left.px]="dropdownPosition.left"
-         [style.z-index]="9999">
+         [style.bottom.px]="dropdownPosition.bottom"
+         [style.right.px]="dropdownPosition.right"
+         (click)="$event.stopPropagation()">
       <button *ngFor="let action of getCurrentDropdownActions()"
+        type="button"
         class="dropdown-item px-3 py-2"
         [class.text-danger]="action.class === 'danger'"
         [class.text-success]="action.class === 'success'"

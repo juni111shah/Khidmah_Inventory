@@ -38,10 +38,10 @@ export interface SearchRequest {
 }
 
 export enum SearchMode {
-  Contains = 0,
-  StartsWith = 1,
-  EndsWith = 2,
-  ExactMatch = 3
+  Contains = 'Contains',
+  StartsWith = 'StartsWith',
+  EndsWith = 'EndsWith',
+  ExactMatch = 'ExactMatch'
 }
 
 export interface FilterRequest {

@@ -13,6 +13,7 @@ import { PermissionService } from '../../core/services/permission.service';
 import { UnifiedCardComponent } from '../../shared/components/unified-card/unified-card.component';
 import { UnifiedButtonComponent } from '../../shared/components/unified-button/unified-button.component';
 import { HeaderService } from '../../core/services/header.service';
+import { ExportService } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-reports',
@@ -176,7 +177,8 @@ export class ReportsComponent implements OnInit {
   constructor(
     private reportApiService: ReportApiService,
     public permissionService: PermissionService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private exportService: ExportService
   ) {}
 
   ngOnInit(): void {
@@ -273,6 +275,91 @@ export class ReportsComponent implements OnInit {
     this.toastMessage = message;
     this.showToast = true;
     setTimeout(() => { this.showToast = false; }, 3000);
+  }
+
+  // Export Methods
+  exportSalesReportPdf(): void {
+    if (!this.salesReport) {
+      this.showToastMessage('warning', 'Please load the sales report first');
+      return;
+    }
+
+    this.loading = true;
+    this.reportApiService.exportSalesReportPdf(
+      this.salesFromDate,
+      this.salesToDate
+    ).subscribe({
+      next: (blob) => {
+        const filename = `Sales_Report_${this.formatDate(this.salesFromDate)}_${this.formatDate(this.salesToDate)}.pdf`;
+        this.exportService.exportBackendPdf(blob, filename);
+        this.showToastMessage('success', 'Sales report exported successfully');
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Export error:', error);
+        this.showToastMessage('error', 'Failed to export sales report');
+        this.loading = false;
+      }
+    });
+  }
+
+  exportInventoryReportPdf(): void {
+    if (!this.inventoryReport) {
+      this.showToastMessage('warning', 'Please load the inventory report first');
+      return;
+    }
+
+    this.loading = true;
+    this.reportApiService.exportInventoryReportPdf(
+      this.inventoryWarehouseId || undefined,
+      this.inventoryCategoryId || undefined,
+      this.lowStockOnly
+    ).subscribe({
+      next: (blob) => {
+        let filename = 'Inventory_Report';
+        if (this.lowStockOnly) {
+          filename += '_Low_Stock';
+        }
+        filename += `_${new Date().toISOString().split('T')[0]}.pdf`;
+        this.exportService.exportBackendPdf(blob, filename);
+        this.showToastMessage('success', 'Inventory report exported successfully');
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Export error:', error);
+        this.showToastMessage('error', 'Failed to export inventory report');
+        this.loading = false;
+      }
+    });
+  }
+
+  exportPurchaseReportPdf(): void {
+    if (!this.purchaseReport) {
+      this.showToastMessage('warning', 'Please load the purchase report first');
+      return;
+    }
+
+    this.loading = true;
+    this.reportApiService.exportPurchaseReportPdf(
+      this.purchaseFromDate,
+      this.purchaseToDate
+    ).subscribe({
+      next: (blob) => {
+        const filename = `Purchase_Report_${this.formatDate(this.purchaseFromDate)}_${this.formatDate(this.purchaseToDate)}.pdf`;
+        this.exportService.exportBackendPdf(blob, filename);
+        this.showToastMessage('success', 'Purchase report exported successfully');
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Export error:', error);
+        this.showToastMessage('error', 'Failed to export purchase report');
+        this.loading = false;
+      }
+    });
+  }
+
+  private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
   }
 }
 

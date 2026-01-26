@@ -15,7 +15,11 @@ using Khidmah_Inventory.API.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 
@@ -23,7 +27,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Khidmah Inventory API", Version = "v1" });
-    
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -104,7 +108,7 @@ builder.Services.AddSignalR();
 
 // Register Analytics Broadcast Service
 builder.Services.AddSingleton<Khidmah_Inventory.API.Services.AnalyticsBroadcastService>();
-builder.Services.AddHostedService(provider => 
+builder.Services.AddHostedService(provider =>
     provider.GetRequiredService<Khidmah_Inventory.API.Services.AnalyticsBroadcastService>());
 
 // Add Application and Infrastructure layers
@@ -125,7 +129,7 @@ builder.Services.AddCors(options =>
         // When using credentials, we must specify exact origins, not wildcard
         var allowedOrigins = builder.Configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>()
             ?? new[] { "http://localhost:4200", "https://localhost:4200", "http://localhost:4204", "https://localhost:4204" };
-        
+
         policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()

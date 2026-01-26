@@ -13,11 +13,13 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 import { HeaderService } from '../../../core/services/header.service';
 
 import { UnifiedButtonComponent } from '../../../shared/components/unified-button/unified-button.component';
+import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
+import { ExportService } from '../../../core/services/export.service';
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent, ToastComponent, LoadingSpinnerComponent, HasPermissionDirective, UnifiedButtonComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ToastComponent, LoadingSpinnerComponent, HasPermissionDirective, UnifiedButtonComponent, ImageUploadComponent],
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss']
 })
@@ -26,6 +28,7 @@ export class UserProfileComponent implements OnInit {
   loading = false;
   saving = false;
   changingPassword = false;
+  isViewMode = false;
 
   // Profile form
   profileForm: UpdateUserProfileRequest = {
@@ -53,10 +56,15 @@ export class UserProfileComponent implements OnInit {
     public router: Router,
     public permissionService: PermissionService,
     public authService: AuthService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private exportService: ExportService
   ) {}
 
   ngOnInit(): void {
+    const url = this.router.url;
+    // View mode if we are not on 'profile' (my profile) AND not editing a user
+    this.isViewMode = !url.includes('/users/profile') && !url.includes('/edit');
+
     this.headerService.setHeaderInfo({
       title: 'User Profile',
       description: 'View and manage user profile details'
@@ -176,6 +184,45 @@ export class UserProfileComponent implements OnInit {
         this.changingPassword = false;
       }
     });
+  }
+
+
+
+  async exportToPdf(): Promise<void> {
+    if (!this.user) return;
+
+    const details = [
+      { label: 'First Name', value: this.user.firstName },
+      { label: 'Last Name', value: this.user.lastName },
+      { label: 'Email', value: this.user.email },
+      { label: 'Username', value: this.user.userName },
+      { label: 'Phone', value: this.user.phoneNumber },
+      { label: 'Status', value: this.user.isActive ? 'Active' : 'Inactive' },
+      { label: 'Roles', value: this.user.roles.join(', ') }
+    ];
+
+    try {
+      await this.exportService.exportEntityDetails(
+        details,
+        `User Details: ${this.user.firstName} ${this.user.lastName}`,
+        `user_details_${this.user.userName}`
+      );
+      this.showToastMessage('success', 'PDF exported successfully');
+    } catch (error) {
+      console.error(error);
+      this.showToastMessage('error', 'Failed to export PDF');
+    }
+  }
+
+  onAvatarUploadSuccess(result: any): void {
+    if (this.user && result.imageUrl) {
+      this.user.avatarUrl = result.imageUrl;
+      this.showToastMessage('success', 'Avatar updated successfully');
+    }
+  }
+
+  onAvatarUploadError(error: string): void {
+    this.showToastMessage('error', error);
   }
 
   showToastMessage(type: 'success' | 'error' | 'warning' | 'info', message: string): void {

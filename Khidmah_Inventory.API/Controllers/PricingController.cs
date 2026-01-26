@@ -1,21 +1,26 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Features.Pricing.Queries.GetPriceSuggestions;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Pricing.Base)]
 [Authorize]
-public class PricingController : BaseApiController
+public class PricingController : BaseController
 {
-    [HttpGet("suggestions")]
-    [AuthorizePermission("Pricing:Suggestions:Read")]
+    public PricingController(IMediator mediator) : base(mediator)
+    {
+    }
+
+    [HttpGet(ApiRoutes.Pricing.Suggestions)]
+    [ValidateApiCode(ApiValidationCodes.PricingModuleCode.Suggestions)]
+    [AuthorizeResource(AuthorizePermissions.PricingPermissions.Controller, AuthorizePermissions.PricingPermissions.Actions.Suggestions)]
     public async Task<IActionResult> GetPriceSuggestions([FromQuery] GetPriceSuggestionsQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Price suggestions retrieved successfully");
+        return await ExecuteRequest(query);
     }
 }
 

@@ -12,9 +12,26 @@
     </div>
 
     <div class="profile-header">
-      <div class="avatar-large">
-        <app-icon name="user" customClass="avatar-icon"></app-icon>
-        <span class="avatar-initials">{{ user.firstName[0] }}{{ user.lastName[0] }}</span>
+      <div class="avatar-section">
+        <div class="avatar-large">
+          <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" [alt]="user.firstName + ' ' + user.lastName"
+               class="avatar-image" />
+          <div *ngIf="!user.avatarUrl" class="avatar-placeholder">
+            <app-icon name="user" customClass="avatar-icon"></app-icon>
+            <span class="avatar-initials">{{ user.firstName[0] }}{{ user.lastName[0] }}</span>
+          </div>
+        </div>
+        <div class="avatar-upload mt-2">
+          <app-image-upload
+            uploadType="user-avatar"
+            [entityId]="user.id"
+            label="Change Avatar"
+            hint="Upload a profile picture"
+            [maxSizeMB]="2"
+            (uploadSuccess)="onAvatarUploadSuccess($event)"
+            (uploadError)="onAvatarUploadError($event)">
+          </app-image-upload>
+        </div>
       </div>
       <div class="user-info">
         <h2>{{ user.firstName }} {{ user.lastName }}</h2>
@@ -52,6 +69,7 @@
         [class.active]="activeTab === 'password'"
         (click)="activeTab = 'password'"
         class="tab-btn"
+        [hidden]="isViewMode"
       >
         <app-icon name="lock" customClass="tab-icon"></app-icon>
         Change Password
@@ -80,6 +98,7 @@
               [(ngModel)]="profileForm.firstName"
               placeholder="Enter first name"
               class="form-control"
+              [disabled]="isViewMode"
             />
           </div>
 
@@ -93,6 +112,7 @@
               [(ngModel)]="profileForm.lastName"
               placeholder="Enter last name"
               class="form-control"
+              [disabled]="isViewMode"
             />
           </div>
         </div>
@@ -135,12 +155,23 @@
             [(ngModel)]="profileForm.phoneNumber"
             placeholder="Enter phone number"
             class="form-control"
+            [disabled]="isViewMode"
           />
         </div>
 
         <div class="form-actions">
           <button
-            *appHasPermission="'Users:Update'"
+            *ngIf="isViewMode"
+            (click)="exportToPdf()"
+            class="btn btn-primary"
+          >
+            <app-icon name="printer" customClass="btn-icon"></app-icon>
+            <span>Export to PDF</span>
+          </button>
+
+          <button
+            *ngIf="!isViewMode"
+            [appHasPermission]="'Users:Update'"
             (click)="saveProfile()"
             [disabled]="saving"
             class="btn btn-primary"

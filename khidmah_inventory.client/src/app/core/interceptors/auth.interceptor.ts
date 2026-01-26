@@ -9,6 +9,7 @@ import {
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, filter, take, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
+import { ApiCodeService } from '../services/api-code.service';
 import { Router } from '@angular/router';
 
 @Injectable()
@@ -18,14 +19,42 @@ export class AuthInterceptor implements HttpInterceptor {
 
   constructor(
     private authService: AuthService,
+    private apiCodeService: ApiCodeService,
     private router: Router
   ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Get API code first
+    const apiCode = this.apiCodeService.getApiCode(request.method, request.url);
+    
+    // Build headers object
+    const headers: { [key: string]: string } = {};
+    
     // Add token to request
     const token = this.authService.getToken();
     if (token) {
-      request = this.addTokenToRequest(request, token);
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Add API code to request header
+    if (apiCode) {
+      headers['X-Api-Code'] = apiCode;
+      // Debug logging (remove in production)
+      if (!request.url.includes('/auth/')) {
+        console.log(`[API Code] ${request.method} ${request.url} -> ${apiCode}`);
+      }
+    } else {
+      // Debug logging for missing API codes (remove in production)
+      if (!request.url.includes('/auth/')) {
+        console.warn(`[API Code] No API code found for ${request.method} ${request.url}`);
+      }
+    }
+    
+    // Clone request with all headers at once
+    if (Object.keys(headers).length > 0) {
+      request = request.clone({
+        setHeaders: headers
+      });
     }
 
     return next.handle(request).pipe(
@@ -64,7 +93,15 @@ export class AuthInterceptor implements HttpInterceptor {
           this.isRefreshing = false;
           if (response.success && response.data) {
             this.refreshTokenSubject.next(response.data.token);
-            return next.handle(this.addTokenToRequest(request, response.data.token));
+            // Re-add API code when retrying with new token
+            const apiCode = this.apiCodeService.getApiCode(request.method, request.url);
+            const headers: { [key: string]: string } = {
+              'Authorization': `Bearer ${response.data.token}`
+            };
+            if (apiCode) {
+              headers['X-Api-Code'] = apiCode;
+            }
+            return next.handle(request.clone({ setHeaders: headers }));
           }
           return throwError(() => new Error('Token refresh failed'));
         }),
@@ -79,7 +116,17 @@ export class AuthInterceptor implements HttpInterceptor {
       return this.refreshTokenSubject.pipe(
         filter(token => token !== null),
         take(1),
-        switchMap((token) => next.handle(this.addTokenToRequest(request, token)))
+        switchMap((token) => {
+          // Re-add API code when retrying with refreshed token
+          const apiCode = this.apiCodeService.getApiCode(request.method, request.url);
+          const headers: { [key: string]: string } = {
+            'Authorization': `Bearer ${token}`
+          };
+          if (apiCode) {
+            headers['X-Api-Code'] = apiCode;
+          }
+          return next.handle(request.clone({ setHeaders: headers }));
+        })
       );
     }
   }

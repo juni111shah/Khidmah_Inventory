@@ -16,12 +16,32 @@ export interface ExportOptions {
   selectedColumns?: string[];
 }
 
+export interface PdfExportOptions {
+  filename: string;
+  title?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ExportService {
 
   constructor() { }
+
+  /**
+   * Export PDF from backend blob response
+   */
+  exportBackendPdf(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
 
   /**
    * Export data to the specified format
@@ -142,7 +162,84 @@ export class ExportService {
       yPosition += rowHeight;
     }
 
-    // Save the PDF
+    pdf.save(`${filename}.pdf`);
+  }
+
+  /**
+   * Export single entity details to PDF
+   */
+  async exportEntityDetails(
+    details: { label: string; value: any }[],
+    title: string,
+    filename: string
+  ): Promise<void> {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 15;
+    let yPosition = margin + 10;
+
+    // Title
+    pdf.setFontSize(18);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(title, margin, yPosition);
+    yPosition += 10;
+
+    // Generated Date
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(`Generated on: ${new Date().toLocaleString()}`, margin, yPosition);
+    yPosition += 15;
+
+    // Draw Line
+    pdf.setDrawColor(200, 200, 200);
+    pdf.line(margin, yPosition - 5, pageWidth - margin, yPosition - 5);
+    yPosition += 5;
+
+    // Details Content
+    pdf.setFontSize(11);
+
+    details.forEach(item => {
+      // Check for page break
+      if (yPosition > pdf.internal.pageSize.getHeight() - margin) {
+        pdf.addPage();
+        yPosition = margin + 10;
+      }
+
+      // Label
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(80, 80, 80);
+      pdf.text(`${item.label}:`, margin, yPosition);
+
+      // Value
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(0, 0, 0);
+
+      const labelWidth = 50; // Fixed width for labels
+      const valueX = margin + labelWidth;
+
+      let valueStr = item.value !== null && item.value !== undefined ? String(item.value) : '-';
+
+      // Handle multiline values
+      const splitValue = pdf.splitTextToSize(valueStr, pageWidth - valueX - margin);
+      pdf.text(splitValue, valueX, yPosition);
+
+      yPosition += (splitValue.length * 7) + 3; // Line height spacing
+    });
+
+    // Footer
+    const pageCount = pdf.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(
+          `Page ${i} of ${pageCount}`,
+          pageWidth / 2,
+          pdf.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        );
+    }
+
     pdf.save(`${filename}.pdf`);
   }
 

@@ -1,70 +1,83 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Categories.Commands.CreateCategory;
 using Khidmah_Inventory.Application.Features.Categories.Commands.UpdateCategory;
 using Khidmah_Inventory.Application.Features.Categories.Commands.DeleteCategory;
 using Khidmah_Inventory.Application.Features.Categories.Queries.GetCategory;
 using Khidmah_Inventory.Application.Features.Categories.Queries.GetCategoriesList;
 using Khidmah_Inventory.Application.Features.Categories.Queries.GetCategoryTree;
+using Khidmah_Inventory.Application.Features.Categories.Commands.UploadCategoryImage;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Categories.Base)]
 [Authorize]
-public class CategoriesController : BaseApiController
+public class CategoriesController : BaseController
 {
-    [HttpGet("{id}")]
-    [AuthorizePermission("Categories:Read")]
-    public async Task<IActionResult> Get(Guid id)
+    public CategoriesController(IMediator mediator) : base(mediator)
     {
-        var query = new GetCategoryQuery { Id = id };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Category retrieved successfully");
     }
 
-    [HttpPost("list")]
-    [AuthorizePermission("Categories:List")]
-    public async Task<IActionResult> GetList([FromBody] GetCategoriesListQuery query)
+    [HttpPost(ApiRoutes.Categories.Index)]
+    [ValidateApiCode(ApiValidationCodes.CategoriesModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.CategoriesPermissions.Controller, AuthorizePermissions.CategoriesPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll([FromBody] FilterRequest request)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Categories retrieved successfully");
+        var query = new GetCategoriesListQuery { FilterRequest = request };
+        return await ExecuteRequest(query);
     }
 
-    [HttpGet("tree")]
-    [AuthorizePermission("Categories:List")]
+    [HttpGet(ApiRoutes.Categories.GetById)]
+    [ValidateApiCode(ApiValidationCodes.CategoriesModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.CategoriesPermissions.Controller, AuthorizePermissions.CategoriesPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequestWithCache(new GetCategoryQuery { Id = id });
+    }
+
+    [HttpGet(ApiRoutes.Categories.Tree)]
+    [ValidateApiCode(ApiValidationCodes.CategoriesModuleCode.ViewTree)]
+    [AuthorizeResource(AuthorizePermissions.CategoriesPermissions.Controller, AuthorizePermissions.CategoriesPermissions.Actions.ViewAll)]
     public async Task<IActionResult> GetTree()
     {
-        var query = new GetCategoryTreeQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Category tree retrieved successfully");
+        return await ExecuteRequest(new GetCategoryTreeQuery());
     }
 
-    [HttpPost]
-    [AuthorizePermission("Categories:Create")]
+    [HttpPost(ApiRoutes.Categories.Add)]
+    [ValidateApiCode(ApiValidationCodes.CategoriesModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.CategoriesPermissions.Controller, AuthorizePermissions.CategoriesPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreateCategoryCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Category created successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPut("{id}")]
-    [AuthorizePermission("Categories:Update")]
+    [HttpPut(ApiRoutes.Categories.Update)]
+    [ValidateApiCode(ApiValidationCodes.CategoriesModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.CategoriesPermissions.Controller, AuthorizePermissions.CategoriesPermissions.Actions.Update)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryCommand command)
     {
         command.Id = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Category updated successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpDelete("{id}")]
-    [AuthorizePermission("Categories:Delete")]
+    [HttpDelete(ApiRoutes.Categories.Delete)]
+    [ValidateApiCode(ApiValidationCodes.CategoriesModuleCode.Delete)]
+    [AuthorizeResource(AuthorizePermissions.CategoriesPermissions.Controller, AuthorizePermissions.CategoriesPermissions.Actions.Delete)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new DeleteCategoryCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Category deleted successfully");
+        return await ExecuteRequest(new DeleteCategoryCommand { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Categories.UploadImage)]
+    [ValidateApiCode(ApiValidationCodes.CategoriesModuleCode.UploadImage)]
+    [AuthorizeResource(AuthorizePermissions.CategoriesPermissions.Controller, AuthorizePermissions.CategoriesPermissions.Actions.Update)]
+    public async Task<IActionResult> UploadImage(Guid id, IFormFile file)
+    {
+        return await ExecuteRequest(new UploadCategoryImageCommand { CategoryId = id, File = file });
     }
 }
 

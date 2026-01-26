@@ -8,6 +8,7 @@ export interface User {
   isActive: boolean;
   emailConfirmed: boolean;
   lastLoginAt?: string;
+  avatarUrl?: string;
   roles: string[];
   permissions: string[];
   companies: Company[];

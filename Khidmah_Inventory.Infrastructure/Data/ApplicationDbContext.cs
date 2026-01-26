@@ -59,6 +59,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
     public DbSet<SalesOrderItem> SalesOrderItems => Set<SalesOrderItem>();
+    public DbSet<PosSession> PosSessions => Set<PosSession>();
 
     // Settings
     public DbSet<Settings> Settings => Set<Settings>();

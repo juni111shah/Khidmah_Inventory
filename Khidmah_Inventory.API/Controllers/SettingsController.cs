@@ -1,6 +1,8 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Features.Settings.Queries.GetCompanySettings;
 using Khidmah_Inventory.Application.Features.Settings.Commands.SaveCompanySettings;
 using Khidmah_Inventory.Application.Features.Settings.Queries.GetUserSettings;
@@ -13,118 +15,111 @@ using Khidmah_Inventory.Application.Features.Settings.Queries.GetUISettings;
 using Khidmah_Inventory.Application.Features.Settings.Commands.SaveUISettings;
 using Khidmah_Inventory.Application.Features.Settings.Queries.GetReportSettings;
 using Khidmah_Inventory.Application.Features.Settings.Commands.SaveReportSettings;
+using Khidmah_Inventory.Application.Features.Settings.Models;
 
 namespace Khidmah_Inventory.API.Controllers;
 
+[Route(ApiRoutes.Settings.Base)]
 [Authorize]
-public class SettingsController : BaseApiController
+public class SettingsController : BaseController
 {
-    // Company Settings
-    [HttpGet("company")]
-    [AuthorizePermission("Settings:Company:Read")]
+    public SettingsController(IMediator mediator) : base(mediator)
+    {
+    }
+    [HttpGet(ApiRoutes.Settings.Company)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.CompanyRead)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.CompanyRead)]
     public async Task<IActionResult> GetCompanySettings()
     {
-        var query = new GetCompanySettingsQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Company settings retrieved successfully");
+        return await ExecuteRequest(new GetCompanySettingsQuery());
     }
 
-    [HttpPost("company")]
-    [AuthorizePermission("Settings:Company:Update")]
+    [HttpPost(ApiRoutes.Settings.Company)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.CompanyUpdate)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.CompanyUpdate)]
     public async Task<IActionResult> SaveCompanySettings([FromBody] SaveCompanySettingsCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Company settings saved successfully");
+        return await ExecuteRequest(command);
     }
 
-    // User Settings
-    [HttpGet("user")]
-    [AuthorizePermission("Settings:User:Read")]
+    [HttpGet(ApiRoutes.Settings.User)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.UserRead)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.UserRead)]
     public async Task<IActionResult> GetUserSettings()
     {
-        var query = new GetUserSettingsQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "User settings retrieved successfully");
+        return await ExecuteRequest(new GetUserSettingsQuery());
     }
 
-    [HttpPost("user")]
-    [AuthorizePermission("Settings:User:Update")]
+    [HttpPost(ApiRoutes.Settings.User)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.UserUpdate)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.UserUpdate)]
     public async Task<IActionResult> SaveUserSettings([FromBody] SaveUserSettingsCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "User settings saved successfully");
+        return await ExecuteRequest(command);
     }
 
-    // System Settings
-    [HttpGet("system")]
-    [AuthorizePermission("Settings:System:Read")]
+    [HttpGet(ApiRoutes.Settings.System)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.SystemRead)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.SystemRead)]
     public async Task<IActionResult> GetSystemSettings()
     {
-        var query = new GetSystemSettingsQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "System settings retrieved successfully");
+        return await ExecuteRequest(new GetSystemSettingsQuery());
     }
 
-    [HttpPost("system")]
-    [AuthorizePermission("Settings:System:Update")]
+    [HttpPost(ApiRoutes.Settings.System)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.SystemUpdate)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.SystemUpdate)]
     public async Task<IActionResult> SaveSystemSettings([FromBody] SaveSystemSettingsCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "System settings saved successfully");
+        return await ExecuteRequest(command);
     }
 
-    // Notification Settings
-    [HttpGet("notifications")]
-    [AuthorizePermission("Settings:Notification:Read")]
+    [HttpGet(ApiRoutes.Settings.Notification)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.NotificationRead)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.NotificationRead)]
     public async Task<IActionResult> GetNotificationSettings()
     {
-        var query = new GetNotificationSettingsQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Notification settings retrieved successfully");
+        return await ExecuteRequest(new GetNotificationSettingsQuery());
     }
 
-    [HttpPost("notifications")]
-    [AuthorizePermission("Settings:Notification:Update")]
+    [HttpPost(ApiRoutes.Settings.Notification)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.NotificationUpdate)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.NotificationUpdate)]
     public async Task<IActionResult> SaveNotificationSettings([FromBody] SaveNotificationSettingsCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Notification settings saved successfully");
+        return await ExecuteRequest(command);
     }
 
-    // UI Settings
-    [HttpGet("ui")]
-    [AuthorizePermission("Settings:UI:Read")]
+    [HttpGet(ApiRoutes.Settings.UI)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.UIRead)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.UIRead)]
     public async Task<IActionResult> GetUISettings()
     {
-        var query = new GetUISettingsQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "UI settings retrieved successfully");
+        return await ExecuteRequest<GetUISettingsQuery, UISettingsDto>(new GetUISettingsQuery());
     }
 
-    [HttpPost("ui")]
-    [AuthorizePermission("Settings:UI:Update")]
+    [HttpPost(ApiRoutes.Settings.UI)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.UIUpdate)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.UIUpdate)]
     public async Task<IActionResult> SaveUISettings([FromBody] SaveUISettingsCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "UI settings saved successfully");
+        return await ExecuteRequest<SaveUISettingsCommand, UISettingsDto>(command);
     }
 
-    // Report Settings
-    [HttpGet("reports")]
-    [AuthorizePermission("Settings:Report:Read")]
+    [HttpGet(ApiRoutes.Settings.Report)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.ReportRead)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.ReportRead)]
     public async Task<IActionResult> GetReportSettings()
     {
-        var query = new GetReportSettingsQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Report settings retrieved successfully");
+        return await ExecuteRequest(new GetReportSettingsQuery());
     }
 
-    [HttpPost("reports")]
-    [AuthorizePermission("Settings:Report:Update")]
+    [HttpPost(ApiRoutes.Settings.Report)]
+    [ValidateApiCode(ApiValidationCodes.SettingsModuleCode.ReportUpdate)]
+    [AuthorizeResource(AuthorizePermissions.SettingsPermissions.Controller, AuthorizePermissions.SettingsPermissions.Actions.ReportUpdate)]
     public async Task<IActionResult> SaveReportSettings([FromBody] SaveReportSettingsCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Report settings saved successfully");
+        return await ExecuteRequest(command);
     }
 }
 

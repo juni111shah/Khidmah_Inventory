@@ -1,0 +1,242 @@
+<div class="pos-container">
+  <!-- Top Bar / Header -->
+  <header class="pos-header">
+    <div class="brand">
+      <i class="bi bi-shop"></i>
+      <span>POS Terminal</span>
+    </div>
+    <div class="session-info" *ngIf="activeSessionId">
+      <span class="badge bg-success">Session Active</span>
+      <button class="btn btn-outline-danger btn-sm ms-3" (click)="closeSession()">
+        <i class="bi bi-door-closed"></i> Close Session
+      </button>
+    </div>
+    <div class="session-info" *ngIf="!activeSessionId">
+      <button class="btn btn-primary btn-sm" (click)="openSession()">
+        <i class="bi bi-play-circle"></i> Open Session
+      </button>
+    </div>
+  </header>
+
+  <div class="pos-main-content" *ngIf="activeSessionId">
+    <!-- Left Section: Product Browser -->
+    <section class="product-browser">
+      <div class="search-bar">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" placeholder="Search products..."
+                 [(ngModel)]="searchQuery" (input)="filterProducts()">
+          <span class="input-group-text bg-primary text-white" title="Barcode Scanner">
+            <i class="bi bi-upc-scan"></i>
+          </span>
+          <input type="text" class="form-control barcode-input" placeholder="Scan Barcode..."
+                 [(ngModel)]="barcodeValue" (keyup.enter)="onBarcodeScanned()">
+        </div>
+      </div>
+
+      <div class="categories-strip">
+        <button class="category-chip" [class.active]="selectedCategory === null" (click)="selectCategory(null)">All</button>
+        <button class="category-chip" *ngFor="let cat of categories"
+                [class.active]="selectedCategory === cat.id" (click)="selectCategory(cat.id)">
+          {{cat.name}}
+        </button>
+      </div>
+
+      <div class="product-grid">
+        <div class="product-card" *ngFor="let p of filteredProducts" (click)="addToCart(p)">
+          <div class="product-image">
+            <img [src]="p.imageUrl || 'assets/placeholder-product.png'" [alt]="p.name">
+          </div>
+          <div class="product-details">
+            <span class="product-name">{{p.name}}</span>
+            <span class="product-sku">{{p.sku}}</span>
+            <span class="product-price">{{p.salePrice | currency}}</span>
+          </div>
+          <div class="stock-badge" [class.low-stock]="p.currentStock < 5">
+            {{p.currentStock}} in stock
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Section: Cart -->
+    <aside class="pos-cart">
+      <div class="cart-header">
+        <h3>Current Order</h3>
+        <button class="btn btn-link text-danger p-0" (click)="clearCart()">Clear All</button>
+      </div>
+
+      <div class="customer-selector mb-3">
+        <label>Customer</label>
+        <select class="form-select" [(ngModel)]="selectedCustomerId">
+          <option *ngFor="let c of customers" [value]="c.id">{{c.name}}</option>
+        </select>
+      </div>
+
+      <div class="warehouse-selector mb-3">
+        <label>Dispatch Warehouse</label>
+        <select class="form-select" [(ngModel)]="selectedWarehouseId">
+          <option *ngFor="let w of warehouses" [value]="w.id">{{w.name}}</option>
+        </select>
+      </div>
+
+      <div class="cart-items">
+        <div class="cart-item" *ngFor="let item of cart">
+          <div class="item-info">
+            <span class="name">{{item.productName}}</span>
+            <span class="price-qty">{{item.unitPrice | currency}} x {{item.quantity}}</span>
+          </div>
+          <div class="item-actions">
+            <button (click)="updateQty(item, -1)"><i class="bi bi-dash"></i></button>
+            <span>{{item.quantity}}</span>
+            <button (click)="updateQty(item, 1)"><i class="bi bi-plus"></i></button>
+          </div>
+          <div class="item-total">
+            {{item.unitPrice * item.quantity | currency}}
+          </div>
+        </div>
+        <div class="empty-cart-msg" *ngIf="cart.length === 0">
+          <i class="bi bi-cart3"></i>
+          <p>Your cart is empty</p>
+        </div>
+      </div>
+
+      <div class="cart-summary">
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>{{subtotal | currency}}</span>
+        </div>
+        <div class="summary-row">
+          <span>Tax</span>
+          <span>{{tax | currency}}</span>
+        </div>
+        <div class="summary-total">
+          <span>Total</span>
+          <span>{{total | currency}}</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg w-100 checkout-btn"
+              [disabled]="cart.length === 0" (click)="checkout()">
+        Proceed to Checkout
+      </button>
+    </aside>
+  </div>
+
+  <div class="no-session-overlay" *ngIf="!activeSessionId">
+    <div class="message-card">
+      <i class="bi bi-lock"></i>
+      <h2>Register is Closed</h2>
+      <p>Please open a new session to start processing sales.</p>
+      <div class="mt-4 w-100">
+        <label class="form-label">Opening Balance</label>
+        <input type="number" class="form-control" [(ngModel)]="openingBalance">
+        <button class="btn btn-primary w-100 mt-3" (click)="openSession()">Open Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div class="pos-modal-backdrop" *ngIf="showCheckoutModal">
+    <div class="pos-modal">
+      <div class="modal-header">
+        <h3>Payment</h3>
+        <button class="close-btn" (click)="showCheckoutModal = false">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="total-to-pay">
+            <span>Total Amount</span>
+            <h2>{{total | currency}}</h2>
+        </div>
+
+        <div class="payment-methods mt-4">
+            <button class="method-btn" [class.active]="paymentMethod === 'Cash'" (click)="paymentMethod = 'Cash'">
+                <i class="bi bi-cash-stack"></i> Cash
+            </button>
+            <button class="method-btn" [class.active]="paymentMethod === 'Card'" (click)="paymentMethod = 'Card'">
+                <i class="bi bi-credit-card"></i> Card
+            </button>
+        </div>
+
+        <div class="amount-paid-input mt-4" *ngIf="paymentMethod === 'Cash'">
+            <label>Amount Received</label>
+            <input type="number" class="form-control form-control-lg" [(ngModel)]="amountPaid">
+
+            <div class="change-amount mt-3" *ngIf="amountPaid > total">
+                <span>Change to return</span>
+                <h3 class="text-success">{{amountPaid - total | currency}}</h3>
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showCheckoutModal = false">Cancel</button>
+        <button class="btn btn-success btn-lg" [disabled]="amountPaid < total" (click)="processSale()">
+            Complete Sale
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div class="pos-modal-backdrop" *ngIf="showReceiptModal">
+    <div class="pos-modal receipt-modal">
+      <div class="modal-header">
+        <h3>Receipt</h3>
+        <button class="close-btn" (click)="showReceiptModal = false">&times;</button>
+      </div>
+      <div class="modal-body printable-area">
+        <div class="receipt-content text-center">
+            <h4 class="fw-bold">KHIDMAH INVENTORY</h4>
+            <p class="smaller mb-1">Tax Invoice</p>
+            <p class="smaller">Date: {{lastSale?.date | date:'medium'}}</p>
+            <hr>
+            <div class="receipt-items text-start mb-3">
+                <div class="d-flex justify-content-between fw-bold mb-1">
+                    <span>Item</span>
+                    <span>Total</span>
+                </div>
+                <div *ngFor="let item of lastSale?.items" class="d-flex justify-content-between smaller">
+                    <span>{{item.productName}} x{{item.quantity}}</span>
+                    <span>{{item.unitPrice * item.quantity | currency}}</span>
+                </div>
+            </div>
+            <hr>
+            <div class="receipt-summary text-end">
+                <div class="d-flex justify-content-between">
+                    <span>Subtotal:</span>
+                    <span>{{lastSale?.subtotal | currency}}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>VAT (15%):</span>
+                    <span>{{lastSale?.tax | currency}}</span>
+                </div>
+                <div class="d-flex justify-content-between fw-bold fs-5 mt-1">
+                    <span>Total:</span>
+                    <span>{{lastSale?.total | currency}}</span>
+                </div>
+            </div>
+            <hr>
+            <div class="receipt-payment text-start smaller">
+                <div>Payment Method: {{lastSale?.paymentMethod}}</div>
+                <div>Amount Received: {{lastSale?.amountPaid | currency}}</div>
+                <div>Change: {{lastSale?.change | currency}}</div>
+                <div>Customer: {{lastSale?.customer}}</div>
+            </div>
+            <div class="mt-4">
+                <p class="smaller mb-1">Thank you for your business!</p>
+                <div class="barcode-placeholder">
+                    <i class="bi bi-upc"></i>
+                    <p class="smaller text-muted">{{lastSale?.id}}</p>
+                </div>
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer d-print-none">
+        <button class="btn btn-secondary" (click)="showReceiptModal = false">Close</button>
+        <button class="btn btn-primary" (click)="printReceipt()">
+            <i class="bi bi-printer"></i> Print Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -6,6 +6,8 @@ import { InventoryApiService } from '../../../core/services/inventory-api.servic
 import { ProductApiService } from '../../../core/services/product-api.service';
 import { WarehouseApiService } from '../../../core/services/warehouse-api.service';
 import { StockLevel, GetStockLevelsListQuery } from '../../../core/models/inventory.model';
+import { Warehouse } from '../../../core/models/warehouse.model';
+import { FilterRequest, SearchMode, ApiResponse, PagedResult } from '../../../core/models/api-response.model';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { DataTableColumn, DataTableConfig } from '../../../shared/models/data-table.model';
 import { ToastComponent } from '../../../shared/components/toast/toast.component';
@@ -18,23 +20,27 @@ import { FilterFieldComponent } from '../../../shared/components/filter-field/fi
 import { FilterPanelComponent, FilterPanelConfig, FilterPanelField } from '../../../shared/components/filter-panel/filter-panel.component';
 import { ExportComponent } from '../../../shared/components/export/export.component';
 import { HeaderService } from '../../../core/services/header.service';
+import { UnifiedModalComponent } from '../../../shared/components/unified-modal/unified-modal.component';
+import { DataTableAction } from '../../../shared/models/data-table.model';
+import jsPDF from 'jspdf';
 
 @Component({
   selector: 'app-stock-levels-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
+    CommonModule,
+    FormsModule,
     ReactiveFormsModule,
-    DataTableComponent, 
-    ToastComponent, 
-    HasPermissionDirective, 
+    DataTableComponent,
+    ToastComponent,
+    HasPermissionDirective,
     IconComponent,
     ListingContainerComponent,
     UnifiedButtonComponent,
     FilterFieldComponent,
     FilterPanelComponent,
-    ExportComponent
+    ExportComponent,
+    UnifiedModalComponent
   ],
   templateUrl: './stock-levels-list.component.html'
 })
@@ -46,7 +52,10 @@ export class StockLevelsListComponent implements OnInit {
   selectedWarehouseId: string | null = null;
   lowStockOnly = false;
   pagedResult: any = null;
-  filterRequest: any = {
+  selectedStockLevel: StockLevel | null = null;
+  showDetailsModal = false;
+
+  filterRequest: FilterRequest = {
     pagination: {
       pageNo: 1,
       pageSize: 10,
@@ -56,7 +65,7 @@ export class StockLevelsListComponent implements OnInit {
     search: {
       term: '',
       searchFields: ['productName', 'productSKU', 'warehouseName'],
-      mode: 'Contains',
+      mode: SearchMode.Contains,
       isCaseSensitive: false
     }
   };
@@ -76,7 +85,7 @@ export class StockLevelsListComponent implements OnInit {
     showFilters: false,
     showColumnToggle: false,
     showPagination: true,
-    showActions: false,
+    showActions: true,
     showCheckbox: false,
     pageSize: 10,
     pageSizeOptions: [5, 10, 25, 50, 100],
@@ -84,6 +93,16 @@ export class StockLevelsListComponent implements OnInit {
     emptyMessage: 'No stock levels found',
     loadingMessage: 'Loading stock levels...'
   };
+
+  actions: DataTableAction<StockLevel>[] = [
+    {
+      label: 'View Details',
+      action: (row) => this.openDetails(row),
+      icon: 'eye',
+      class: 'primary',
+      tooltip: 'View Stock Details'
+    }
+  ];
 
   showToast = false;
   toastMessage = '';
@@ -108,6 +127,8 @@ export class StockLevelsListComponent implements OnInit {
 
   constructor(
     private inventoryApiService: InventoryApiService,
+    private warehouseApiService: WarehouseApiService,
+    private productApiService: ProductApiService,
     public router: Router,
     public permissionService: PermissionService,
     private headerService: HeaderService
@@ -119,7 +140,39 @@ export class StockLevelsListComponent implements OnInit {
       description: 'Monitor product quantities across warehouses'
     });
     this.initializeFilterPanel();
+    this.loadWarehouses();
     this.loadStockLevels();
+  }
+
+  loadWarehouses(): void {
+    this.warehouseApiService.getWarehouses({
+      filterRequest: {
+        pagination: { pageNo: 1, pageSize: 100, sortBy: 'name', sortOrder: 'ascending' }
+      }
+    }).subscribe({
+      next: (response: ApiResponse<PagedResult<Warehouse>>) => {
+        if (response.success && response.data) {
+          const warehouseOptions = response.data.items.map((w: Warehouse) => ({
+            label: w.name,
+            value: w.id
+          }));
+
+          const warehouseField: FilterPanelField = {
+            key: 'warehouseId',
+            label: 'Warehouse',
+            type: 'select',
+            placeholder: 'Select a warehouse',
+            colSize: 'col-md-6',
+            options: warehouseOptions
+          };
+
+          this.filterPanelConfig = {
+            ...this.filterPanelConfig,
+            fields: [...this.filterPanelConfig.fields, warehouseField]
+          };
+        }
+      }
+    });
   }
 
   private initializeFilterPanel(): void {
@@ -163,6 +216,7 @@ export class StockLevelsListComponent implements OnInit {
   // Filter panel event handlers
   onFilterApplied(filters: { [key: string]: any }): void {
     this.lowStockOnly = filters['lowStockOnly'] || false;
+    this.selectedWarehouseId = filters['warehouseId'] || null;
 
     if (this.filterRequest.pagination) {
       this.filterRequest.pagination.pageNo = 1;
@@ -172,8 +226,8 @@ export class StockLevelsListComponent implements OnInit {
 
   onFilterReset(): void {
     this.lowStockOnly = false;
-    this.selectedProductId = null;
     this.selectedWarehouseId = null;
+    this.filterPanelValues = { lowStockOnly: false, warehouseId: null };
     this.searchTerm = '';
     if (this.filterRequest.search) {
       this.filterRequest.search.term = '';
@@ -246,6 +300,66 @@ export class StockLevelsListComponent implements OnInit {
       this.filterRequest.pagination.sortOrder = sort.direction === 'asc' ? 'ascending' : 'descending';
     }
     this.loadStockLevels();
+  }
+
+  openDetails(stockLevel: StockLevel): void {
+    this.selectedStockLevel = stockLevel;
+    this.showDetailsModal = true;
+  }
+
+  closeDetails(): void {
+    this.showDetailsModal = false;
+    this.selectedStockLevel = null;
+  }
+
+  exportToPdf(): void {
+    if (!this.selectedStockLevel) return;
+
+    const doc = new jsPDF();
+    const item = this.selectedStockLevel;
+    const now = new Date().toLocaleString();
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(41, 128, 185); // Primary color
+    doc.text('Stock Level Details', 20, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${now}`, 20, 30);
+
+    // Content
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+
+    const startY = 50;
+    const lineHeight = 10;
+    let currentY = startY;
+
+    const addLine = (label: string, value: any) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${label}:`, 20, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${value || '-'}`, 80, currentY);
+      currentY += lineHeight;
+    };
+
+    addLine('Product', item.productName);
+    addLine('SKU', item.productSKU);
+    addLine('Warehouse', item.warehouseName);
+    addLine('Total Quantity', item.quantity);
+    addLine('Available', item.availableQuantity);
+    addLine('Reserved', item.reservedQuantity);
+    addLine('Average Cost', item.averageCost ? `$${item.averageCost.toFixed(2)}` : '-');
+    addLine('Last Updated', new Date(item.lastUpdated).toLocaleDateString());
+
+    // Footer
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 280, 190, 280);
+    doc.setFontSize(8);
+    doc.text('Khidmah Inventory Management System', 20, 285);
+
+    doc.save(`stock-details-${item.productSKU}.pdf`);
   }
 
 

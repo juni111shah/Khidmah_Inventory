@@ -41,6 +41,9 @@ export { UnifiedDatePickerComponent } from './unified-date-picker/unified-date-p
 
 export { UnifiedFileUploadComponent } from './unified-file-upload/unified-file-upload.component';
 
+export { ImageUploadComponent } from './image-upload/image-upload.component';
+export type { ImageUploadType } from './image-upload/image-upload.component';
+
 // Layout Components
 export { UnifiedCardComponent } from './unified-card/unified-card.component';
 export type { CardVariant, CardElevation } from './unified-card/unified-card.component';

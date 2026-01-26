@@ -3,7 +3,7 @@
     <app-loading-spinner></app-loading-spinner>
   </div>
 
-  <div *ngIf="!loading" class="form-content">
+  <div *ngIf="!loading && (product || !isEditMode && !isViewMode)" class="form-content">
     <div class="d-flex justify-content-start mb-4">
       <app-unified-button
         variant="secondary"
@@ -16,210 +16,288 @@
       </app-unified-button>
     </div>
 
-    <div class="row g-4">
-      <!-- Left Column: Core Info & Pricing -->
-      <div class="col-lg-8">
-        <!-- Basic Information -->
-        <app-unified-card header="Basic Information" customClass="mb-4 border-0 shadow-sm">
-          <div class="row g-3">
-            <div class="col-12">
-              <app-form-field
-                label="Product Name"
-                type="text"
-                [(ngModel)]="formData.name"
-                [required]="true">
-              </app-form-field>
-            </div>
-            
-            <div class="col-md-6">
-              <app-form-field
-                label="SKU"
-                type="text"
-                [(ngModel)]="formData.sku"
-                [required]="true">
-              </app-form-field>
-            </div>
-            
-            <div class="col-md-6">
-              <app-form-field
-                label="Barcode"
-                type="text"
-                [(ngModel)]="formData.barcode">
-              </app-form-field>
-            </div>
-            
-            <div class="col-md-4">
-              <app-form-field
-                label="Category"
-                type="select"
-                [options]="getCategoryOptions()"
-                [(ngModel)]="formData.categoryId">
-              </app-form-field>
-            </div>
-            
-            <div class="col-md-4">
-              <app-form-field
-                label="Brand"
-                type="select"
-                [options]="getBrandOptions()"
-                [(ngModel)]="formData.brandId">
-              </app-form-field>
-            </div>
-            
-            <div class="col-md-4">
-              <app-form-field
-                label="Unit of Measure"
-                type="select"
-                [options]="getUnitOfMeasureOptions()"
-                [(ngModel)]="formData.unitOfMeasureId"
-                [required]="true">
-              </app-form-field>
-            </div>
-            
-            <div class="col-12">
-              <app-form-field
-                label="Description"
-                type="textarea"
-                [rows]="3"
-                [(ngModel)]="formData.description">
-              </app-form-field>
-            </div>
-          </div>
-        </app-unified-card>
+    <app-tabs [(activeTab)]="activeTab">
+      <app-tab label="Product Details" icon="bi-info-circle">
+        <div class="row g-4 pt-4">
+          <!-- Left Column: Core Info & Pricing -->
+          <div class="col-lg-8">
+            <!-- Basic Information -->
+            <app-unified-card header="Basic Information" customClass="mb-4 border-0 shadow-sm">
+              <div class="row g-3">
+                <div class="col-12">
+                  <app-form-field
+                    label="Product Name"
+                    type="text"
+                    [(ngModel)]="formData.name"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                  </app-form-field>
+                </div>
 
-        <!-- Pricing -->
-        <app-unified-card header="Pricing" customClass="border-0 shadow-sm">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <app-form-field
-                label="Purchase Price"
-                type="number"
-                [(ngModel)]="formData.purchasePrice"
-                icon="bi-currency-dollar"
-                [required]="true">
-              </app-form-field>
-            </div>
-            
-            <div class="col-md-4">
-              <app-form-field
-                label="Sale Price"
-                type="number"
-                [(ngModel)]="formData.salePrice"
-                icon="bi-tag"
-                [required]="true">
-              </app-form-field>
-            </div>
-            
-            <div class="col-md-4">
-              <app-form-field
-                label="Cost Price"
-                type="number"
-                [(ngModel)]="formData.costPrice"
-                icon="bi-cash">
-              </app-form-field>
-            </div>
-          </div>
-        </app-unified-card>
-      </div>
+                <div class="col-md-6">
+                  <app-form-field
+                    label="SKU"
+                    type="text"
+                    [(ngModel)]="formData.sku"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                  </app-form-field>
+                </div>
 
-      <!-- Right Column: Stock & Attributes -->
-      <div class="col-lg-4">
-        <!-- Stock Management -->
-        <app-unified-card header="Stock Management" customClass="mb-4 border-0 shadow-sm">
-          <div class="row g-3">
-            <div class="col-12">
-              <app-form-field
-                label="Min Stock Level"
-                type="number"
-                [(ngModel)]="formData.minStockLevel">
-              </app-form-field>
-            </div>
-            
-            <div class="col-12">
-              <app-form-field
-                label="Max Stock Level"
-                type="number"
-                [(ngModel)]="formData.maxStockLevel">
-              </app-form-field>
-            </div>
-            
-            <div class="col-12">
-              <app-form-field
-                label="Reorder Point"
-                type="number"
-                [(ngModel)]="formData.reorderPoint">
-              </app-form-field>
-            </div>
-            
-            <div class="col-12 mt-3">
-              <app-unified-checkbox [(ngModel)]="formData.trackQuantity" label="Track Quantity"></app-unified-checkbox>
-              <app-unified-checkbox [(ngModel)]="formData.trackBatch" label="Track Batch Numbers"></app-unified-checkbox>
-              <app-unified-checkbox [(ngModel)]="formData.trackExpiry" label="Track Expiry Dates"></app-unified-checkbox>
-            </div>
-          </div>
-        </app-unified-card>
+                <div class="col-md-6">
+                  <app-form-field
+                    label="Barcode"
+                    type="text"
+                    [(ngModel)]="formData.barcode"
+                    [disabled]="isViewMode">
+                  </app-form-field>
+                </div>
 
-        <!-- Physical Attributes -->
-        <app-unified-card header="Physical Attributes" customClass="border-0 shadow-sm">
-          <div class="row g-3">
-            <div class="col-6">
-              <app-form-field
-                label="Weight"
-                type="number"
-                [(ngModel)]="formData.weight">
-              </app-form-field>
-            </div>
-            
-            <div class="col-6">
-              <app-form-field
-                label="Unit"
-                type="select"
-                [options]="weightUnitOptions"
-                [(ngModel)]="formData.weightUnit">
-              </app-form-field>
-            </div>
-            
-            <div class="col-4">
-              <app-form-field label="Length" type="number" [(ngModel)]="formData.length"></app-form-field>
-            </div>
-            <div class="col-4">
-              <app-form-field label="Width" type="number" [(ngModel)]="formData.width"></app-form-field>
-            </div>
-            <div class="col-4">
-              <app-form-field label="Height" type="number" [(ngModel)]="formData.height"></app-form-field>
-            </div>
-            
-            <div class="col-12">
-              <app-form-field
-                label="Dimensions Unit"
-                type="select"
-                [options]="dimensionsUnitOptions"
-                [(ngModel)]="formData.dimensionsUnit">
-              </app-form-field>
-            </div>
-          </div>
-        </app-unified-card>
-      </div>
-    </div>
+                <div class="col-md-4">
+                  <app-form-field
+                    label="Category"
+                    type="select"
+                    [options]="getCategoryOptions()"
+                    [(ngModel)]="formData.categoryId"
+                    [disabled]="isViewMode">
+                  </app-form-field>
+                </div>
 
-    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-      <app-unified-button
-        variant="secondary"
-        [outlined]="true"
-        (clicked)="router.navigate(['/products'])">
-        Cancel
-      </app-unified-button>
-      
-      <app-unified-button
-        variant="primary"
-        *appHasPermission="isEditMode ? 'Products:Update' : 'Products:Create'"
-        (clicked)="save()"
-        [loading]="saving"
-        icon="bi-save"
-        iconLibrary="bi">
-        {{ isEditMode ? 'Update' : 'Create' }} Product
-      </app-unified-button>
-    </div>
+                <div class="col-md-4">
+                  <app-form-field
+                    label="Brand"
+                    type="select"
+                    [options]="getBrandOptions()"
+                    [(ngModel)]="formData.brandId"
+                    [disabled]="isViewMode">
+                  </app-form-field>
+                </div>
+
+                <div class="col-md-4">
+                  <app-form-field
+                    label="Unit of Measure"
+                    type="select"
+                    [options]="getUnitOfMeasureOptions()"
+                    [(ngModel)]="formData.unitOfMeasureId"
+                    [disabled]="isViewMode"
+                    [required]="true">
+                  </app-form-field>
+                </div>
+
+                <div class="col-12">
+                  <app-form-field
+                    label="Description"
+                    type="textarea"
+                    [rows]="3"
+                    [(ngModel)]="formData.description"
+                    [disabled]="isViewMode">
+                  </app-form-field>
+                </div>
+              </div>
+            </app-unified-card>
+
+            <!-- Pricing -->
+            <app-unified-card header="Pricing" customClass="border-0 shadow-sm">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <app-form-field
+                    label="Purchase Price"
+                    type="number"
+                    [(ngModel)]="formData.purchasePrice"
+                    [disabled]="isViewMode"
+                    icon="bi-currency-dollar"
+                    [required]="true">
+                  </app-form-field>
+                </div>
+
+                <div class="col-md-4">
+                  <app-form-field
+                    label="Sale Price"
+                    type="number"
+                    [(ngModel)]="formData.salePrice"
+                    [disabled]="isViewMode"
+                    icon="bi-tag"
+                    [required]="true">
+                  </app-form-field>
+                </div>
+
+                <div class="col-md-4">
+                  <app-form-field
+                    label="Cost Price"
+                    type="number"
+                    [(ngModel)]="formData.costPrice"
+                    [disabled]="isViewMode"
+                    icon="bi-cash">
+                  </app-form-field>
+                </div>
+              </div>
+            </app-unified-card>
+          </div>
+
+          <!-- Right Column: Stock & Attributes -->
+          <div class="col-lg-4">
+            <!-- Stock Management -->
+            <app-unified-card header="Stock Management" customClass="mb-4 border-0 shadow-sm">
+              <div class="row g-3">
+                <div class="col-12">
+                  <app-form-field
+                    label="Min Stock Level"
+                    type="number"
+                    [(ngModel)]="formData.minStockLevel"
+                    [disabled]="isViewMode">
+                  </app-form-field>
+                </div>
+
+                <div class="col-12">
+                  <app-form-field
+                    label="Max Stock Level"
+                    type="number"
+                    [(ngModel)]="formData.maxStockLevel"
+                    [disabled]="isViewMode">
+                  </app-form-field>
+                </div>
+
+                <div class="col-12">
+                  <app-form-field
+                    label="Reorder Point"
+                    type="number"
+                    [(ngModel)]="formData.reorderPoint">
+                  </app-form-field>
+                </div>
+
+                <div class="col-12 mt-3">
+                  <app-unified-checkbox [(ngModel)]="formData.trackQuantity" label="Track Quantity" [disabled]="isViewMode"></app-unified-checkbox>
+                  <app-unified-checkbox [(ngModel)]="formData.trackBatch" label="Track Batch Numbers" [disabled]="isViewMode"></app-unified-checkbox>
+                  <app-unified-checkbox [(ngModel)]="formData.trackExpiry" label="Track Expiry Dates" [disabled]="isViewMode"></app-unified-checkbox>
+                </div>
+              </div>
+            </app-unified-card>
+
+            <!-- Physical Attributes -->
+            <app-unified-card header="Physical Attributes" customClass="border-0 shadow-sm">
+              <div class="row g-3">
+                <div class="col-6">
+                  <app-form-field
+                    label="Weight"
+                    type="number"
+                    [(ngModel)]="formData.weight">
+                  </app-form-field>
+                </div>
+
+                <div class="col-6">
+                  <app-form-field
+                    label="Unit"
+                    type="select"
+                    [options]="weightUnitOptions"
+                    [(ngModel)]="formData.weightUnit">
+                  </app-form-field>
+                </div>
+
+                <div class="col-4">
+                  <app-form-field label="Length" type="number" [(ngModel)]="formData.length"></app-form-field>
+                </div>
+                <div class="col-4">
+                  <app-form-field label="Width" type="number" [(ngModel)]="formData.width"></app-form-field>
+                </div>
+                <div class="col-4">
+                  <app-form-field label="Height" type="number" [(ngModel)]="formData.height"></app-form-field>
+                </div>
+
+                <div class="col-12">
+                  <app-form-field
+                    label="Dimensions Unit"
+                    type="select"
+                    [options]="dimensionsUnitOptions"
+                    [(ngModel)]="formData.dimensionsUnit">
+                  </app-form-field>
+                </div>
+              </div>
+            </app-unified-card>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+          <app-unified-button
+            variant="secondary"
+            [outlined]="true"
+            (clicked)="router.navigate(['/products'])">
+            Cancel
+          </app-unified-button>
+
+          <app-unified-button
+            variant="primary"
+            *ngIf="isViewMode"
+            (clicked)="exportToPdf()"
+            icon="bi-printer"
+            iconLibrary="bi">
+            Export to PDF
+          </app-unified-button>
+
+          <app-unified-button
+            variant="primary"
+            *ngIf="!isViewMode"
+            [appHasPermission]="isEditMode ? 'Products:Update' : 'Products:Create'"
+            (clicked)="save()"
+            [loading]="saving"
+            icon="bi-save"
+            iconLibrary="bi">
+            {{ isEditMode ? 'Update' : 'Create' }} Product
+          </app-unified-button>
+        </div>
+      </app-tab>
+
+      <app-tab label="AI Insights" icon="bi-robot" *ngIf="isViewMode">
+        <div class="pt-4">
+          <app-unified-card title="AI Demand Forecasting" customClass="mb-4 border-0 shadow-sm">
+            <div *ngIf="forecastChartData" style="height: 400px; width: 100%;">
+              <app-chart type="line" [data]="forecastChartData" [height]="400"></app-chart>
+            </div>
+
+            <div *ngIf="forecastData" class="row mt-4 g-3">
+              <div class="col-md-4">
+                <div class="p-4 bg-light rounded-4 text-center futuristic-insight-card">
+                  <h6 class="text-muted text-uppercase smaller fw-bold mb-2">Total Predicted (30d)</h6>
+                  <h2 class="fw-bold mb-0 text-primary">{{forecastData.totalPredictedQuantity}}</h2>
+                  <p class="smaller text-muted mt-2 mb-0">Anticipated units needed</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-4 bg-light rounded-4 text-center futuristic-insight-card">
+                  <h6 class="text-muted text-uppercase smaller fw-bold mb-2">Confidence Score</h6>
+                  <h2 class="fw-bold mb-0 text-success">{{forecastData.confidenceScore * 100 | number:'1.0-0'}}%</h2>
+                  <p class="smaller text-muted mt-2 mb-0">Model accuracy prediction</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-4 bg-light rounded-4 text-center futuristic-insight-card">
+                  <h6 class="text-muted text-uppercase smaller fw-bold mb-2">AI Recommendation</h6>
+                  <h5 class="fw-bold mb-0 text-dark">{{forecastData.recommendation}}</h5>
+                  <p class="smaller text-muted mt-2 mb-0">Suggested inventory action</p>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="!forecastChartData && loading" class="text-center py-5">
+              <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading forecast...</span>
+              </div>
+              <p class="text-muted">Generating intelligent demand insights...</p>
+            </div>
+          </app-unified-card>
+        </div>
+      </app-tab>
+
+      <app-tab label="Inventory History" icon="bi-clock-history" *ngIf="isViewMode">
+        <div class="pt-4">
+           <app-unified-card header="Recent Stock Movements" customClass="border-0 shadow-sm">
+             <div class="text-center py-5">
+               <i class="bi bi-clock-history fs-1 opacity-25 mb-3 d-block"></i>
+               <p class="text-muted">History tracking module is coming soon.</p>
+             </div>
+           </app-unified-card>
+        </div>
+      </app-tab>
+    </app-tabs>
   </div>
 
   <app-toast

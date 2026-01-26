@@ -14,7 +14,7 @@
   (toggleColumns)="onColumnsToggle()"
   (closeColumns)="showColumnToggle = false"
   (columnToggle)="onColumnToggle($event)">
-  
+
   <div listing-actions class="d-flex gap-2">
     <app-unified-button variant="secondary" [outlined]="true" (clicked)="router.navigate(['/inventory/transfer'])" *appHasPermission="'Inventory:StockTransaction:Create'">
       <app-icon name="arrow-left-right" size="sm" customClass="me-2"></app-icon>
@@ -50,11 +50,78 @@
     [config]="config"
     [pagedResult]="pagedResult"
     [filterRequest]="filterRequest"
+    [actions]="actions"
     (filterChange)="onFilterChange($event)"
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)">
   </app-data-table>
 </app-listing-container>
+
+<app-unified-modal
+  [isOpen]="showDetailsModal"
+  headerTitle="Stock Level Details"
+  [showFooter]="true"
+  (closed)="closeDetails()">
+
+  <div class="container-fluid" *ngIf="selectedStockLevel">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label fw-bold text-secondary small">Product</label>
+        <input type="text" class="form-control" [value]="selectedStockLevel.productName" disabled>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold text-secondary small">SKU</label>
+        <input type="text" class="form-control" [value]="selectedStockLevel.productSKU" disabled>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold text-secondary small">Warehouse</label>
+        <input type="text" class="form-control" [value]="selectedStockLevel.warehouseName" disabled>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold text-secondary small">Last Updated</label>
+        <input type="text" class="form-control" [value]="selectedStockLevel.lastUpdated | date:'medium'" disabled>
+      </div>
+
+      <div class="col-12"><hr class="my-2 text-secondary opacity-25"></div>
+
+      <div class="col-md-4">
+        <div class="p-3 bg-light rounded text-center border">
+          <label class="d-block fw-bold text-secondary small mb-1">Total</label>
+          <div class="fs-4 fw-bold text-primary">{{selectedStockLevel.quantity}}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 bg-light rounded text-center border">
+          <label class="d-block fw-bold text-secondary small mb-1">Available</label>
+          <div class="fs-4 fw-bold text-success">{{selectedStockLevel.availableQuantity}}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-3 bg-light rounded text-center border">
+          <label class="d-block fw-bold text-secondary small mb-1">Reserved</label>
+          <div class="fs-4 fw-bold text-warning">{{selectedStockLevel.reservedQuantity}}</div>
+        </div>
+      </div>
+
+       <div class="col-12 mt-4" *ngIf="selectedStockLevel.averageCost">
+        <label class="form-label fw-bold text-secondary small">Average Cost</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light">$</span>
+          <input type="text" class="form-control" [value]="selectedStockLevel.averageCost.toFixed(2)" disabled>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div slot="footer" class="d-flex w-100 justify-content-end gap-2">
+    <app-unified-button variant="secondary" [outlined]="true" (clicked)="closeDetails()">
+      Close
+    </app-unified-button>
+    <app-unified-button variant="primary" icon="printer" (clicked)="exportToPdf()">
+      Print / Export PDF
+    </app-unified-button>
+  </div>
+</app-unified-modal>
 
 <app-toast
   *ngIf="showToast"
@@ -62,5 +129,3 @@
   [type]="toastType"
   (close)="showToast = false"
 ></app-toast>
-
-

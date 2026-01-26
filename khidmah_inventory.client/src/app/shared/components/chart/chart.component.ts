@@ -98,7 +98,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   chartSeries: any = [];
   chartOptions: Partial<ApexOptions> = {};
   hasValidData: boolean = false;
-  
+
   // Cached config properties to prevent change detection loops
   chartConfig: any;
   xaxisConfig: any;
@@ -113,7 +113,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   responsiveConfig: any[] = [];
   titleConfig: any;
   labelsConfig: string[] = [];
-  
+
   // Cached default objects to ensure same reference
   private defaultChart: any;
   private defaultXAxis: any;
@@ -148,7 +148,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
         // Trigger chart resize when container size changes
         this.resizeChart();
       });
-      
+
       this.resizeObserver.observe(this.chartContainer.nativeElement);
     }
 
@@ -191,7 +191,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   private handleWindowResize = (): void => {
     this.resizeChart();
   };
-  
+
   private initializeDefaults(): void {
     this.defaultChart = {
       type: 'line',
@@ -247,7 +247,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       labelsCount: this.data?.labels?.length || 0,
       type: this.type
     });
-    
+
     if (!this.data || !this.data.datasets || this.data.datasets.length === 0) {
       // Initialize with empty data to prevent errors
       console.warn('Chart has no data or empty datasets');
@@ -260,12 +260,12 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       }
       return;
     }
-    
+
     // Validate that datasets have data arrays
-    const hasValidDatasets = this.data.datasets.some(ds => 
+    const hasValidDatasets = this.data.datasets.some(ds =>
       ds && Array.isArray(ds.data) && ds.data.length > 0
     );
-    
+
     if (!hasValidDatasets) {
       console.warn('Chart datasets have no valid data arrays');
       this.chartSeries = [];
@@ -280,7 +280,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
 
     try {
       // Convert Chart.js format to ApexCharts format
-      const labels = (this.data.labels || []).map(label => 
+      const labels = (this.data.labels || []).map(label =>
         label != null ? String(label) : ''
       ).filter(label => label !== '');
 
@@ -305,18 +305,18 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
               const num = typeof d === 'number' ? d : (typeof d === 'string' ? parseFloat(d) : 0);
               return isNaN(num) ? 0 : num;
             });
-            
+
             return {
               name: dataset.label || 'Series',
               data: seriesData
             };
           });
-        
+
         // Chart is valid if we have at least one series with data
-        this.hasValidData = this.chartSeries.length > 0 && 
+        this.hasValidData = this.chartSeries.length > 0 &&
                             this.chartSeries.some((s: any) => s.data && s.data.length > 0) &&
                             labels.length > 0;
-        
+
         // Debug logging
         console.log('Chart series conversion:', {
           inputDatasets: this.data.datasets.map(ds => ({
@@ -328,7 +328,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
           labels: labels,
           hasValidData: this.hasValidData
         });
-        
+
         if (!this.hasValidData) {
           console.warn('Chart has no valid data:', {
             datasets: this.data.datasets,
@@ -340,7 +340,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
 
       // Build ApexCharts options
       this.chartOptions = this.buildApexOptions(labels);
-      
+
       // Update cached config properties to prevent change detection loops
       this.updateCachedConfigs();
       // Manually trigger change detection since we're using OnPush
@@ -363,7 +363,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       }
     }
   }
-  
+
   private updateCachedConfigs(): void {
     this.chartConfig = this.chartOptions.chart || this.defaultChart;
     this.xaxisConfig = this.chartOptions.xaxis || this.defaultXAxis;
@@ -376,8 +376,8 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
     this.dataLabelsConfig = this.chartOptions.dataLabels || this.defaultDataLabels;
     this.plotOptionsConfig = this.chartOptions.plotOptions;
     // Ensure responsive is always an array
-    this.responsiveConfig = Array.isArray(this.chartOptions.responsive) 
-      ? this.chartOptions.responsive 
+    this.responsiveConfig = Array.isArray(this.chartOptions.responsive)
+      ? this.chartOptions.responsive
       : (this.chartOptions.responsive ? [this.chartOptions.responsive] : []);
     this.titleConfig = this.chartOptions.title;
     this.labelsConfig = this.chartOptions.labels || [];
@@ -388,69 +388,65 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       chart: {
         type: this.mapChartType(this.type),
         height: this.height,
-        width: '100%', // Ensure chart expands to fill container
-        toolbar: {
-          show: true
-        },
-        zoom: {
-          enabled: true
-        },
-        // Enable automatic resizing
+        width: '100%',
+        toolbar: { show: false },
+        zoom: { enabled: false },
         redrawOnParentResize: true,
         redrawOnWindowResize: true,
-        // Ensure chart is responsive
-        animations: {
-          enabled: true
-        },
-        // Ensure chart uses full width of container
+        animations: { enabled: true, easing: 'easeinout', speed: 800 },
         parentHeightOffset: 0,
-        // Make chart fluid and responsive
-        sparkline: {
-          enabled: false
-        }
+        sparkline: { enabled: false },
+        background: 'transparent',
+        ...this.options?.chart
       },
       xaxis: {
         categories: labels.length > 0 ? labels : ['No Data'],
+        axisBorder: { show: false },
+        axisTicks: { show: false },
         labels: {
-          style: {
-            fontSize: '12px'
-          }
-        }
+          style: { fontSize: '12px', colors: '#64748b' }
+        },
+        ...this.options?.xaxis
       },
       yaxis: {
         labels: {
-          style: {
-            fontSize: '12px'
-          },
+          style: { fontSize: '12px', colors: '#64748b' },
           formatter: (value: number) => {
-            try {
-              // Apply custom formatter from options if available
-              if (this.options?.scales?.y?.ticks?.callback && typeof this.options.scales.y.ticks.callback === 'function') {
-                return this.options.scales.y.ticks.callback(value);
-              }
-              return value.toLocaleString();
-            } catch (error) {
-              return value.toLocaleString();
+            if (this.options?.yaxis?.labels?.formatter) {
+              return this.options.yaxis.labels.formatter(value);
             }
+            return value.toLocaleString();
           }
-        }
+        },
+        ...this.options?.yaxis
+      },
+      grid: {
+        borderColor: '#f1f5f9',
+        strokeDashArray: 4,
+        padding: { left: 10, right: 10 },
+        ...this.options?.grid
       },
       legend: {
         show: true,
         position: 'top',
-        fontSize: '14px'
+        fontSize: '14px',
+        ...this.options?.legend
       },
       tooltip: {
         enabled: true,
+        theme: 'light',
         shared: true,
-        intersect: false
+        intersect: false,
+        ...this.options?.tooltip
       },
       dataLabels: {
-        enabled: false
+        enabled: false,
+        ...this.options?.dataLabels
       },
       stroke: {
         curve: 'smooth',
-        width: 2
+        width: 3,
+        ...this.options?.stroke
       },
       fill: {
         type: 'gradient',
@@ -459,14 +455,20 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
           opacityFrom: 0.7,
           opacityTo: 0.3,
           stops: [0, 90, 100]
-        }
+        },
+        ...this.options?.fill
       },
-      responsive: [{
+      plotOptions: {
+        bar: {
+          borderRadius: 4,
+          columnWidth: '60%'
+        },
+        ...this.options?.plotOptions
+      },
+      responsive: this.options?.responsive || [{
         breakpoint: 768,
         options: {
-          chart: {
-            height: 250
-          }
+          chart: { height: 250 }
         }
       }]
     };
@@ -474,83 +476,21 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
     // Handle chart type specific options
     if (this.type === 'pie' || this.type === 'donut') {
       baseOptions.labels = labels;
-      baseOptions.plotOptions = {
-        pie: {
-          donut: {
-            size: this.type === 'donut' ? '70%' : '0%'
-          }
-        }
+      if (!baseOptions.plotOptions) baseOptions.plotOptions = {};
+      baseOptions.plotOptions.pie = {
+        donut: { size: this.type === 'donut' ? '70%' : '0%' },
+        ...this.options?.plotOptions?.pie
       };
     }
 
-    // Merge with custom options
-    if (this.options) {
-      // Handle colors - ensure we have colors for all series
-      if (this.data?.datasets) {
-        const colors = this.data.datasets.flatMap(ds => {
-          if (Array.isArray(ds.borderColor)) {
-            // Use borderColor if available (usually more visible)
-            return ds.borderColor.map((color: string) => this.rgbaToHex(color));
-          } else if (ds.borderColor) {
-            return [this.rgbaToHex(ds.borderColor)];
-          } else if (Array.isArray(ds.backgroundColor)) {
-            return ds.backgroundColor.map((color: string) => this.rgbaToHex(color));
-          } else if (ds.backgroundColor) {
-            return [this.rgbaToHex(ds.backgroundColor)];
-          }
-          return [];
-        });
-        if (colors.length > 0) {
-          baseOptions.colors = colors;
-          console.log('Chart colors set:', colors);
-        } else {
-          // Default colors if none provided
-          baseOptions.colors = ['#36A2EB', '#FF6384', '#4BC0C0', '#FFCE56', '#9966FF', '#FF9F40'];
-          console.log('Using default chart colors');
-        }
-      }
-
-      // Handle fill option for area charts
-      if (this.type === 'area') {
-        // For area charts, ensure gradient fill is enabled
-        baseOptions.fill = {
-          type: 'gradient',
-          gradient: {
-            shadeIntensity: 1,
-            opacityFrom: 0.7,
-            opacityTo: 0.3,
-            stops: [0, 90, 100]
-          }
-        };
-      } else if (this.data?.datasets?.[0]?.fill === false) {
-        baseOptions.fill = {
-          type: 'solid',
-          opacity: 0
-        };
-      }
-
-      // Merge other options
-      // Ensure responsive is always an array (ApexCharts requirement)
-      if (this.options.responsive !== undefined) {
-        if (Array.isArray(this.options.responsive)) {
-          baseOptions.responsive = this.options.responsive;
-        } else if (this.options.responsive === true || this.options.responsive === false) {
-          // Ignore boolean values - ApexCharts is responsive by default
-          // Only set responsive if it's an array of breakpoint configs
-        } else {
-          // If it's an object, wrap it in an array
-          baseOptions.responsive = [this.options.responsive];
-        }
-      }
-      if (this.options.title) {
-        baseOptions.title = {
-          text: this.options.title,
-          style: {
-            fontSize: '16px',
-            fontWeight: 'bold'
-          }
-        };
-      }
+    // Set colors from datasets
+    if (this.data?.datasets) {
+      const colors = this.data.datasets.map(ds => {
+        if (ds.borderColor && typeof ds.borderColor === 'string') return this.rgbaToHex(ds.borderColor);
+        if (ds.backgroundColor && typeof ds.backgroundColor === 'string') return this.rgbaToHex(ds.backgroundColor);
+        return '#6366f1'; // Default
+      });
+      baseOptions.colors = colors;
     }
 
     return baseOptions;
@@ -573,7 +513,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
     if (rgba.startsWith('#')) {
       return rgba;
     }
-    
+
     const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
     if (match) {
       const r = parseInt(match[1]);
@@ -584,7 +524,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
         return hex.length === 1 ? '0' + hex : hex;
       }).join('');
     }
-    
+
     return '#36A2EB'; // Default color
   }
 

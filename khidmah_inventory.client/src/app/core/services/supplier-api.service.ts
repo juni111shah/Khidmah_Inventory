@@ -26,8 +26,28 @@ export class SupplierApiService {
     return this.http.post<ApiResponse<PagedResult<Supplier>>>(`${this.apiUrl}/list`, query || {});
   }
 
+  getSupplier(id: string): Observable<ApiResponse<Supplier>> {
+    return this.http.get<ApiResponse<Supplier>>(`${this.apiUrl}/${id}`);
+  }
+
+  updateSupplier(id: string, request: any): Observable<ApiResponse<Supplier>> {
+    return this.http.put<ApiResponse<Supplier>>(`${this.apiUrl}/${id}`, request);
+  }
+
   createSupplier(request: CreateSupplierRequest): Observable<ApiResponse<Supplier>> {
     return this.http.post<ApiResponse<Supplier>>(this.apiUrl, request);
+  }
+
+  deleteSupplier(id: string): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`);
+  }
+
+  activateSupplier(id: string): Observable<ApiResponse<Supplier>> {
+    return this.http.patch<ApiResponse<Supplier>>(`${this.apiUrl}/${id}/activate`, null);
+  }
+
+  deactivateSupplier(id: string): Observable<ApiResponse<Supplier>> {
+    return this.http.patch<ApiResponse<Supplier>>(`${this.apiUrl}/${id}/deactivate`, null);
   }
 }
 

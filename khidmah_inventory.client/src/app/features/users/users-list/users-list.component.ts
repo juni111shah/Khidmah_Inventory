@@ -22,12 +22,12 @@ import { ExportComponent } from '../../../shared/components/export/export.compon
   selector: 'app-users-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
+    CommonModule,
+    FormsModule,
     ReactiveFormsModule,
-    IconComponent, 
-    ToastComponent, 
-    DataTableComponent, 
+    IconComponent,
+    ToastComponent,
+    DataTableComponent,
     HasPermissionDirective,
     ListingContainerComponent,
     UnifiedButtonComponent,
@@ -315,9 +315,9 @@ export class UsersListComponent implements OnInit {
     if (!this.filterRequest.filters) {
       this.filterRequest.filters = [];
     }
-    
+
     this.filterRequest.filters = this.filterRequest.filters.filter(f => f.column !== 'isActive');
-    
+
     if (value !== null && value !== '') {
       this.filterRequest.filters.push({
         column: 'isActive',
@@ -325,7 +325,7 @@ export class UsersListComponent implements OnInit {
         value: value === 'true' || value === true
       });
     }
-    
+
     if (this.filterRequest.pagination) {
       this.filterRequest.pagination.pageNo = 1;
     }
@@ -443,17 +443,9 @@ export class UsersListComponent implements OnInit {
   loadUsers(): void {
     this.loading = true;
 
-    // Apply active filter
-    if (!this.filterRequest.filters) {
-      this.filterRequest.filters = [];
-    }
-    this.filterRequest.filters = this.filterRequest.filters.filter(f => f.column !== 'isActive');
-    if (this.isActiveFilter !== null && this.isActiveFilter !== '') {
-      this.filterRequest.filters.push({
-        column: 'isActive',
-        operator: 'Equals',
-        value: this.isActiveFilter === 'true' || this.isActiveFilter === true
-      });
+    // Apply search if not already applied
+    if (this.searchTerm && this.filterRequest.search) {
+      this.filterRequest.search.term = this.searchTerm;
     }
 
     this.userApiService.getUsers(this.filterRequest).subscribe({

@@ -46,10 +46,20 @@
           <input type="date" [(ngModel)]="salesToDate" class="form-control" />
         </div>
         <div class="col-md-4">
-          <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadSalesReport()">
-            <i class="bi bi-file-earmark-arrow-down me-2"></i>
-            Generate Report
-          </app-unified-button>
+          <div class="d-flex gap-2">
+            <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadSalesReport()">
+              <i class="bi bi-file-earmark-arrow-down me-2"></i>
+              Generate Report
+            </app-unified-button>
+            <app-unified-button
+              *ngIf="salesReport"
+              variant="success"
+              [disabled]="loading"
+              (clicked)="exportSalesReportPdf()"
+              title="Export as PDF">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </app-unified-button>
+          </div>
         </div>
       </div>
     </div>
@@ -109,10 +119,20 @@
           </div>
         </div>
         <div class="col-md-4">
-          <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadInventoryReport()">
-            <i class="bi bi-file-earmark-arrow-down me-2"></i>
-            Generate Report
-          </app-unified-button>
+          <div class="d-flex gap-2">
+            <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadInventoryReport()">
+              <i class="bi bi-file-earmark-arrow-down me-2"></i>
+              Generate Report
+            </app-unified-button>
+            <app-unified-button
+              *ngIf="inventoryReport"
+              variant="success"
+              [disabled]="loading"
+              (clicked)="exportInventoryReportPdf()"
+              title="Export as PDF">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </app-unified-button>
+          </div>
         </div>
       </div>
     </div>
@@ -168,10 +188,20 @@
           <input type="date" [(ngModel)]="purchaseToDate" class="form-control" />
         </div>
         <div class="col-md-4">
-          <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadPurchaseReport()">
-            <i class="bi bi-file-earmark-arrow-down me-2"></i>
-            Generate Report
-          </app-unified-button>
+          <div class="d-flex gap-2">
+            <app-unified-button variant="primary" [fullWidth]="true" (clicked)="loadPurchaseReport()">
+              <i class="bi bi-file-earmark-arrow-down me-2"></i>
+              Generate Report
+            </app-unified-button>
+            <app-unified-button
+              *ngIf="purchaseReport"
+              variant="success"
+              [disabled]="loading"
+              (clicked)="exportPurchaseReportPdf()"
+              title="Export as PDF">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </app-unified-button>
+          </div>
         </div>
       </div>
     </div>

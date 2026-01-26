@@ -1,39 +1,44 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Features.Analytics.Queries.GetSalesAnalytics;
 using Khidmah_Inventory.Application.Features.Analytics.Queries.GetInventoryAnalytics;
 using Khidmah_Inventory.Application.Features.Analytics.Queries.GetProfitAnalytics;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Analytics.Base)]
 [Authorize]
-public class AnalyticsController : BaseApiController
+public class AnalyticsController : BaseController
 {
-    [HttpPost("sales")]
-    [AuthorizePermission("Analytics:Sales:Read")]
+    public AnalyticsController(IMediator mediator) : base(mediator)
+    {
+    }
+
+    [HttpPost(ApiRoutes.Analytics.Sales)]
+    [ValidateApiCode(ApiValidationCodes.AnalyticsModuleCode.Sales)]
+    [AuthorizeResource(AuthorizePermissions.AnalyticsPermissions.Controller, AuthorizePermissions.AnalyticsPermissions.Actions.Sales)]
     public async Task<IActionResult> GetSalesAnalytics([FromBody] GetSalesAnalyticsQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Sales analytics retrieved successfully");
+        return await ExecuteRequest(query);
     }
 
-    [HttpGet("inventory")]
-    [AuthorizePermission("Analytics:Inventory:Read")]
+    [HttpGet(ApiRoutes.Analytics.Inventory)]
+    [ValidateApiCode(ApiValidationCodes.AnalyticsModuleCode.Inventory)]
+    [AuthorizeResource(AuthorizePermissions.AnalyticsPermissions.Controller, AuthorizePermissions.AnalyticsPermissions.Actions.Inventory)]
     public async Task<IActionResult> GetInventoryAnalytics([FromQuery] GetInventoryAnalyticsQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Inventory analytics retrieved successfully");
+        return await ExecuteRequest(query);
     }
 
-    [HttpPost("profit")]
-    [AuthorizePermission("Analytics:Profit:Read")]
+    [HttpPost(ApiRoutes.Analytics.Profit)]
+    [ValidateApiCode(ApiValidationCodes.AnalyticsModuleCode.Profit)]
+    [AuthorizeResource(AuthorizePermissions.AnalyticsPermissions.Controller, AuthorizePermissions.AnalyticsPermissions.Actions.Profit)]
     public async Task<IActionResult> GetProfitAnalytics([FromBody] GetProfitAnalyticsQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Profit analytics retrieved successfully");
+        return await ExecuteRequest(query);
     }
 }
 

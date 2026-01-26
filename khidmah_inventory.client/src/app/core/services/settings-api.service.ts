@@ -31,7 +31,7 @@ export class SettingsApiService {
   }
 
   saveCompanySettings(settings: CompanySettings): Observable<ApiResponse<CompanySettings>> {
-    return this.http.post<ApiResponse<CompanySettings>>(`${this.apiUrl}/company`, { settings });
+    return this.http.post<ApiResponse<CompanySettings>>(`${this.apiUrl}/company`, { Settings: settings });
   }
 
   // User Settings
@@ -40,7 +40,7 @@ export class SettingsApiService {
   }
 
   saveUserSettings(settings: UserSettings): Observable<ApiResponse<UserSettings>> {
-    return this.http.post<ApiResponse<UserSettings>>(`${this.apiUrl}/user`, { settings });
+    return this.http.post<ApiResponse<UserSettings>>(`${this.apiUrl}/user`, { Settings: settings });
   }
 
   // System Settings
@@ -49,7 +49,7 @@ export class SettingsApiService {
   }
 
   saveSystemSettings(settings: SystemSettings): Observable<ApiResponse<SystemSettings>> {
-    return this.http.post<ApiResponse<SystemSettings>>(`${this.apiUrl}/system`, { settings });
+    return this.http.post<ApiResponse<SystemSettings>>(`${this.apiUrl}/system`, { Settings: settings });
   }
 
   // Notification Settings
@@ -58,7 +58,7 @@ export class SettingsApiService {
   }
 
   saveNotificationSettings(settings: NotificationSettings): Observable<ApiResponse<NotificationSettings>> {
-    return this.http.post<ApiResponse<NotificationSettings>>(`${this.apiUrl}/notifications`, { settings });
+    return this.http.post<ApiResponse<NotificationSettings>>(`${this.apiUrl}/notifications`, { Settings: settings });
   }
 
   // UI Settings
@@ -67,7 +67,7 @@ export class SettingsApiService {
   }
 
   saveUISettings(settings: UISettings): Observable<ApiResponse<UISettings>> {
-    return this.http.post<ApiResponse<UISettings>>(`${this.apiUrl}/ui`, { settings });
+    return this.http.post<ApiResponse<UISettings>>(`${this.apiUrl}/ui`, { Settings: settings });
   }
 
   // Report Settings
@@ -76,7 +76,7 @@ export class SettingsApiService {
   }
 
   saveReportSettings(settings: ReportSettings): Observable<ApiResponse<ReportSettings>> {
-    return this.http.post<ApiResponse<ReportSettings>>(`${this.apiUrl}/reports`, { settings });
+    return this.http.post<ApiResponse<ReportSettings>>(`${this.apiUrl}/reports`, { Settings: settings });
   }
 
   // Appearance Settings (using UI settings endpoint for now)
@@ -86,7 +86,7 @@ export class SettingsApiService {
   }
 
   saveAppearanceSettings(settings: any): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/ui`, { settings });
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/ui`, { Settings: settings });
   }
 }
 

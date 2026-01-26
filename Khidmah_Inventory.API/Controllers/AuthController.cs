@@ -1,48 +1,53 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Features.Auth.Commands.Login;
 using Khidmah_Inventory.Application.Features.Auth.Commands.Register;
 using Khidmah_Inventory.Application.Features.Auth.Commands.RefreshToken;
 using Khidmah_Inventory.Application.Features.Auth.Commands.Logout;
-using Khidmah_Inventory.API.Attributes;
+using LoginResponseDto = Khidmah_Inventory.Application.Features.Auth.Commands.Login.LoginResponseDto;
+using RegisterResponseDto = Khidmah_Inventory.Application.Features.Auth.Commands.Register.RegisterResponseDto;
+using RefreshTokenResponseDto = Khidmah_Inventory.Application.Features.Auth.Commands.RefreshToken.RefreshTokenResponseDto;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : BaseApiController
+[Route(ApiRoutes.Auth.Base)]
+public class AuthController : BaseController
 {
-    [HttpPost("login")]
+    public AuthController(IMediator mediator) : base(mediator)
+    {
+    }
+
+    [HttpPost(ApiRoutes.Auth.Login)]
+    [ValidateApiCode(ApiValidationCodes.AuthModuleCode.Login)]
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Login successful");
+        return await ExecuteRequest<LoginCommand, LoginResponseDto>(command);
     }
 
-    [HttpPost("register")]
-    [AuthorizePermission("Auth:Create")]
+    [HttpPost(ApiRoutes.Auth.Register)]
+    [ValidateApiCode(ApiValidationCodes.AuthModuleCode.Register)]
+    [AuthorizeResource(AuthorizePermissions.AuthPermissions.Controller, AuthorizePermissions.AuthPermissions.Actions.Create)]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "User registered successfully");
+        return await ExecuteRequest<RegisterCommand, RegisterResponseDto>(command);
     }
 
     [HttpPost("refresh-token")]
     [AllowAnonymous]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Token refreshed successfully");
+        return await ExecuteRequest<RefreshTokenCommand, RefreshTokenResponseDto>(command);
     }
 
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        var command = new LogoutCommand();
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Logout successful");
+        return await ExecuteRequest(new LogoutCommand());
     }
 }
 

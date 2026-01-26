@@ -1,0 +1,92 @@
+<div class="po-form-container container-fluid py-4">
+  <div *ngIf="loading" class="d-flex justify-content-center align-items-center py-5">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading" class="form-content max-width-1000 mx-auto">
+    <div class="d-flex justify-content-start mb-4">
+      <app-unified-button
+        variant="secondary"
+        [outlined]="true"
+        size="sm"
+        (clicked)="router.navigate(['/purchase-orders'])"
+        icon="bi-arrow-left"
+        iconLibrary="bi">
+        Back to Purchase Orders
+      </app-unified-button>
+    </div>
+
+    <app-unified-card header="Purchase Order Details" customClass="border-0 shadow-sm">
+      <div class="row g-3">
+        <!-- Header Info -->
+        <div class="col-md-6">
+          <app-form-field
+            label="Supplier"
+            type="select"
+            [options]="supplierOptions"
+            [(ngModel)]="formData.supplierId"
+            [required]="true">
+          </app-form-field>
+        </div>
+        <div class="col-md-3">
+          <app-form-field
+            label="Order Date"
+            type="date"
+            [(ngModel)]="formData.orderDate"
+            [required]="true">
+          </app-form-field>
+        </div>
+        <div class="col-md-3">
+          <app-form-field
+            label="Expected Delivery"
+            type="date"
+            [(ngModel)]="formData.expectedDeliveryDate">
+          </app-form-field>
+        </div>
+
+        <div class="col-12">
+          <app-form-field
+            label="Notes"
+            type="textarea"
+            [(ngModel)]="formData.notes"
+            [rows]="2">
+          </app-form-field>
+        </div>
+
+        <div class="col-12 mt-4">
+             <div class="alert alert-info">
+                 <app-icon name="info-circle" class="me-2"></app-icon>
+                 Line items management to be implemented.
+             </div>
+        </div>
+
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+        <app-unified-button
+          variant="secondary"
+          [outlined]="true"
+          (clicked)="router.navigate(['/purchase-orders'])">
+          Cancel
+        </app-unified-button>
+
+        <app-unified-button
+          variant="primary"
+          *appHasPermission="isEditMode ? 'PurchaseOrders:Update' : 'PurchaseOrders:Create'"
+          (clicked)="save()"
+          [loading]="saving"
+          icon="bi-save"
+          iconLibrary="bi">
+          {{ isEditMode ? 'Update' : 'Create' }} Order
+        </app-unified-button>
+      </div>
+    </app-unified-card>
+  </div>
+
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false">
+  </app-toast>
+</div>

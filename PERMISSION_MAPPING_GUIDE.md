@@ -200,7 +200,7 @@ All permissions follow the pattern: `{Module}:{Action}` or `{Module}:{SubModule}
 {
   path: 'settings',
   canActivate: [AuthGuard, PermissionGuard],
-  data: { 
+  data: {
     permission: ['Settings:Company:Read', 'Settings:User:Read'],
     permissionMode: 'any'
   }
@@ -210,7 +210,7 @@ All permissions follow the pattern: `{Module}:{Action}` or `{Module}:{SubModule}
 {
   path: 'admin',
   canActivate: [AuthGuard, PermissionGuard],
-  data: { 
+  data: {
     permission: ['Users:Update', 'Roles:Update'],
     permissionMode: 'all'
   }
@@ -323,6 +323,25 @@ However, these relationships should be explicitly granted in the role configurat
 | Settings | - | ✓ | - | ✓ | - | - | - | - |
 | Theme | - | ✓ | - | ✓ | - | - | - | - |
 | Auth | - | - | ✓ | - | - | - | - | - |
+| POS | - | ✓ | ✓ | ✓ | - | - | - | Session:Open, Session:Close, Sale:Create |
+
+### POS Module
+
+#### Permissions
+- `Pos:Read` - Access POS interface
+- `Pos:Session:Open` - Open new POS session
+- `Pos:Session:Close` - Close active POS session
+- `Pos:Sale:Create` - Process new POS sale
+
+#### Routes
+- `/pos` - Requires `Pos:Read` or `SalesOrders:Create`
+
+#### API Endpoints
+- `GET /api/pos/sessions/active` - `Pos:Read`
+- `POST /api/pos/sessions/open` - `Pos:Session:Open`
+- `POST /api/pos/sessions/close` - `Pos:Session:Close`
+- `POST /api/pos/sales` - `Pos:Sale:Create`
+
 
 ## Migration Notes
 

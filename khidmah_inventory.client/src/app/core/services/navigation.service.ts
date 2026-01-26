@@ -80,6 +80,18 @@ export class NavigationService {
           icon: 'arrow-left-right',
           route: '/inventory/transfer',
           permission: 'Inventory:StockTransaction:Create'
+        },
+        {
+          label: 'Batches & Lots',
+          icon: 'archive',
+          route: '/inventory/batches',
+          permission: 'Inventory:Batch:List'
+        },
+        {
+          label: 'Serial Numbers',
+          icon: 'upc-scan',
+          route: '/inventory/serial-numbers',
+          permission: 'Inventory:SerialNumber:List'
         }
       ]
     },
@@ -120,6 +132,12 @@ export class NavigationService {
           icon: 'bag-check',
           route: '/sales-orders',
           permission: 'SalesOrders:List'
+        },
+        {
+          label: 'Point of Sale (POS)',
+          icon: 'shop',
+          route: '/pos',
+          permission: 'SalesOrders:Create'
         }
       ]
     },

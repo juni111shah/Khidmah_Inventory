@@ -647,6 +647,9 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -738,6 +741,65 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.PosSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("ClosingBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("ExpectedBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("OpeningBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PosSessions");
                 });
 
             modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.Product", b =>
@@ -1229,6 +1291,12 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("AmountPaid")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ChangeAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uniqueidentifier");
 
@@ -1256,6 +1324,9 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsPos")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
@@ -1266,6 +1337,12 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PosSessionId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1295,6 +1372,8 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                     b.HasIndex("CompanyId");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("PosSessionId");
 
                     b.HasIndex("CompanyId", "OrderNumber")
                         .IsUnique()
@@ -1747,6 +1826,9 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -1852,6 +1934,9 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uniqueidentifier");
@@ -2437,6 +2522,17 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                     b.Navigation("CreatedByUser");
                 });
 
+            modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.PosSession", b =>
+                {
+                    b.HasOne("Khidmah_Inventory.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.Product", b =>
                 {
                     b.HasOne("Khidmah_Inventory.Domain.Entities.Brand", "Brand")
@@ -2541,7 +2637,13 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Khidmah_Inventory.Domain.Entities.PosSession", "PosSession")
+                        .WithMany("SalesOrders")
+                        .HasForeignKey("PosSessionId");
+
                     b.Navigation("Customer");
+
+                    b.Navigation("PosSession");
                 });
 
             modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.SalesOrderItem", b =>
@@ -2772,6 +2874,11 @@ namespace Khidmah_Inventory.Infrastructure.Migrations
             modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.PosSession", b =>
+                {
+                    b.Navigation("SalesOrders");
                 });
 
             modelBuilder.Entity("Khidmah_Inventory.Domain.Entities.Product", b =>

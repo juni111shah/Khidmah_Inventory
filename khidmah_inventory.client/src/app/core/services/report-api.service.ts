@@ -51,5 +51,39 @@ export class ReportApiService {
     }
     return this.http.get<ApiResponse<PurchaseReport>>(`${this.apiUrl}/purchase`, { params });
   }
+
+  // PDF Export Methods
+  exportSalesReportPdf(fromDate: Date, toDate: Date, customerId?: string): Observable<Blob> {
+    const body = {
+      fromDate: fromDate.toISOString(),
+      toDate: toDate.toISOString(),
+      customerId: customerId || null
+    };
+    return this.http.post(`${this.apiUrl}/sales/pdf`, body, {
+      responseType: 'blob'
+    });
+  }
+
+  exportInventoryReportPdf(warehouseId?: string, categoryId?: string, lowStockOnly?: boolean): Observable<Blob> {
+    const body = {
+      warehouseId: warehouseId || null,
+      categoryId: categoryId || null,
+      lowStockOnly: lowStockOnly || false
+    };
+    return this.http.post(`${this.apiUrl}/inventory/pdf`, body, {
+      responseType: 'blob'
+    });
+  }
+
+  exportPurchaseReportPdf(fromDate: Date, toDate: Date, supplierId?: string): Observable<Blob> {
+    const body = {
+      fromDate: fromDate.toISOString(),
+      toDate: toDate.toISOString(),
+      supplierId: supplierId || null
+    };
+    return this.http.post(`${this.apiUrl}/purchase/pdf`, body, {
+      responseType: 'blob'
+    });
+  }
 }
 

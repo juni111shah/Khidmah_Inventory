@@ -1,6 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Inventory.Commands.CreateStockTransaction;
 using Khidmah_Inventory.Application.Features.Inventory.Queries.GetStockTransactionsList;
 using Khidmah_Inventory.Application.Features.Inventory.Queries.GetStockLevelsList;
@@ -9,85 +12,90 @@ using Khidmah_Inventory.Application.Features.Inventory.Commands.CreateSerialNumb
 using Khidmah_Inventory.Application.Features.Inventory.Queries.GetBatchesList;
 using Khidmah_Inventory.Application.Features.Inventory.Queries.GetSerialNumbersList;
 using Khidmah_Inventory.Application.Features.Inventory.Commands.RecallBatch;
+using Khidmah_Inventory.Application.Features.Inventory.Models;
+using Khidmah_Inventory.Application.Common.Models;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Inventory.Base)]
 [Authorize]
-public class InventoryController : BaseApiController
+public class InventoryController : BaseController
 {
-    [HttpPost("transactions")]
-    [AuthorizePermission("Inventory:StockTransaction:Create")]
+    public InventoryController(IMediator mediator) : base(mediator)
+    {
+    }
+
+    [HttpPost(ApiRoutes.Inventory.StockTransaction)]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.StockTransaction)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.StockTransactionCreate)]
     public async Task<IActionResult> CreateTransaction([FromBody] CreateStockTransactionCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Stock transaction created successfully");
+        return await ExecuteRequest(command);
     }
 
     [HttpPost("transactions/list")]
-    [AuthorizePermission("Inventory:StockTransaction:List")]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.StockTransactions)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.StockTransactionList)]
     public async Task<IActionResult> GetTransactions([FromBody] GetStockTransactionsListQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Stock transactions retrieved successfully");
+        return await ExecuteRequest(query);
     }
 
     [HttpPost("stock-levels/list")]
-    [AuthorizePermission("Inventory:StockLevel:List")]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.StockLevels)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.StockLevelList)]
     public async Task<IActionResult> GetStockLevels([FromBody] GetStockLevelsListQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Stock levels retrieved successfully");
+        return await ExecuteRequest(query);
     }
 
-    [HttpPost("transfer")]
-    [AuthorizePermission("Inventory:StockTransaction:Create")]
+    [HttpPost(ApiRoutes.Inventory.AdjustStock)]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.AdjustStock)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.StockTransactionCreate)]
     public async Task<IActionResult> TransferStock([FromBody] Khidmah_Inventory.Application.Features.Inventory.Commands.TransferStock.TransferStockCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Stock transferred successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPost("batches")]
-    [AuthorizePermission("Inventory:Batch:Create")]
+    [HttpPost(ApiRoutes.Inventory.Batch)]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.Batch)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.BatchCreate)]
     public async Task<IActionResult> CreateBatch([FromBody] CreateBatchCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Batch created successfully");
+        return await ExecuteRequest(command);
     }
 
     [HttpPost("batches/list")]
-    [AuthorizePermission("Inventory:Batch:List")]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.Batches)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.BatchList)]
     public async Task<IActionResult> GetBatches([FromBody] GetBatchesListQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Batches retrieved successfully");
+        return await ExecuteRequest<GetBatchesListQuery, PagedResult<BatchDto>>(query);
     }
 
     [HttpPost("batches/{id}/recall")]
-    [AuthorizePermission("Inventory:Batch:Update")]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.BatchUpdate)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.BatchUpdate)]
     public async Task<IActionResult> RecallBatch(Guid id, [FromBody] RecallBatchCommand command)
     {
         command.BatchId = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Batch recalled successfully");
+        return await ExecuteRequest(command);
     }
 
     [HttpPost("serial-numbers")]
-    [AuthorizePermission("Inventory:SerialNumber:Create")]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.SerialNumber)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.SerialNumberCreate)]
     public async Task<IActionResult> CreateSerialNumber([FromBody] CreateSerialNumberCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Serial number created successfully");
+        return await ExecuteRequest(command);
     }
 
     [HttpPost("serial-numbers/list")]
-    [AuthorizePermission("Inventory:SerialNumber:List")]
+    [ValidateApiCode(ApiValidationCodes.InventoryModuleCode.SerialNumbers)]
+    [AuthorizeResource(AuthorizePermissions.InventoryPermissions.Controller, AuthorizePermissions.InventoryPermissions.Actions.SerialNumberList)]
     public async Task<IActionResult> GetSerialNumbers([FromBody] GetSerialNumbersListQuery query)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Serial numbers retrieved successfully");
+        return await ExecuteRequest(query);
     }
 }
 

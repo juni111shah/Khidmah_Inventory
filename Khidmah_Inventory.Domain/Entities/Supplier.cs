@@ -19,6 +19,7 @@ public class Supplier : Entity
     public decimal? CreditLimit { get; private set; }
     public decimal? Balance { get; private set; } = 0;
     public bool IsActive { get; private set; } = true;
+    public string? ImageUrl { get; private set; }
 
     // Navigation properties
     public virtual ICollection<PurchaseOrder> PurchaseOrders { get; private set; } = new List<PurchaseOrder>();
@@ -76,6 +77,12 @@ public class Supplier : Entity
     public void Deactivate(Guid? updatedBy = null)
     {
         IsActive = false;
+        UpdateAuditInfo(updatedBy);
+    }
+
+    public void UpdateImage(string? imageUrl, Guid? updatedBy = null)
+    {
+        ImageUrl = imageUrl;
         UpdateAuditInfo(updatedBy);
     }
 }

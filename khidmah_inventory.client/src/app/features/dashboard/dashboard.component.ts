@@ -15,6 +15,11 @@ import { Subscription } from 'rxjs';
 import { UnifiedCardComponent } from '../../shared/components/unified-card/unified-card.component';
 import { HeaderService } from '../../core/services/header.service';
 import { NgApexchartsModule } from 'ng-apexcharts';
+import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { User } from '../../core/models/user.model';
+import { ThemeService } from '../../core/services/theme.service';
+import { ThemeConfig } from '../../core/models/theme.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,7 +34,8 @@ import { NgApexchartsModule } from 'ng-apexcharts';
     StatCardComponent,
     SparklineChartComponent,
     UnifiedCardComponent,
-    NgApexchartsModule
+    NgApexchartsModule,
+    RouterModule
   ],
   templateUrl: './dashboard.component.html',
   styles: [`
@@ -86,7 +92,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedSalesPeriod: 7 | 15 | 30 = 30;
   statCardData: StatBarData[] = [];
   selectedTimeFrame: TimeFrame = 'month';
-  
+
   // Sparkline data for summary cards
   totalProductsTrend: number[] = [];
   warehousesTrend: number[] = [];
@@ -96,17 +102,37 @@ export class DashboardComponent implements OnInit, OnDestroy {
   todayPurchasesTrend: number[] = [];
   pendingPOTrend: number[] = [];
   pendingSOTrend: number[] = [];
-  
+
   private subscriptions = new Subscription();
+
+  user: User | null = null;
+  greeting: string = '';
+
+  quickActions = [
+    { label: 'New Sale', icon: 'bi-cart-plus', route: '/sales-orders/new', color: 'primary', permission: 'SalesOrders:Create' },
+    { label: 'Add Product', icon: 'bi-box-seam', route: '/products/new', color: 'success', permission: 'Products:Create' },
+    { label: 'Purchase Order', icon: 'bi-truck', route: '/purchase-orders/new', color: 'warning', permission: 'PurchaseOrders:Create' },
+    { label: 'Customer', icon: 'bi-person-add', route: '/customers/new', color: 'info', permission: 'Customers:Create' }
+  ];
+
+  private themeConfig: ThemeConfig;
 
   constructor(
     private dashboardApiService: DashboardApiService,
     private signalRService: SignalRService,
     public router: Router,
-    private headerService: HeaderService
-  ) {}
+    private headerService: HeaderService,
+    private authService: AuthService,
+    private themeService: ThemeService
+  ) {
+    this.themeConfig = this.themeService.getTheme();
+    this.initializeChartOptions();
+  }
 
   ngOnInit(): void {
+    this.user = this.authService.getCurrentUser();
+    this.greeting = this.getGreeting();
+
     this.headerService.setHeaderInfo({
       title: 'Dashboard',
       description: 'System overview and performance metrics'
@@ -208,19 +234,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
         labels: filteredData.map(d => formatDate(d.date || '')),
         datasets: [
           {
-            label: 'Sales',
+            label: 'Sales ($)',
             data: filteredData.map(d => Number(d.sales) || 0),
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: '#6366f1',
+            borderColor: '#6366f1',
             borderWidth: 2,
             fill: true,
             tension: 0.4
           },
           {
-            label: 'Purchases',
+            label: 'Purchases ($)',
             data: filteredData.map(d => Number(d.purchases) || 0),
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: '#f43f5e',
+            borderColor: '#f43f5e',
             borderWidth: 2,
             fill: true,
             tension: 0.4
@@ -259,19 +285,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
       labels: labels,
       datasets: [
         {
-          label: 'Sales',
+          label: 'Sales ($)',
           data: salesData,
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: '#6366f1',
+          borderColor: '#6366f1',
           borderWidth: 2,
           fill: true,
           tension: 0.4
         },
         {
-          label: 'Purchases',
+          label: 'Purchases ($)',
           data: purchasesData,
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderColor: 'rgba(255, 99, 132, 1)',
+          backgroundColor: '#f43f5e',
+          borderColor: '#f43f5e',
           borderWidth: 2,
           fill: true,
           tension: 0.4
@@ -535,8 +561,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.updateUnifiedStockChart();
   }
 
-  onSalesPeriodChange(period: 7 | 15 | 30): void {
-    this.selectedSalesPeriod = period;
+  onSalesPeriodChange(period: any): void {
+    const validPeriod = [7, 15, 30].includes(Number(period)) ? (Number(period) as 7 | 15 | 30) : 30;
+    this.selectedSalesPeriod = validPeriod;
     this.updateCharts();
   }
 
@@ -551,50 +578,250 @@ export class DashboardComponent implements OnInit, OnDestroy {
     setTimeout(() => { this.showToast = false; }, 3000);
   }
 
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-  }
+  private initializeChartOptions(): void {
+    const theme = this.themeConfig;
 
-  formatNumber(value: number): string {
-    return new Intl.NumberFormat('en-US').format(value);
-  }
-
-  chartOptions: any = {
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: (value: any) => {
-            return '$' + value.toLocaleString();
-          }
+    // Initialize chart options with theme settings
+    this.chartOptions = {
+      chart: {
+        fontFamily: "'Inter', sans-serif",
+        toolbar: { show: false },
+        background: 'transparent',
+        animations: {
+          enabled: theme.animationsEnabled,
+          easing: theme.chartAnimationEasing,
+          speed: theme.chartAnimationSpeed
         }
-      }
-    },
-    plugins: {
+      },
+      stroke: {
+        curve: 'smooth',
+        width: 4,
+        lineCap: 'round'
+      },
+      markers: {
+        size: 5,
+        strokeWidth: 3,
+        hover: { size: 7 }
+      },
+      grid: {
+        show: true,
+        borderColor: '#f1f5f9',
+        strokeDashArray: 4,
+        xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: true } }
+      },
+      xaxis: {
+        labels: {
+          rotate: -45,
+          rotateAlways: false,
+          hideOverlappingLabels: true,
+          trim: true,
+          style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 }
+        },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        labels: {
+          style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
+          formatter: (val: number) => '$' + val.toLocaleString()
+        }
+      },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.6,
+          opacityTo: 0.1,
+          stops: [0, 90, 100],
+          gradientToColors: ['#818cf8']
+        }
+      },
       legend: {
-        display: true,
-        position: 'top'
+        position: 'top',
+        horizontalAlign: 'right',
+        fontSize: '13px',
+        fontWeight: 600,
+        labels: { colors: '#334155' },
+        markers: { radius: 12, width: 10, height: 10 }
       },
       tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: (context: any) => {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
+        theme: 'light',
+        x: { show: true },
+        y: { formatter: (val: number) => '$' + val.toLocaleString() }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    };
+
+    this.barChartOptions = {
+      chart: {
+        fontFamily: "'Inter', sans-serif",
+        toolbar: { show: false },
+        background: 'transparent',
+        animations: {
+          enabled: theme.animationsEnabled,
+          easing: theme.chartAnimationEasing,
+          speed: theme.chartAnimationSpeed
+        }
+      },
+      plotOptions: {
+        bar: {
+          borderRadius: parseInt(theme.chartBorderRadius),
+          borderRadiusApplication: 'around',
+          columnWidth: '35%',
+          distributed: false
+        }
+      },
+      colors: [theme.dangerColor],
+      dataLabels: {
+        enabled: false
+      },
+      grid: {
+        show: true,
+        borderColor: '#f1f5f9',
+        strokeDashArray: 4,
+        xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: true } }
+      },
+      xaxis: {
+        labels: {
+          rotate: -45,
+          rotateAlways: false,
+          hideOverlappingLabels: true,
+          trim: true,
+          maxHeight: 60,
+          style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 }
+        },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        labels: {
+          style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
+          formatter: (val: number) => '$' + val.toLocaleString()
+        }
+      },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shade: 'light',
+          type: 'vertical',
+          shadeIntensity: 0.5,
+          gradientToColors: ['#fb7185'],
+          inverseColors: true,
+          opacityFrom: 1,
+          opacityTo: 0.7,
+          stops: [0, 100]
+        }
+      },
+      legend: {
+        show: false
+      },
+      tooltip: {
+        theme: 'light',
+        y: { formatter: (val: number) => '$' + val.toLocaleString() }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    };
+
+    this.pieChartOptions = {
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            padding: 20
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+              return `${label}: $${value.toLocaleString()} (${percentage}%)`;
             }
-            if (context.parsed.y !== null) {
-              label += '$' + context.parsed.y.toLocaleString();
-            }
-            return label;
           }
         }
+      },
+      animation: {
+        animateScale: true,
+        animateRotate: true,
+        duration: theme.chartAnimationSpeed,
+        easing: 'easeInOutQuart'
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    };
+  }
+
+
+  chartOptions: any = {
+    chart: {
+      fontFamily: "'Inter', sans-serif",
+      toolbar: { show: false },
+      background: 'transparent',
+      animations: { enabled: true, easing: 'easeinout', speed: 800 }
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 4,
+      lineCap: 'round'
+    },
+    markers: {
+      size: 5,
+      strokeWidth: 3,
+      hover: { size: 7 }
+    },
+    grid: {
+      show: true,
+      borderColor: '#f1f5f9',
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } }
+    },
+    xaxis: {
+      labels: {
+        rotate: -45,
+        rotateAlways: false,
+        hideOverlappingLabels: true,
+        trim: true,
+        style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 }
+      },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
+        formatter: (val: number) => '$' + val.toLocaleString()
       }
     },
-    animation: {
-      duration: 1000,
-      easing: 'easeInOutQuart'
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.6,
+        opacityTo: 0.1,
+        stops: [0, 90, 100],
+        gradientToColors: ['#818cf8'] // Fade Indigo to Blue-ish
+      }
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'right',
+      fontSize: '13px',
+      fontWeight: 600,
+      labels: { colors: '#334155' },
+      markers: { radius: 12, width: 10, height: 10 }
+    },
+    tooltip: {
+      theme: 'light',
+      x: { show: true },
+      y: { formatter: (val: number) => '$' + val.toLocaleString() }
     },
     responsive: true,
     maintainAspectRatio: false
@@ -632,42 +859,68 @@ export class DashboardComponent implements OnInit, OnDestroy {
   };
 
   barChartOptions: any = {
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: (value: any) => {
-            return '$' + value.toLocaleString();
-          }
-        }
+    chart: {
+      fontFamily: "'Inter', sans-serif",
+      toolbar: { show: false },
+      background: 'transparent',
+      animations: { enabled: true, easing: 'easeinout', speed: 800 }
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 15,
+        borderRadiusApplication: 'around', // Rounded on both ends
+        columnWidth: '35%',
+        distributed: false
       }
     },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top'
+    colors: ['#f43f5e'], // Pink/Rose as in image
+    dataLabels: {
+      enabled: false
+    },
+    grid: {
+      show: true,
+      borderColor: '#f1f5f9',
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } }
+    },
+    xaxis: {
+      labels: {
+        rotate: -45,
+        rotateAlways: false,
+        hideOverlappingLabels: true,
+        trim: true,
+        maxHeight: 60,
+        style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 }
       },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: (context: any) => {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += '$' + context.parsed.y.toLocaleString();
-            }
-            return label;
-          }
-        }
+      axisBorder: { show: false },
+      axisTicks: { show: false }
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
+        formatter: (val: number) => '$' + val.toLocaleString()
       }
     },
-    animation: {
-      duration: 1200,
-      easing: 'easeInOutQuart',
-      delay: (context: any) => context.dataIndex * 100
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'light',
+        type: 'vertical',
+        shadeIntensity: 0.5,
+        gradientToColors: ['#fb7185'], // Lighter pink
+        inverseColors: true,
+        opacityFrom: 1,
+        opacityTo: 0.7,
+        stops: [0, 100]
+      }
+    },
+    legend: {
+      show: false
+    },
+    tooltip: {
+      theme: 'light',
+      y: { formatter: (val: number) => '$' + val.toLocaleString() }
     },
     responsive: true,
     maintainAspectRatio: false
@@ -696,7 +949,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    
+
     const monthlyData = this.dashboard.salesChartData.filter(d => {
       if (!d.date) return false;
       const date = new Date(d.date);
@@ -720,7 +973,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const date = new Date(d.date);
       const day = date.getDate();
       let weekKey = '';
-      
+
       if (day <= 7) weekKey = '1-7';
       else if (day <= 14) weekKey = '8-14';
       else if (day <= 21) weekKey = '15-21';
@@ -738,7 +991,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         label: key,
         value: avg,
         average: index === arr.length - 1 ? Math.round(
-          Object.values(weeks).flat().reduce((a, b) => a + b, 0) / 
+          Object.values(weeks).flat().reduce((a, b) => a + b, 0) /
           Object.values(weeks).flat().length
         ) : undefined
       };
@@ -830,5 +1083,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   Math = Math;
+
+  getGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  formatNumber(val: number): string {
+    if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+    if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+    return val.toString();
+  }
+
+  formatCurrencyValue(val: number): string {
+    const formatted = this.formatCurrency(val);
+    // If it's too long, simplify it
+    if (val >= 1000000) return '$' + (val / 1000000).toFixed(1) + 'M';
+    if (val >= 10000) return '$' + (val / 1000).toFixed(0) + 'K';
+    return formatted;
+  }
+
+  formatCurrency(val: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(val);
+  }
 }
 

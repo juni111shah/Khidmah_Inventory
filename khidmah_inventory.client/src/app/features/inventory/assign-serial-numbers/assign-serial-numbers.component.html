@@ -1,0 +1,92 @@
+<app-unified-modal
+  [isOpen]="show"
+  headerTitle="Assign Serial Number"
+  (closed)="onClose()"
+  size="lg"
+>
+  <form [formGroup]="serialForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-select
+        label="Product"
+        formControlName="productId"
+        [options]="productOptions"
+        [required]="true"
+        placeholder="Select product"
+      ></app-unified-select>
+
+      <app-unified-select
+        label="Warehouse"
+        formControlName="warehouseId"
+        [options]="warehouseOptions"
+        [required]="true"
+        placeholder="Select warehouse"
+      ></app-unified-select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-input
+        label="Serial Number / IMEIs"
+        formControlName="serialNumberValue"
+        [required]="true"
+        placeholder="e.g. SN-123456789"
+      ></app-unified-input>
+
+      <app-unified-select
+        label="Batch (Optional)"
+        formControlName="batchId"
+        [options]="batchOptions"
+        placeholder="Select batch"
+      ></app-unified-select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-input
+        label="Manufacture Date"
+        type="date"
+        formControlName="manufactureDate"
+      ></app-unified-input>
+
+      <app-unified-input
+        label="Expiry Date"
+        type="date"
+        formControlName="expiryDate"
+      ></app-unified-input>
+    </div>
+
+    <app-unified-input
+      label="Warranty Expiry Info"
+      formControlName="warrantyExpiryDate"
+      placeholder="e.g. 1 Year from sale"
+    ></app-unified-input>
+
+    <app-unified-textarea
+      label="Notes"
+      formControlName="notes"
+      placeholder="Any additional information..."
+    ></app-unified-textarea>
+
+    <div class="flex justify-end space-x-3 pt-4">
+      <app-unified-button
+        variant="secondary"
+        (click)="onClose()"
+        [disabled]="submitting"
+      >
+        Cancel
+      </app-unified-button>
+      <app-unified-button
+        type="submit"
+        variant="primary"
+        [loading]="submitting"
+      >
+        Assign Serial Number
+      </app-unified-button>
+    </div>
+  </form>
+</app-unified-modal>
+
+<app-toast
+  *ngIf="showToast"
+  [message]="toastMessage"
+  [type]="toastType"
+  (close)="showToast = false"
+></app-toast>

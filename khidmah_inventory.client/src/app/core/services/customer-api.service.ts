@@ -26,6 +26,14 @@ export class CustomerApiService {
     return this.http.post<ApiResponse<PagedResult<Customer>>>(`${this.apiUrl}/list`, query || {});
   }
 
+  getCustomer(id: string): Observable<ApiResponse<Customer>> {
+    return this.http.get<ApiResponse<Customer>>(`${this.apiUrl}/${id}`);
+  }
+
+  updateCustomer(id: string, request: any): Observable<ApiResponse<Customer>> {
+    return this.http.put<ApiResponse<Customer>>(`${this.apiUrl}/${id}`, request);
+  }
+
   createCustomer(request: CreateCustomerRequest): Observable<ApiResponse<Customer>> {
     return this.http.post<ApiResponse<Customer>>(this.apiUrl, request);
   }

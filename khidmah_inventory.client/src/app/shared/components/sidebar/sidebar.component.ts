@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -23,7 +24,37 @@ export interface MenuItem {
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterModule, BadgeComponent, IconComponent, HasPermissionDirective],
-  templateUrl: './sidebar.component.html'
+  templateUrl: './sidebar.component.html',
+  animations: [
+    trigger('submenuAnimation', [
+      state('collapsed', style({
+        height: '0',
+        opacity: '0',
+        overflow: 'hidden',
+        paddingTop: '0',
+        paddingBottom: '0',
+        margin: '0'
+      })),
+      state('expanded', style({
+        height: '*',
+        opacity: '1',
+        paddingTop: '*',
+        paddingBottom: '*',
+        margin: '*'
+      })),
+      transition('collapsed <=> expanded', [
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)')
+      ]),
+      transition(':enter', [
+        style({ height: '0', opacity: '0', overflow: 'hidden' }),
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: '1' }))
+      ]),
+      transition(':leave', [
+        style({ height: '*', opacity: '1', overflow: 'hidden' }),
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0', opacity: '0' }))
+      ])
+    ])
+  ]
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   @Input() menuItems: MenuItem[] = [];
@@ -33,11 +64,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
   @Output() collapsedChange = new EventEmitter<boolean>();
   @Output() menuItemClick = new EventEmitter<MenuItem>();
   @ViewChild('sidebarElement', { static: false }) sidebarElement?: ElementRef;
-  
+  @ViewChild('scrollContainer', { static: false }) scrollContainer?: ElementRef;
+
   activeRoute: string = '';
   expandedItems: Set<string> = new Set();
   filteredMenuItems: MenuItem[] = [];
   hoveredItem: MenuItem | null = null;
+  canScrollUp: boolean = false;
+  canScrollDown: boolean = false;
   private navigationSubscription?: Subscription;
 
   constructor(
@@ -48,7 +82,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.updateActiveRoute();
     this.checkAndExpandSettings();
-    
+
     // If menuItems are provided from parent (already filtered), use them
     // Otherwise, subscribe to NavigationService for dynamic filtering
     if (this.menuItems && this.menuItems.length > 0) {
@@ -62,13 +96,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
     } else {
       this.filteredMenuItems = this.menuItems;
     }
-    
+
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         this.updateActiveRoute();
         this.checkAndExpandSettings();
+        // Check scroll after navigation as menu items might change or expand
+        setTimeout(() => this.checkScroll(), 300);
       });
+
+    // Check scroll initially
+    setTimeout(() => this.checkScroll(), 500);
   }
 
   ngOnDestroy(): void {
@@ -83,7 +122,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     // Get full URL including query params
     this.activeRoute = this.router.url;
   }
-  
+
   private checkAndExpandSettings(): void {
     // Auto-expand Settings if on settings page
     if (this.activeRoute.includes('/settings') && this.menuItems) {
@@ -106,13 +145,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
         // Close this item
         this.expandedItems.delete(key);
       } else {
-        // If collapsed, close all other items first (only one open at a time)
-        if (this.collapsed && !this.isTopNavigationLayout()) {
+        // Close all other items first (only one open at a time - accordion behavior)
+        // If it's not the top navigation layout, we want this accordion effect
+        if (!this.isTopNavigationLayout()) {
           this.expandedItems.clear();
         }
         // Open this item
         this.expandedItems.add(key);
       }
+      // Check scroll after animation
+      setTimeout(() => this.checkScroll(), 300);
     }
   }
 
@@ -127,22 +169,22 @@ export class SidebarComponent implements OnInit, OnDestroy {
       const itemQuery = item.route.includes('?') ? item.route.split('?')[1] : '';
       const currentRoute = this.activeRoute.split('?')[0];
       const currentQuery = this.activeRoute.includes('?') ? this.activeRoute.split('?')[1] : '';
-      
+
       // First check if the base route matches
       if (currentRoute !== itemRoute && !currentRoute.startsWith(itemRoute + '/')) {
         return false;
       }
-      
+
       // If item has query params, they must match exactly with current query params
       if (itemQuery) {
         if (!currentQuery) {
           return false; // Item has query params but current doesn't
         }
-        
+
         // Parse query params and compare
         const itemParams = this.parseQueryParams(itemQuery);
         const currentParams = this.parseQueryParams(currentQuery);
-        
+
         // Check if all item query params match current query params exactly
         for (const key in itemParams) {
           if (itemParams[key] !== currentParams[key]) {
@@ -152,12 +194,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
         // Also check that we're not missing any required params from item
         return Object.keys(itemParams).length > 0;
       }
-      
+
       // If item has no query params but current does, check if base route matches exactly
       if (!itemQuery && currentQuery) {
         return currentRoute === itemRoute; // Exact match only, no sub-routes
       }
-      
+
       // Both have no query params, check route
       return currentRoute === itemRoute || currentRoute.startsWith(itemRoute + '/');
     }
@@ -171,7 +213,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private parseQueryParams(queryString: string): { [key: string]: string } {
     const params: { [key: string]: string } = {};
     if (!queryString) return params;
-    
+
     queryString.split('&').forEach(param => {
       const [key, value] = param.split('=');
       if (key) {
@@ -201,7 +243,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     if (item.children && item.children.length > 0) {
       // Toggle submenu (works for both collapsed and expanded states)
       this.toggleSubmenu(item);
@@ -211,7 +253,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.expandedItems.clear();
         this.hoveredItem = null;
       }
-      
+
       // Handle routes with query parameters
       const [path, queryString] = item.route.split('?');
       if (queryString) {
@@ -262,17 +304,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   shouldShowPopoutSubmenu(item: MenuItem): boolean {
-    return !!this.collapsed && 
-           !this.isTopNavigationLayout() && 
-           !!item.children && 
-           item.children.length > 0 && 
+    return !!this.collapsed &&
+           !this.isTopNavigationLayout() &&
+           !!item.children &&
+           item.children.length > 0 &&
            (this.isExpanded(item) || this.hoveredItem === item);
   }
 
   shouldShowTooltip(item: MenuItem): boolean {
-    return !!this.collapsed && 
-           !this.isTopNavigationLayout() && 
-           this.hoveredItem === item && 
+    return !!this.collapsed &&
+           !this.isTopNavigationLayout() &&
+           this.hoveredItem === item &&
            (!item.children || item.children.length === 0);
   }
 
@@ -280,7 +322,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     if (!this.collapsed || this.isTopNavigationLayout()) {
       return 0;
     }
-    
+
     // Find the nav-item element for this item
     const navItems = document.querySelectorAll('.sidebar.collapsed .nav-item');
     let itemIndex = -1;
@@ -289,13 +331,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
         itemIndex = index;
       }
     });
-    
+
     if (itemIndex >= 0 && navItems[itemIndex]) {
       const navItemElement = navItems[itemIndex] as HTMLElement;
       const rect = navItemElement.getBoundingClientRect();
       return rect.top;
     }
-    
+
     return 0;
   }
 
@@ -314,22 +356,22 @@ export class SidebarComponent implements OnInit, OnDestroy {
       const target = event.target as HTMLElement;
       const sidebar = this.sidebarElement?.nativeElement || document.querySelector('.sidebar');
       const popoutSubmenu = document.querySelector('.submenu-popout');
-      
+
       // Check if click is inside the popout submenu (including submenu links)
       const clickedInsideSubmenu = popoutSubmenu && popoutSubmenu.contains(target);
       const clickedOnSubmenuLink = target.closest('.submenu-link');
-      
+
       // If clicking on a submenu link, don't close (let navigation happen)
       if (clickedOnSubmenuLink && clickedInsideSubmenu) {
         return;
       }
-      
+
       // Check if click is on a sidebar nav-link (clicking on another menu item)
       const clickedOnNavLink = target.closest('.nav-link');
-      
+
       // Check if click is outside both sidebar and pop-out submenu
       const clickedInsideSidebar = sidebar && sidebar.contains(target);
-      
+
       // Close submenu if:
       // 1. Clicked outside both sidebar and submenu, OR
       // 2. Clicked on a different nav-link (not the one that opened the submenu)
@@ -363,6 +405,37 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       }
     }
+  }
+  @HostListener('window:resize')
+  onResize(): void {
+    this.checkScroll();
+  }
+
+  checkScroll(): void {
+    if (!this.scrollContainer) return;
+
+    const element = this.scrollContainer.nativeElement;
+    this.canScrollUp = element.scrollTop > 10;
+    this.canScrollDown = element.scrollHeight > element.clientHeight + element.scrollTop + 10;
+  }
+
+  scrollSidebar(direction: 'up' | 'down'): void {
+    if (!this.scrollContainer) return;
+
+    const element = this.scrollContainer.nativeElement;
+    const scrollAmount = 200;
+    const targetScroll = direction === 'up'
+      ? element.scrollTop - scrollAmount
+      : element.scrollTop + scrollAmount;
+
+    element.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth'
+    });
+  }
+
+  onScroll(): void {
+    this.checkScroll();
   }
 }
 

@@ -6,7 +6,12 @@
     </div>
   </div>
 
-  <nav class="sidebar-nav">
+  <nav class="sidebar-nav" #scrollContainer (scroll)="onScroll()">
+    <!-- Scroll Up Indicator -->
+    <div class="scroll-indicator scroll-up" *ngIf="canScrollUp && !collapsed" (click)="scrollSidebar('up')">
+      <app-icon name="chevron-up" size="sm"></app-icon>
+    </div>
+
     <ul class="nav-list ps-0">
       <li *ngFor="let item of displayMenuItems; let i = index"
           class="nav-item"
@@ -30,14 +35,14 @@
             <app-badge [value]="item.badge" [color]="item.badgeColor || 'primary'"></app-badge>
           </span>
           <app-icon *ngIf="item.children && item.children.length > 0 && !collapsed && !isTopNavigationLayout()"
-                    [name]="isExpanded(item) ? 'caret-down' : 'caret-right'"
+                    name="caret-right"
                     size="sm"
-                    customClass="nav-arrow">
+                    [customClass]="'nav-arrow ' + (isExpanded(item) ? 'rotated' : '')">
           </app-icon>
           <app-icon *ngIf="item.children && item.children.length > 0 && isTopNavigationLayout()"
-                    [name]="isExpanded(item) ? 'caret-down' : 'caret-right'"
+                    name="caret-right"
                     size="sm"
-                    customClass="nav-arrow">
+                    [customClass]="'nav-arrow ' + (isExpanded(item) ? 'rotated' : '')">
           </app-icon>
         </a>
         <!-- Tooltip for collapsed state -->
@@ -47,7 +52,7 @@
           {{ item.label }}
         </div>
         <!-- Regular submenu for expanded state -->
-        <ul class="submenu" *ngIf="item.children && item.children.length > 0 && isExpanded(item) && !collapsed && !isTopNavigationLayout()">
+        <ul class="submenu" [@submenuAnimation] *ngIf="item.children && item.children.length > 0 && isExpanded(item) && !collapsed && !isTopNavigationLayout()">
           <li *ngFor="let child of item.children" class="submenu-item" [class.active]="isActive(child)">
             <a
               *appHasPermission="child.permission || ''"
@@ -87,7 +92,7 @@
           </li>
         </ul>
         <!-- Top navigation submenu -->
-        <ul class="submenu" *ngIf="item.children && item.children.length > 0 && isExpanded(item) && isTopNavigationLayout()">
+        <ul class="submenu" [@submenuAnimation] *ngIf="item.children && item.children.length > 0 && isExpanded(item) && isTopNavigationLayout()">
           <li *ngFor="let child of item.children" class="submenu-item" [class.active]="isActive(child)">
             <a
               *appHasPermission="child.permission || ''"
@@ -105,6 +110,11 @@
         </ul>
       </li>
     </ul>
+
+    <!-- Scroll Down Indicator -->
+    <div class="scroll-indicator scroll-down" *ngIf="canScrollDown && !collapsed" (click)="scrollSidebar('down')">
+      <app-icon name="chevron-down" size="sm"></app-icon>
+    </div>
   </nav>
 
   <div class="sidebar-footer" *ngIf="!collapsed">

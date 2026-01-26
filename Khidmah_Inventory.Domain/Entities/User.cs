@@ -15,6 +15,7 @@ public class User : Entity
     public DateTime? LastLoginAt { get; private set; }
     public string? RefreshToken { get; private set; }
     public DateTime? RefreshTokenExpiryTime { get; private set; }
+    public string? AvatarUrl { get; private set; }
 
     // Navigation properties
     public virtual ICollection<UserRole> UserRoles { get; private set; } = new List<UserRole>();
@@ -84,6 +85,12 @@ public class User : Entity
     public void ConfirmEmail()
     {
         EmailConfirmed = true;
+    }
+
+    public void UpdateAvatar(string? avatarUrl, Guid? updatedBy = null)
+    {
+        AvatarUrl = avatarUrl;
+        UpdateAuditInfo(updatedBy);
     }
 }
 

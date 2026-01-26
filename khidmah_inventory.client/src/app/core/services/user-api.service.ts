@@ -9,6 +9,17 @@ import {
   PagedResult,
   FilterRequest
 } from '../models/user.model';
+
+interface CreateUserRequest {
+  email: string;
+  userName: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  password: string;
+  roles: string[];
+  companyId?: string;
+}
 import { ApiConfigService } from './api-config.service';
 
 @Injectable({
@@ -36,6 +47,10 @@ export class UserApiService {
     return this.http.post<ApiResponse<PagedResult<User>>>(`${this.apiUrl}/list`, filterRequest || {});
   }
 
+  createUser(user: CreateUserRequest): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(this.apiUrl, user);
+  }
+
   updateProfile(id: string, profile: UpdateUserProfileRequest): Observable<ApiResponse<User>> {
     return this.http.put<ApiResponse<User>>(`${this.apiUrl}/${id}/profile`, profile);
   }
@@ -45,11 +60,11 @@ export class UserApiService {
   }
 
   activateUser(id: string): Observable<ApiResponse<User>> {
-    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/${id}/activate`, {});
+    return this.http.patch<ApiResponse<User>>(`${this.apiUrl}/${id}/activate`, null);
   }
 
   deactivateUser(id: string): Observable<ApiResponse<User>> {
-    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/${id}/deactivate`, {});
+    return this.http.patch<ApiResponse<User>>(`${this.apiUrl}/${id}/deactivate`, null);
   }
 }
 

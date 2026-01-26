@@ -25,7 +25,7 @@ export class InventoryApiService {
   }
 
   createStockTransaction(request: CreateStockTransactionRequest): Observable<ApiResponse<StockTransaction>> {
-    return this.http.post<ApiResponse<StockTransaction>>(`${this.apiUrl}/transactions`, request);
+    return this.http.post<ApiResponse<StockTransaction>>(`${this.apiUrl}/stock-transaction`, request);
   }
 
   getStockTransactions(query?: GetStockTransactionsListQuery): Observable<ApiResponse<PagedResult<StockTransaction>>> {
@@ -45,7 +45,27 @@ export class InventoryApiService {
     batchNumber?: string;
     expiryDate?: string;
   }): Observable<ApiResponse<StockTransaction[]>> {
-    return this.http.post<ApiResponse<StockTransaction[]>>(`${this.apiUrl}/transfer`, request);
+    return this.http.post<ApiResponse<StockTransaction[]>>(`${this.apiUrl}/adjust-stock`, request);
+  }
+
+  getBatches(query?: any): Observable<ApiResponse<PagedResult<any>>> {
+    return this.http.post<ApiResponse<PagedResult<any>>>(`${this.apiUrl}/batches/list`, query || {});
+  }
+
+  recallBatch(id: string, request: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/batches/${id}/recall`, request);
+  }
+
+  getSerialNumbers(query?: any): Observable<ApiResponse<PagedResult<any>>> {
+    return this.http.post<ApiResponse<PagedResult<any>>>(`${this.apiUrl}/serial-numbers/list`, query || {});
+  }
+
+  createBatch(command: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/batches`, command);
+  }
+
+  createSerialNumber(command: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/serial-numbers`, command);
   }
 }
 

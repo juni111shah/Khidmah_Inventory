@@ -26,6 +26,14 @@ export class SalesOrderApiService {
     return this.http.post<ApiResponse<PagedResult<SalesOrder>>>(`${this.apiUrl}/list`, query || {});
   }
 
+  getSalesOrder(id: string): Observable<ApiResponse<SalesOrder>> {
+    return this.http.get<ApiResponse<SalesOrder>>(`${this.apiUrl}/${id}`);
+  }
+
+  updateSalesOrder(id: string, request: any): Observable<ApiResponse<SalesOrder>> {
+    return this.http.put<ApiResponse<SalesOrder>>(`${this.apiUrl}/${id}`, request);
+  }
+
   createSalesOrder(request: CreateSalesOrderRequest): Observable<ApiResponse<SalesOrder>> {
     return this.http.post<ApiResponse<SalesOrder>>(this.apiUrl, request);
   }

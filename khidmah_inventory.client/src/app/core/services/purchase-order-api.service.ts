@@ -30,6 +30,10 @@ export class PurchaseOrderApiService {
     return this.http.post<ApiResponse<PagedResult<PurchaseOrder>>>(`${this.apiUrl}/list`, query || {});
   }
 
+  updatePurchaseOrder(id: string, request: any): Observable<ApiResponse<PurchaseOrder>> {
+    return this.http.put<ApiResponse<PurchaseOrder>>(`${this.apiUrl}/${id}`, request);
+  }
+
   createPurchaseOrder(request: CreatePurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
     return this.http.post<ApiResponse<PurchaseOrder>>(this.apiUrl, request);
   }

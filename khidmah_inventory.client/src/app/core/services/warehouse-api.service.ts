@@ -44,11 +44,11 @@ export class WarehouseApiService {
   }
 
   activateWarehouse(id: string): Observable<ApiResponse<Warehouse>> {
-    return this.http.post<ApiResponse<Warehouse>>(`${this.apiUrl}/${id}/activate`, {});
+    return this.http.patch<ApiResponse<Warehouse>>(`${this.apiUrl}/${id}/activate`, null);
   }
 
   deactivateWarehouse(id: string): Observable<ApiResponse<Warehouse>> {
-    return this.http.post<ApiResponse<Warehouse>>(`${this.apiUrl}/${id}/deactivate`, {});
+    return this.http.patch<ApiResponse<Warehouse>>(`${this.apiUrl}/${id}/deactivate`, null);
   }
 }
 

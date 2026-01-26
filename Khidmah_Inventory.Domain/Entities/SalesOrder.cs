@@ -17,8 +17,15 @@ public class SalesOrder : Entity
     public string? Notes { get; private set; }
     public string? TermsAndConditions { get; private set; }
 
+    public Guid? PosSessionId { get; private set; }
+    public string? PaymentMethod { get; private set; } // Cash, Card, Mobile
+    public decimal AmountPaid { get; private set; }
+    public decimal ChangeAmount { get; private set; }
+    public bool IsPos { get; private set; }
+
     // Navigation properties
     public virtual Customer Customer { get; private set; } = null!;
+    public virtual PosSession? PosSession { get; private set; }
     public virtual ICollection<SalesOrderItem> Items { get; private set; } = new List<SalesOrderItem>();
 
     private SalesOrder() { }
@@ -63,6 +70,15 @@ public class SalesOrder : Entity
     {
         Status = status;
         UpdateAuditInfo(updatedBy);
+    }
+
+    public void SetPosData(Guid posSessionId, string paymentMethod, decimal amountPaid, decimal changeAmount)
+    {
+        PosSessionId = posSessionId;
+        PaymentMethod = paymentMethod;
+        AmountPaid = amountPaid;
+        ChangeAmount = changeAmount;
+        IsPos = true;
     }
 }
 

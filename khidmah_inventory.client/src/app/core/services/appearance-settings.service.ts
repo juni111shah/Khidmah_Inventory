@@ -41,13 +41,13 @@ export class AppearanceSettingsService {
     // Try to load from localStorage first (for instant display)
     const stored = this.loadFromLocalStorage();
     if (stored) {
-      this.currentSettings = stored;
+      this.currentSettings = { ...DEFAULT_APPEARANCE_SETTINGS, ...stored };
       // Sync layout with layout service
-      if (stored.layoutConfig) {
-        this.layoutService.setCustomLayout(stored.layoutConfig);
+      if (this.currentSettings.layoutConfig) {
+        this.layoutService.setCustomLayout(this.currentSettings.layoutConfig);
       }
-      this.applySettings(stored);
-      this.settingsSubject.next(stored);
+      this.applySettings(this.currentSettings);
+      this.settingsSubject.next(this.currentSettings);
     } else {
       // Load layout from layout service if no stored settings
       const currentLayout = this.layoutService.getCurrentLayout();
@@ -112,7 +112,7 @@ export class AppearanceSettingsService {
       this.ngZone.run(() => {
         // Trigger change detection
         this.appRef.tick();
-        
+
         // Also use requestAnimationFrame to ensure DOM updates are applied
         requestAnimationFrame(() => {
           // Force a reflow to ensure CSS variables are applied
@@ -185,171 +185,234 @@ export class AppearanceSettingsService {
     const root = document.documentElement;
     const body = document.body;
 
-    // Apply colors from settings
-    const colors = {
-      primaryColor: settings.primaryColor,
-      secondaryColor: settings.secondaryColor,
-      accentColor: settings.accentColor,
-      successColor: settings.successColor,
-      warningColor: settings.warningColor,
-      dangerColor: settings.dangerColor,
-      infoColor: settings.infoColor
-    };
+    // Merge with defaults to ensure all properties exist
+    const s = { ...DEFAULT_APPEARANCE_SETTINGS, ...settings };
 
-    // Apply color variables IMMEDIATELY - these will cascade to all components using CSS variables
-    root.style.setProperty('--primary-color', colors.primaryColor);
-    root.style.setProperty('--secondary-color', colors.secondaryColor);
-    root.style.setProperty('--accent-color', colors.accentColor);
-    root.style.setProperty('--success-color', colors.successColor);
-    root.style.setProperty('--warning-color', colors.warningColor);
-    root.style.setProperty('--danger-color', colors.dangerColor);
-    root.style.setProperty('--info-color', colors.infoColor);
-    root.style.setProperty('--error-color', colors.dangerColor);
-    
-    // Force update all buttons and elements directly (use setTimeout to ensure DOM is ready)
-    setTimeout(() => {
-      this.forceUpdateButtonColors(colors);
-      this.forceUpdateBadgeColors(colors);
-    }, 0);
+    // ============ COLORS ============
+    root.style.setProperty('--primary-color', s.primaryColor);
+    root.style.setProperty('--secondary-color', s.secondaryColor);
+    root.style.setProperty('--accent-color', s.accentColor);
+    root.style.setProperty('--success-color', s.successColor);
+    root.style.setProperty('--warning-color', s.warningColor);
+    root.style.setProperty('--danger-color', s.dangerColor);
+    root.style.setProperty('--info-color', s.infoColor);
+    root.style.setProperty('--error-color', s.dangerColor);
+    root.style.setProperty('--background-color', s.backgroundColor);
+    root.style.setProperty('--surface-color', s.surfaceColor);
+    root.style.setProperty('--text-color', s.textColor);
+    root.style.setProperty('--text-secondary-color', s.textSecondaryColor);
+    root.style.setProperty('--border-color', s.borderColor);
 
-    // Apply background and surface colors
-    const bgColor = '#F5F5F5';
-    const surfaceColor = '#FFFFFF';
-    const textColor = '#212121';
-    const textSecondaryColor = '#757575';
-    
-    // Apply background and text colors IMMEDIATELY
-    root.style.setProperty('--background-color', bgColor);
-    root.style.setProperty('--surface-color', surfaceColor);
-    root.style.setProperty('--text-color', textColor);
-    root.style.setProperty('--text-secondary-color', textSecondaryColor);
-    
-    // Also apply to body immediately
-    body.style.backgroundColor = bgColor;
-    body.style.color = textColor;
+    // Apply to body
+    body.style.backgroundColor = s.backgroundColor;
+    body.style.color = s.textColor;
 
-    // Apply branding
-    root.style.setProperty('--logo-url', settings.logoUrl ? `url(${settings.logoUrl})` : 'none');
-    root.style.setProperty('--logo-height', settings.logoHeight);
+    // ============ THEME MODE ============
+    body.setAttribute('data-theme', s.themeMode);
 
-    // Apply component styles
-    const componentStyles = {
-      borderRadius: settings.borderRadius,
-      buttonStyle: settings.buttonStyle,
-      cardStyle: settings.cardStyle,
-      cardElevation: settings.cardElevation
-    };
+    // ============ BRANDING ============
+    root.style.setProperty('--logo-url', s.logoUrl ? `url(${s.logoUrl})` : 'none');
+    root.style.setProperty('--logo-height', s.logoHeight);
+    root.style.setProperty('--company-name', `"${s.companyName}"`);
 
-    root.style.setProperty('--border-radius', componentStyles.borderRadius);
-    root.style.setProperty('--button-style', componentStyles.buttonStyle);
-    root.style.setProperty('--button-border-radius', componentStyles.borderRadius);
-    root.style.setProperty('--button-padding', '12px 24px');
-    root.style.setProperty('--card-style', componentStyles.cardStyle);
-    root.style.setProperty('--card-elevation', componentStyles.cardElevation.toString());
-    root.style.setProperty('--card-border-radius', componentStyles.borderRadius);
-    
-    // CRITICAL: Apply button and card style attributes to body for global application
-    body.setAttribute('data-button-style', componentStyles.buttonStyle);
-    body.setAttribute('data-card-style', componentStyles.cardStyle);
-    
-    // Remove table design attribute (not used in single template)
-    body.removeAttribute('data-table-design');
-    
-    // Remove tab style attribute (not used in single template)
-    body.removeAttribute('data-tab-style');
-    
-    // Apply card shadow based on elevation
-    const elevation = componentStyles.cardElevation || 2;
-    // Card shadows
-    const shadowMap: Record<number, string> = {
-      0: 'none',
-      1: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.12)',
-      2: '0 2px 8px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.12)',
-      3: '0 4px 12px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.15)',
-      4: '0 8px 16px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.18)',
-      5: '0 12px 24px rgba(0,0,0,0.15), 0 6px 12px rgba(0,0,0,0.2)'
-    };
-    root.style.setProperty('--card-shadow', shadowMap[elevation] || shadowMap[2]);
-    
-    // Apply input styles
-    root.style.setProperty('--input-border-radius', componentStyles.borderRadius);
-    
-    // Reset table styles to defaults (single template)
-    root.style.setProperty('--table-header-background', 'var(--background-color, #F5F5F5)');
-    root.style.setProperty('--table-header-text-color', 'var(--text-color, #212121)');
-    root.style.setProperty('--table-header-border-color', 'var(--border-color, rgba(0, 0, 0, 0.12))');
-    root.style.setProperty('--table-row-hover-color', 'rgba(0, 0, 0, 0.04)');
-    root.style.setProperty('--table-row-selected-color', 'rgba(33, 150, 243, 0.1)');
-    root.style.setProperty('--table-border-color', 'var(--border-color, rgba(0, 0, 0, 0.12))');
-    root.style.setProperty('--table-striped-background', 'rgba(0, 0, 0, 0.02)');
-    root.style.setProperty('--table-border-radius', '0px');
+    // ============ SPACING ============
+    root.style.setProperty('--spacing', s.spacingValue);
+    root.style.setProperty('--container-max-width', s.containerMaxWidth);
+    root.style.setProperty('--content-padding', s.contentPadding);
+    body.setAttribute('data-spacing', s.spacing);
 
-    // Apply typography - using default system fonts
-    root.style.setProperty('--font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif');
-    root.style.setProperty('--font-size-md', '14px');
+    // ============ RADIUS ============
+    root.style.setProperty('--border-radius', s.borderRadius);
+    root.style.setProperty('--button-border-radius', s.buttonBorderRadius);
+    root.style.setProperty('--card-border-radius', s.cardBorderRadius);
+    root.style.setProperty('--input-border-radius', s.inputBorderRadius);
+    root.style.setProperty('--modal-border-radius', s.modalBorderRadius);
+    root.style.setProperty('--dropdown-border-radius', s.dropdownBorderRadius);
+    root.style.setProperty('--badge-border-radius', s.badgeBorderRadius);
+    root.style.setProperty('--table-border-radius', s.tableBorderRadius);
+    root.style.setProperty('--chart-border-radius', s.chartBorderRadius);
 
-    // Apply layout
-    this.applyLayout(settings.layoutConfig);
+    // ============ BUTTONS ============
+    root.style.setProperty('--button-style', s.buttonStyle);
+    root.style.setProperty('--button-size', s.buttonSize);
+    root.style.setProperty('--button-padding', s.buttonPadding);
+    root.style.setProperty('--button-font-size', s.buttonFontSize);
+    root.style.setProperty('--button-font-weight', s.buttonFontWeight);
+    root.style.setProperty('--button-text-transform', s.buttonTextTransform);
+    root.style.setProperty('--button-shadow', s.buttonShadow);
+    root.style.setProperty('--button-hover-effect', s.buttonHoverEffect);
+    body.setAttribute('data-button-style', s.buttonStyle);
+    body.setAttribute('data-button-hover-effect', s.buttonHoverEffect);
 
-    // Apply animations
-    root.style.setProperty('--animations-enabled', settings.animationsEnabled ? '1' : '0');
-    const speedMultiplier = settings.animationSpeed === 'slow' ? 1.5 : settings.animationSpeed === 'fast' ? 0.5 : 1;
-    root.style.setProperty('--transition-duration', `${300 * speedMultiplier}ms`);
-    
-    // Apply animation style
-    root.style.setProperty('--animation-style', 'smooth');
-    body.setAttribute('data-animation-style', 'smooth');
+    // ============ CARDS ============
+    root.style.setProperty('--card-style', s.cardStyle);
+    root.style.setProperty('--card-elevation', (s.cardElevation ?? 2).toString());
+    root.style.setProperty('--card-padding', s.cardPadding);
+    root.style.setProperty('--card-shadow', s.cardShadow);
+    root.style.setProperty('--card-hover-shadow', s.cardHoverShadow);
+    root.style.setProperty('--card-hover-effect', s.cardHoverEffect);
+    body.setAttribute('data-card-style', s.cardStyle);
+    body.setAttribute('data-card-hover-effect', s.cardHoverEffect);
 
-    // Apply animation class
-    if (settings.animationsEnabled) {
+    // ============ FORM FIELDS ============
+    root.style.setProperty('--input-style', s.inputStyle);
+    root.style.setProperty('--input-size', s.inputSize);
+    root.style.setProperty('--input-padding', s.inputPadding);
+    root.style.setProperty('--input-font-size', s.inputFontSize);
+    root.style.setProperty('--input-border-width', s.inputBorderWidth);
+    root.style.setProperty('--input-focus-effect', s.inputFocusEffect);
+    root.style.setProperty('--label-position', s.labelPosition);
+    body.setAttribute('data-input-style', s.inputStyle);
+    body.setAttribute('data-label-position', s.labelPosition);
+
+    // ============ TYPOGRAPHY ============
+    root.style.setProperty('--font-family', s.fontFamily);
+    root.style.setProperty('--font-size', s.fontSize);
+    root.style.setProperty('--font-weight', s.fontWeight);
+    root.style.setProperty('--line-height', s.lineHeight);
+    root.style.setProperty('--heading-font-family', s.headingFontFamily);
+    root.style.setProperty('--heading-font-weight', s.headingFontWeight);
+    body.style.fontFamily = s.fontFamily;
+    body.style.fontSize = s.fontSize;
+    body.style.lineHeight = s.lineHeight;
+
+    // ============ ANIMATIONS ============
+    root.style.setProperty('--animations-enabled', s.animationsEnabled ? '1' : '0');
+    const speedMultiplier = s.animationSpeed === 'slow' ? 1.5 : s.animationSpeed === 'fast' ? 0.5 : 1;
+    root.style.setProperty('--transition-duration', `${s.transitionDuration * speedMultiplier}ms`);
+    root.style.setProperty('--animation-easing', s.animationEasing);
+    root.style.setProperty('--hover-transform', s.hoverTransform);
+    root.style.setProperty('--page-transition', s.pageTransition);
+
+    if (s.animationsEnabled) {
       body.classList.add('animations-enabled');
       body.classList.remove('animations-disabled');
     } else {
       body.classList.add('animations-disabled');
       body.classList.remove('animations-enabled');
     }
+    body.setAttribute('data-animation-speed', s.animationSpeed);
+    body.setAttribute('data-page-transition', s.pageTransition);
 
-    // Apply light theme backgrounds
-    root.style.setProperty('--background-color', '#F5F5F5');
-    root.style.setProperty('--surface-color', '#FFFFFF');
-    root.style.setProperty('--text-color', '#212121');
-    root.style.setProperty('--text-secondary-color', '#757575');
-    body.style.backgroundColor = '#F5F5F5';
-    body.style.color = '#212121';
+    // ============ SIDEBAR ============
+    root.style.setProperty('--sidebar-style', s.sidebarStyle);
+    root.style.setProperty('--sidebar-width', s.sidebarWidth);
+    root.style.setProperty('--sidebar-collapsed-width', s.sidebarCollapsedWidth);
+    root.style.setProperty('--sidebar-item-style', s.sidebarItemStyle);
+    root.style.setProperty('--sidebar-item-spacing', s.sidebarItemSpacing);
+    root.style.setProperty('--layout-sidebar-width', s.sidebarWidth);
+    body.setAttribute('data-sidebar-style', s.sidebarStyle);
+    body.setAttribute('data-sidebar-item-style', s.sidebarItemStyle);
+
+    // ============ HEADER ============
+    root.style.setProperty('--header-style', s.headerStyle);
+    root.style.setProperty('--header-height', s.headerHeight);
+    root.style.setProperty('--header-shadow', s.headerShadow);
+    root.style.setProperty('--header-border-bottom', s.headerBorderBottom);
+    root.style.setProperty('--layout-header-height', s.headerHeight);
+    body.setAttribute('data-header-style', s.headerStyle);
+
+    // ============ TABLES ============
+    root.style.setProperty('--table-style', s.tableStyle);
+    root.style.setProperty('--table-header-style', s.tableHeaderStyle);
+    root.style.setProperty('--table-row-hover-effect', s.tableRowHoverEffect);
+    body.setAttribute('data-table-style', s.tableStyle);
+    body.setAttribute('data-table-header-style', s.tableHeaderStyle);
+
+    // ============ MODALS ============
+    root.style.setProperty('--modal-backdrop', s.modalBackdrop);
+    root.style.setProperty('--modal-animation', s.modalAnimation);
+    root.style.setProperty('--modal-shadow', s.modalShadow);
+    body.setAttribute('data-modal-backdrop', s.modalBackdrop);
+    body.setAttribute('data-modal-animation', s.modalAnimation);
+
+    // ============ DROPDOWNS ============
+    root.style.setProperty('--dropdown-style', s.dropdownStyle);
+    root.style.setProperty('--dropdown-shadow', s.dropdownShadow);
+    root.style.setProperty('--dropdown-animation', s.dropdownAnimation);
+    body.setAttribute('data-dropdown-style', s.dropdownStyle);
+
+    // ============ BADGES ============
+    root.style.setProperty('--badge-style', s.badgeStyle);
+    root.style.setProperty('--badge-size', s.badgeSize);
+    body.setAttribute('data-badge-style', s.badgeStyle);
+    body.setAttribute('data-badge-size', s.badgeSize);
+
+    // ============ CHARTS ============
+    root.style.setProperty('--chart-animation-speed', (s.chartAnimationSpeed ?? 800).toString());
+    root.style.setProperty('--chart-animation-easing', s.chartAnimationEasing);
+    root.style.setProperty('--chart-color-scheme', s.chartColorScheme);
+    body.setAttribute('data-chart-color-scheme', s.chartColorScheme);
+
+    // ============ SCROLLBAR ============
+    root.style.setProperty('--scrollbar-width', s.scrollbarWidth);
+    root.style.setProperty('--scrollbar-color', s.scrollbarColor);
+    if (s.customScrollbar) {
+      body.classList.add('custom-scrollbar');
+    } else {
+      body.classList.remove('custom-scrollbar');
+    }
+
+    // ============ EFFECTS ============
+    root.style.setProperty('--glass-blur', s.glassBlur);
+    root.style.setProperty('--glass-opacity', (s.glassOpacity ?? 0.1).toString());
+    root.style.setProperty('--shadow-intensity', s.shadowIntensity);
+    if (s.glassEffect) {
+      body.classList.add('glass-effect-enabled');
+    } else {
+      body.classList.remove('glass-effect-enabled');
+    }
+    body.setAttribute('data-shadow-intensity', s.shadowIntensity);
+
+    // Apply layout
+    this.applyLayout(s.layoutConfig);
 
     // Apply sidebar and header styles
-    this.applySidebarStyles(settings);
-    this.applyHeaderStyles(settings);
-    this.applyFooterStyles(settings);
-    this.applyContentStyles(settings);
-    
-    // Force immediate re-application after a short delay to ensure DOM is ready
+    this.applySidebarStyles(s);
+    this.applyHeaderStyles(s);
+    this.applyFooterStyles(s);
+    this.applyContentStyles(s);
+
+    // Force update colors and elements
     setTimeout(() => {
-      this.forceUpdateAllElements(componentStyles);
-      
+      const colors = {
+        primaryColor: s.primaryColor,
+        secondaryColor: s.secondaryColor,
+        accentColor: s.accentColor,
+        successColor: s.successColor,
+        warningColor: s.warningColor,
+        dangerColor: s.dangerColor,
+        infoColor: s.infoColor
+      };
+      this.forceUpdateButtonColors(colors);
+      this.forceUpdateBadgeColors(colors);
+      this.forceUpdateAllElements({
+        borderRadius: s.borderRadius,
+        buttonStyle: s.buttonStyle,
+        cardStyle: s.cardStyle,
+        cardElevation: s.cardElevation
+      });
+
       // Apply layout class
-      if (settings.layoutConfig?.type) {
-        const body = document.body;
+      if (s.layoutConfig?.type) {
         Object.keys(LAYOUT_PRESETS).forEach(type => {
           body.classList.remove(`layout-${type}`);
         });
-        body.classList.add(`layout-${settings.layoutConfig.type}`);
+        body.classList.add(`layout-${s.layoutConfig.type}`);
       }
-      
     }, 100);
-    
   }
-  
+
   private applyLayout(layout: any): void {
     if (!this.isBrowser || !layout) return;
-    
+
     // Use layout service to apply layout
     if (layout.type) {
       this.layoutService.setLayout(layout.type);
     } else {
       this.layoutService.setCustomLayout(layout);
     }
-    
+
     // Apply layout class to body
     setTimeout(() => {
       const body = document.body;
@@ -364,7 +427,7 @@ export class AppearanceSettingsService {
 
   private applySidebarStyles(settings: AppearanceSettings): void {
     const root = document.documentElement;
-    
+
     // Default light sidebar - use primary color from settings
     const primaryColor = settings.primaryColor || '#667eea';
     const hexToRgb = (hex: string): string => {
@@ -381,7 +444,7 @@ export class AppearanceSettingsService {
     root.style.setProperty('--sidebar-border-color', 'rgba(0, 0, 0, 0.08)');
     root.style.setProperty('--sidebar-margin', '0px');
     root.style.setProperty('--sidebar-border-radius', '0px');
-    
+
     // Apply to sidebar element
     setTimeout(() => {
       const sidebarElement = document.querySelector('.sidebar') as HTMLElement;
@@ -394,7 +457,7 @@ export class AppearanceSettingsService {
 
   private applyHeaderStyles(settings: AppearanceSettings): void {
     const root = document.documentElement;
-    
+
     // Default header styles
     root.style.setProperty('--header-background', 'var(--surface-color)');
     root.style.setProperty('--header-text', 'var(--text-color)');
@@ -405,7 +468,7 @@ export class AppearanceSettingsService {
     root.style.setProperty('--header-margin', '0px');
     root.style.setProperty('--header-height', '72px');
     root.style.setProperty('--layout-header-height', '72px');
-    
+
     setTimeout(() => {
       const headerElement = document.querySelector('.app-header') as HTMLElement;
       if (headerElement) {
@@ -416,7 +479,7 @@ export class AppearanceSettingsService {
 
   private applyFooterStyles(settings: AppearanceSettings): void {
     const root = document.documentElement;
-    
+
     // Default footer styles
     root.style.setProperty('--footer-background', 'var(--surface-color)');
     root.style.setProperty('--footer-text', 'var(--text-color)');
@@ -427,7 +490,7 @@ export class AppearanceSettingsService {
   private applyContentStyles(settings: AppearanceSettings): void {
     const root = document.documentElement;
     const body = document.body;
-    
+
     root.style.setProperty('--content-background', 'var(--background-color)');
     root.style.setProperty('--content-text', 'var(--text-color)');
     root.style.setProperty('--hover-color', 'rgba(0, 0, 0, 0.05)');
@@ -441,7 +504,7 @@ export class AppearanceSettingsService {
     buttons.forEach(btn => {
       const btnEl = btn as HTMLElement;
       const classes = btnEl.className;
-      
+
       if (classes.includes('primary') || classes.includes('btn-primary')) {
         btnEl.style.setProperty('background-color', colors.primaryColor, 'important');
         btnEl.style.setProperty('border-color', colors.primaryColor, 'important');
@@ -471,7 +534,7 @@ export class AppearanceSettingsService {
     badges.forEach(badge => {
       const badgeEl = badge as HTMLElement;
       const classes = badgeEl.className;
-      
+
       if (classes.includes('primary') || classes.includes('badge-primary')) {
         badgeEl.style.setProperty('background-color', colors.primaryColor, 'important');
       } else if (classes.includes('secondary') || classes.includes('badge-secondary')) {

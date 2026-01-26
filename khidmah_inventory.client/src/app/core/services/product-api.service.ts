@@ -44,11 +44,11 @@ export class ProductApiService {
   }
 
   activateProduct(id: string): Observable<ApiResponse<Product>> {
-    return this.http.post<ApiResponse<Product>>(`${this.apiUrl}/${id}/activate`, {});
+    return this.http.patch<ApiResponse<Product>>(`${this.apiUrl}/${id}/activate`, null);
   }
 
   deactivateProduct(id: string): Observable<ApiResponse<Product>> {
-    return this.http.post<ApiResponse<Product>>(`${this.apiUrl}/${id}/deactivate`, {});
+    return this.http.patch<ApiResponse<Product>>(`${this.apiUrl}/${id}/deactivate`, null);
   }
 }
 

@@ -1,6 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Suppliers.Commands.CreateSupplier;
 using Khidmah_Inventory.Application.Features.Suppliers.Commands.UpdateSupplier;
 using Khidmah_Inventory.Application.Features.Suppliers.Commands.DeleteSupplier;
@@ -8,73 +11,82 @@ using Khidmah_Inventory.Application.Features.Suppliers.Commands.ActivateSupplier
 using Khidmah_Inventory.Application.Features.Suppliers.Commands.DeactivateSupplier;
 using Khidmah_Inventory.Application.Features.Suppliers.Queries.GetSupplier;
 using Khidmah_Inventory.Application.Features.Suppliers.Queries.GetSuppliersList;
+using Khidmah_Inventory.Application.Features.Suppliers.Commands.UploadSupplierImage;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Suppliers.Base)]
 [Authorize]
-public class SuppliersController : BaseApiController
+public class SuppliersController : BaseController
 {
-    [HttpGet("{id}")]
-    [AuthorizePermission("Suppliers:Read")]
-    public async Task<IActionResult> Get(Guid id)
+    public SuppliersController(IMediator mediator) : base(mediator)
     {
-        var query = new GetSupplierQuery { Id = id };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Supplier retrieved successfully");
     }
 
-    [HttpPost("list")]
-    [AuthorizePermission("Suppliers:List")]
-    public async Task<IActionResult> GetList([FromBody] GetSuppliersListQuery query)
+    [HttpPost(ApiRoutes.Suppliers.Index)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll([FromBody] FilterRequest request)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Suppliers retrieved successfully");
+        var query = new GetSuppliersListQuery { FilterRequest = request };
+        return await ExecuteRequest(query);
     }
 
-    [HttpPost]
-    [AuthorizePermission("Suppliers:Create")]
+    [HttpGet(ApiRoutes.Suppliers.GetById)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequestWithCache(new GetSupplierQuery { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Suppliers.Add)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreateSupplierCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Supplier created successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPut("{id}")]
-    [AuthorizePermission("Suppliers:Update")]
+    [HttpPut(ApiRoutes.Suppliers.Update)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.Update)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSupplierCommand command)
     {
         command.Id = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Supplier updated successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpDelete("{id}")]
-    [AuthorizePermission("Suppliers:Delete")]
+    [HttpDelete(ApiRoutes.Suppliers.Delete)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.Delete)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.Delete)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new DeleteSupplierCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Supplier deleted successfully");
+        return await ExecuteRequest(new DeleteSupplierCommand { Id = id });
     }
 
-    [HttpPost("{id}/activate")]
-    [AuthorizePermission("Suppliers:Update")]
+    [HttpPatch(ApiRoutes.Suppliers.Activate)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.Update)]
     public async Task<IActionResult> Activate(Guid id)
     {
-        var command = new ActivateSupplierCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Supplier activated successfully");
+        return await ExecuteRequest(new ActivateSupplierCommand { Id = id });
     }
 
-    [HttpPost("{id}/deactivate")]
-    [AuthorizePermission("Suppliers:Update")]
+    [HttpPatch(ApiRoutes.Suppliers.Deactivate)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.Update)]
     public async Task<IActionResult> Deactivate(Guid id)
     {
-        var command = new DeactivateSupplierCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Supplier deactivated successfully");
+        return await ExecuteRequest(new DeactivateSupplierCommand { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Suppliers.UploadImage)]
+    [ValidateApiCode(ApiValidationCodes.SuppliersModuleCode.UploadImage)]
+    [AuthorizeResource(AuthorizePermissions.SuppliersPermissions.Controller, AuthorizePermissions.SuppliersPermissions.Actions.Update)]
+    public async Task<IActionResult> UploadImage(Guid id, IFormFile file)
+    {
+        return await ExecuteRequest(new UploadSupplierImageCommand { SupplierId = id, File = file });
     }
 }
 

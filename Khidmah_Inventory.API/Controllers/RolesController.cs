@@ -1,5 +1,8 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Features.Roles.Queries.GetRole;
 using Khidmah_Inventory.Application.Features.Roles.Queries.GetRolesList;
 using Khidmah_Inventory.Application.Features.Roles.Commands.CreateRole;
@@ -7,75 +10,72 @@ using Khidmah_Inventory.Application.Features.Roles.Commands.UpdateRole;
 using Khidmah_Inventory.Application.Features.Roles.Commands.DeleteRole;
 using Khidmah_Inventory.Application.Features.Roles.Commands.AssignRoleToUser;
 using Khidmah_Inventory.Application.Features.Roles.Commands.RemoveRoleFromUser;
-using Khidmah_Inventory.API.Attributes;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Roles.Base)]
 [Authorize]
-public class RolesController : BaseApiController
+public class RolesController : BaseController
 {
-    [HttpGet("{id}")]
-    [AuthorizePermission("Roles:Read")]
-    public async Task<IActionResult> Get(Guid id)
+    public RolesController(IMediator mediator) : base(mediator)
     {
-        var query = new GetRoleQuery { Id = id };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Role retrieved successfully");
     }
 
-    [HttpGet]
-    [AuthorizePermission("Roles:List")]
-    public async Task<IActionResult> GetList()
+    [HttpGet(ApiRoutes.Roles.Index)]
+    [ValidateApiCode(ApiValidationCodes.RolesModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.RolesPermissions.Controller, AuthorizePermissions.RolesPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll()
     {
-        var query = new GetRolesListQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Roles retrieved successfully");
+        return await ExecuteRequest(new GetRolesListQuery());
     }
 
-    [HttpPost]
-    [AuthorizePermission("Roles:Create")]
+    [HttpGet(ApiRoutes.Roles.GetById)]
+    [ValidateApiCode(ApiValidationCodes.RolesModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.RolesPermissions.Controller, AuthorizePermissions.RolesPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequestWithCache(new GetRoleQuery { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Roles.Add)]
+    [ValidateApiCode(ApiValidationCodes.RolesModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.RolesPermissions.Controller, AuthorizePermissions.RolesPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreateRoleCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Role created successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPut("{id}")]
-    [AuthorizePermission("Roles:Update")]
+    [HttpPut(ApiRoutes.Roles.Update)]
+    [ValidateApiCode(ApiValidationCodes.RolesModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.RolesPermissions.Controller, AuthorizePermissions.RolesPermissions.Actions.Update)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRoleCommand command)
     {
         command.Id = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Role updated successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpDelete("{id}")]
-    [AuthorizePermission("Roles:Delete")]
+    [HttpDelete(ApiRoutes.Roles.Delete)]
+    [ValidateApiCode(ApiValidationCodes.RolesModuleCode.Delete)]
+    [AuthorizeResource(AuthorizePermissions.RolesPermissions.Controller, AuthorizePermissions.RolesPermissions.Actions.Delete)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new DeleteRoleCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Role deleted successfully");
+        return await ExecuteRequest(new DeleteRoleCommand { Id = id });
     }
 
-    [HttpPost("{roleId}/assign-user/{userId}")]
-    [AuthorizePermission("Roles:Assign")]
+    [HttpPost(ApiRoutes.Roles.AssignUser)]
+    [ValidateApiCode(ApiValidationCodes.RolesModuleCode.Assign)]
+    [AuthorizeResource(AuthorizePermissions.RolesPermissions.Controller, AuthorizePermissions.RolesPermissions.Actions.Assign)]
     public async Task<IActionResult> AssignRoleToUser(Guid roleId, Guid userId)
     {
-        var command = new AssignRoleToUserCommand { RoleId = roleId, UserId = userId };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Role assigned to user successfully");
+        return await ExecuteRequest(new AssignRoleToUserCommand { RoleId = roleId, UserId = userId });
     }
 
-    [HttpDelete("{roleId}/remove-user/{userId}")]
-    [AuthorizePermission("Roles:Assign")]
+    [HttpDelete(ApiRoutes.Roles.RemoveUser)]
+    [ValidateApiCode(ApiValidationCodes.RolesModuleCode.Assign)]
+    [AuthorizeResource(AuthorizePermissions.RolesPermissions.Controller, AuthorizePermissions.RolesPermissions.Actions.Assign)]
     public async Task<IActionResult> RemoveRoleFromUser(Guid roleId, Guid userId)
     {
-        var command = new RemoveRoleFromUserCommand { RoleId = roleId, UserId = userId };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Role removed from user successfully");
+        return await ExecuteRequest(new RemoveRoleFromUserCommand { RoleId = roleId, UserId = userId });
     }
 }
 

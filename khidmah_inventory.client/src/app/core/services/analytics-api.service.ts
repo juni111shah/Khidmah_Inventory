@@ -19,7 +19,7 @@ export class AnalyticsApiService {
   }
 
   getSalesAnalytics(request: AnalyticsRequest): Observable<ApiResponse<SalesAnalytics>> {
-    return this.http.post<ApiResponse<SalesAnalytics>>(`${this.apiUrl}/sales`, { request });
+    return this.http.post<ApiResponse<SalesAnalytics>>(`${this.apiUrl}/sales`, request);
   }
 
   getInventoryAnalytics(warehouseId?: string, categoryId?: string): Observable<ApiResponse<InventoryAnalytics>> {
@@ -34,7 +34,7 @@ export class AnalyticsApiService {
   }
 
   getProfitAnalytics(request: AnalyticsRequest): Observable<ApiResponse<ProfitAnalytics>> {
-    return this.http.post<ApiResponse<ProfitAnalytics>>(`${this.apiUrl}/profit`, { request });
+    return this.http.post<ApiResponse<ProfitAnalytics>>(`${this.apiUrl}/profit`, request);
   }
 }
 

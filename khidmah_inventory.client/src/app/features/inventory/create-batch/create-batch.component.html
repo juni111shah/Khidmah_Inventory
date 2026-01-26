@@ -1,0 +1,113 @@
+<app-unified-modal
+  [isOpen]="show"
+  headerTitle="Create New Batch"
+  (closed)="onClose()"
+  size="lg"
+>
+  <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-select
+        label="Product"
+        formControlName="productId"
+        [options]="productOptions"
+        [required]="true"
+        placeholder="Select product"
+      ></app-unified-select>
+
+      <app-unified-select
+        label="Warehouse"
+        formControlName="warehouseId"
+        [options]="warehouseOptions"
+        [required]="true"
+        placeholder="Select warehouse"
+      ></app-unified-select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-input
+        label="Batch Number"
+        formControlName="batchNumber"
+        [required]="true"
+        placeholder="e.g. BATCH-2024-001"
+      ></app-unified-input>
+
+      <app-unified-input
+        label="Lot Number"
+        formControlName="lotNumber"
+        placeholder="e.g. LOT-XYZ"
+      ></app-unified-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-input
+        label="Quantity"
+        type="number"
+        formControlName="quantity"
+        [required]="true"
+      ></app-unified-input>
+
+      <app-unified-input
+        label="Unit Cost"
+        type="number"
+        formControlName="unitCost"
+      ></app-unified-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-input
+        label="Manufacture Date"
+        type="date"
+        formControlName="manufactureDate"
+      ></app-unified-input>
+
+      <app-unified-input
+        label="Expiry Date"
+        type="date"
+        formControlName="expiryDate"
+      ></app-unified-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <app-unified-input
+        label="Supplier Name"
+        formControlName="supplierName"
+        placeholder="e.g. Acme Corp"
+      ></app-unified-input>
+
+      <app-unified-input
+        label="Supplier Batch"
+        formControlName="supplierBatchNumber"
+      ></app-unified-input>
+    </div>
+
+    <app-unified-textarea
+      label="Notes"
+      formControlName="notes"
+      placeholder="Any additional information..."
+    ></app-unified-textarea>
+
+    <div class="flex justify-end space-x-3 pt-4">
+      <app-unified-button
+        variant="secondary"
+        (click)="onClose()"
+        [disabled]="submitting"
+      >
+        Cancel
+      </app-unified-button>
+      <app-unified-button
+        type="submit"
+        variant="primary"
+        [loading]="submitting"
+      >
+        Create Batch
+      </app-unified-button>
+    </div>
+  </form>
+</app-unified-modal>
+
+<app-toast
+  *ngIf="showToast"
+  [message]="toastMessage"
+  [type]="toastType"
+  (close)="showToast = false"
+></app-toast>

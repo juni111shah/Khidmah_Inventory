@@ -1,6 +1,9 @@
 // Data Table Component Styles
 
 .data-table-container {
+  width: 100%;
+  position: relative;
+
   // Action buttons styling
   .action-btn {
     display: inline-flex;
@@ -58,6 +61,51 @@
     }
   }
 
+  // Table Responsive Enhancements
+  .table-responsive {
+    border-radius: 12px;
+    overflow-x: auto;
+    overflow-y: visible; // Try to Allow dropdowns to overflow if they are absolute, but fixed is used now
+    background: #fff;
+    width: 100%;
+
+    table {
+      width: 100%;
+      min-width: 100%;
+      table-layout: auto;
+      border-collapse: separate;
+      border-spacing: 0;
+
+      thead {
+        th {
+          white-space: nowrap;
+          font-weight: 600;
+          color: var(--text-secondary-color, #64748b);
+          border-bottom: 2px solid var(--border-color, #e2e8f0);
+          padding: 1rem 0.75rem;
+          background-color: #f8fafc;
+        }
+      }
+
+      tbody {
+        tr {
+          transition: background-color 0.2s ease;
+
+          &:hover {
+            background-color: #f8fafc;
+          }
+
+          td {
+            padding: 1rem 0.75rem;
+            color: var(--text-color, #1e293b);
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+            vertical-align: middle;
+          }
+        }
+      }
+    }
+  }
+
   // Action dropdown overlay (positioned outside table)
   .action-dropdown-overlay {
     position: fixed;
@@ -66,19 +114,20 @@
     width: 100vw;
     height: 100vh;
     pointer-events: none;
-    z-index: 1040; // Below Bootstrap modals but above other content
+    z-index: 10000; // Above everything
 
     .action-dropdown-menu {
-      position: absolute;
+      position: fixed; // Ensure it stays fixed where we put it
       background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
       padding: 8px 0;
       min-width: 180px;
       max-width: 250px;
       pointer-events: all;
       animation: dropdownFadeIn 0.2s ease-out;
       border: 1px solid rgba(0, 0, 0, 0.1);
+      z-index: 10001;
 
       .dropdown-item {
         display: flex;
@@ -96,25 +145,25 @@
         font-weight: 500;
 
         &:hover {
-          background-color: #f8f9fa;
-          color: var(--text-color, #333);
+          background-color: #f1f5f9;
+          color: var(--primary-color, #3b82f6);
         }
 
         &.text-danger {
-          color: #dc3545 !important;
+          color: #ef4444 !important;
 
           &:hover {
-            background-color: #f8d7da;
-            color: #dc3545 !important;
+            background-color: #fef2f2;
+            color: #ef4444 !important;
           }
         }
 
         &.text-success {
-          color: #28a745 !important;
+          color: #22c55e !important;
 
           &:hover {
-            background-color: #d4edda;
-            color: #28a745 !important;
+            background-color: #f0fdf4;
+            color: #22c55e !important;
           }
         }
 
@@ -142,17 +191,11 @@
     }
 
     .action-dropdown-menu {
-      min-width: 140px;
+      min-width: 150px;
 
       .dropdown-item {
-        padding: 6px 12px;
+        padding: 8px 12px;
         font-size: 13px;
-
-        app-icon {
-          width: 14px;
-          height: 14px;
-          margin-right: 6px;
-        }
       }
     }
   }
@@ -162,8 +205,9 @@
 @keyframes dropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-8px) scale(0.95);
+    transform: translateY(-10px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);

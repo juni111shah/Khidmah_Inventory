@@ -1,6 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Warehouses.Commands.CreateWarehouse;
 using Khidmah_Inventory.Application.Features.Warehouses.Commands.UpdateWarehouse;
 using Khidmah_Inventory.Application.Features.Warehouses.Commands.DeleteWarehouse;
@@ -8,73 +11,75 @@ using Khidmah_Inventory.Application.Features.Warehouses.Commands.ActivateWarehou
 using Khidmah_Inventory.Application.Features.Warehouses.Commands.DeactivateWarehouse;
 using Khidmah_Inventory.Application.Features.Warehouses.Queries.GetWarehouse;
 using Khidmah_Inventory.Application.Features.Warehouses.Queries.GetWarehousesList;
+using Khidmah_Inventory.Application.Features.Warehouses.Models;
+using Khidmah_Inventory.Application.Common.Models;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Warehouses.Base)]
 [Authorize]
-public class WarehousesController : BaseApiController
+public class WarehousesController : BaseController
 {
-    [HttpGet("{id}")]
-    [AuthorizePermission("Warehouses:Read")]
-    public async Task<IActionResult> Get(Guid id)
+    public WarehousesController(IMediator mediator) : base(mediator)
     {
-        var query = new GetWarehouseQuery { Id = id };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Warehouse retrieved successfully");
     }
 
-    [HttpPost("list")]
-    [AuthorizePermission("Warehouses:List")]
-    public async Task<IActionResult> GetList([FromBody] GetWarehousesListQuery query)
+    [HttpPost(ApiRoutes.Warehouses.Index)]
+    [ValidateApiCode(ApiValidationCodes.WarehousesModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.WarehousesPermissions.Controller, AuthorizePermissions.WarehousesPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll([FromBody] FilterRequest request)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Warehouses retrieved successfully");
+        var query = new GetWarehousesListQuery { FilterRequest = request };
+        return await ExecuteRequest<GetWarehousesListQuery, PagedResult<WarehouseDto>>(query);
     }
 
-    [HttpPost]
-    [AuthorizePermission("Warehouses:Create")]
+    [HttpGet(ApiRoutes.Warehouses.GetById)]
+    [ValidateApiCode(ApiValidationCodes.WarehousesModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.WarehousesPermissions.Controller, AuthorizePermissions.WarehousesPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequestWithCache(new GetWarehouseQuery { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Warehouses.Add)]
+    [ValidateApiCode(ApiValidationCodes.WarehousesModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.WarehousesPermissions.Controller, AuthorizePermissions.WarehousesPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreateWarehouseCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Warehouse created successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPut("{id}")]
-    [AuthorizePermission("Warehouses:Update")]
+    [HttpPut(ApiRoutes.Warehouses.Update)]
+    [ValidateApiCode(ApiValidationCodes.WarehousesModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.WarehousesPermissions.Controller, AuthorizePermissions.WarehousesPermissions.Actions.Update)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateWarehouseCommand command)
     {
         command.Id = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Warehouse updated successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpDelete("{id}")]
-    [AuthorizePermission("Warehouses:Delete")]
+    [HttpDelete(ApiRoutes.Warehouses.Delete)]
+    [ValidateApiCode(ApiValidationCodes.WarehousesModuleCode.Delete)]
+    [AuthorizeResource(AuthorizePermissions.WarehousesPermissions.Controller, AuthorizePermissions.WarehousesPermissions.Actions.Delete)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new DeleteWarehouseCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Warehouse deleted successfully");
+        return await ExecuteRequest(new DeleteWarehouseCommand { Id = id });
     }
 
-    [HttpPost("{id}/activate")]
-    [AuthorizePermission("Warehouses:Update")]
+    [HttpPatch(ApiRoutes.Warehouses.Activate)]
+    [ValidateApiCode(ApiValidationCodes.WarehousesModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.WarehousesPermissions.Controller, AuthorizePermissions.WarehousesPermissions.Actions.Update)]
     public async Task<IActionResult> Activate(Guid id)
     {
-        var command = new ActivateWarehouseCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Warehouse activated successfully");
+        return await ExecuteRequest(new ActivateWarehouseCommand { Id = id });
     }
 
-    [HttpPost("{id}/deactivate")]
-    [AuthorizePermission("Warehouses:Update")]
+    [HttpPatch(ApiRoutes.Warehouses.Deactivate)]
+    [ValidateApiCode(ApiValidationCodes.WarehousesModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.WarehousesPermissions.Controller, AuthorizePermissions.WarehousesPermissions.Actions.Update)]
     public async Task<IActionResult> Deactivate(Guid id)
     {
-        var command = new DeactivateWarehouseCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Warehouse deactivated successfully");
+        return await ExecuteRequest(new DeactivateWarehouseCommand { Id = id });
     }
 }
 

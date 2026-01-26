@@ -23,12 +23,12 @@ import { ExportComponent } from '../../../shared/components/export/export.compon
   selector: 'app-categories-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
+    CommonModule,
+    FormsModule,
     ReactiveFormsModule,
-    DataTableComponent, 
-    ToastComponent, 
-    HasPermissionDirective, 
+    DataTableComponent,
+    ToastComponent,
+    HasPermissionDirective,
     IconComponent,
     FormFieldComponent,
     UnifiedButtonComponent,
@@ -440,11 +440,11 @@ export class CategoriesListComponent implements OnInit {
       { value: null, label: 'All Categories' },
       { value: '', label: 'Root Categories Only' }
     ];
-    
+
     this.parentCategories.forEach(parent => {
       options.push({ value: parent.id, label: parent.name });
     });
-    
+
     return options;
   }
 

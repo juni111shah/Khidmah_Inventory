@@ -1,0 +1,79 @@
+<div class="image-upload-container">
+  <!-- Current Image Preview -->
+  <div *ngIf="currentImageUrl" class="current-image mb-3">
+    <label class="form-label">Current Image</label>
+    <div class="image-preview position-relative d-inline-block">
+      <img [src]="currentImageUrl" [alt]="label" class="rounded shadow-sm border"
+           style="max-width: 200px; max-height: 200px; object-fit: cover;" />
+      <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1"
+              (click)="setCurrentImage(null)" title="Remove current image">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- File Upload -->
+  <app-unified-file-upload
+    [label]="label"
+    [accept]="getAcceptTypes()"
+    [multiple]="allowMultiple"
+    [maxSize]="maxSizeMB * 1024 * 1024"
+    [hint]="hint || 'Select an image file (JPEG, PNG, GIF, WebP, or SVG). Max size: ' + maxSizeMB + 'MB'"
+    [disabled]="isUploading"
+    (fileSelected)="onFileSelected($event)"
+    (fileRemoved)="onFileRemoved($event)">
+  </app-unified-file-upload>
+
+  <!-- Additional Options for Product Images -->
+  <div *ngIf="uploadType === 'product-image' && selectedFile" class="mt-3">
+    <div class="row g-3">
+      <div class="col-md-8">
+        <label class="form-label">Alt Text (Optional)</label>
+        <input type="text" class="form-control" placeholder="Describe the image"
+               (input)="setAltText($event)" />
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="isPrimary"
+                 (change)="setIsPrimary($event)" />
+          <label class="form-check-label" for="isPrimary">
+            Set as Primary Image
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Button -->
+  <div *ngIf="selectedFile" class="mt-3">
+    <button
+      type="button"
+      class="btn btn-success"
+      [disabled]="isUploading"
+      (click)="uploadImage()">
+      <span *ngIf="isUploading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+      <i *ngIf="!isUploading" class="bi bi-cloud-upload me-2"></i>
+      {{ isUploading ? 'Uploading...' : 'Upload Image' }}
+    </button>
+
+    <!-- Progress Bar -->
+    <div *ngIf="isUploading && showProgress" class="progress mt-2" style="height: 6px;">
+      <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+           [style.width.%]="uploadProgress"></div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isUploading" class="text-center mt-3">
+    <app-loading-spinner></app-loading-spinner>
+    <p class="text-muted small mt-2">Uploading image...</p>
+  </div>
+
+  <!-- Toast -->
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false">
+  </app-toast>
+</div>

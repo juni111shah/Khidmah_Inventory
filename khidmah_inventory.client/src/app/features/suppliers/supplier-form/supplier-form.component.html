@@ -1,0 +1,193 @@
+<div class="supplier-form-container container-fluid py-4">
+  <div *ngIf="loading" class="d-flex justify-content-center align-items-center py-5">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading" class="form-content max-width-1000 mx-auto">
+    <div class="d-flex justify-content-start mb-4">
+      <app-unified-button
+        variant="secondary"
+        [outlined]="true"
+        size="sm"
+        (clicked)="router.navigate(['/suppliers'])"
+        icon="bi-arrow-left"
+        iconLibrary="bi">
+        Back to Suppliers
+      </app-unified-button>
+    </div>
+
+    <app-unified-card header="Supplier Information" customClass="border-0 shadow-sm">
+      <div class="row g-3">
+        <!-- Basic Info -->
+        <div class="col-12">
+          <h6 class="text-muted mb-3">Basic Details</h6>
+        </div>
+        <div class="col-md-6">
+          <app-form-field
+            label="Supplier Name"
+            type="text"
+            [(ngModel)]="formData.name"
+            [disabled]="isViewMode"
+            [required]="true">
+          </app-form-field>
+        </div>
+        <div class="col-md-6">
+          <app-form-field
+            label="Supplier Code"
+            type="text"
+            [(ngModel)]="formData.code"
+            [disabled]="isViewMode"
+            placeholder="Auto-generated if empty">
+          </app-form-field>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="col-12 mt-4">
+          <h6 class="text-muted mb-3">Contact Information</h6>
+        </div>
+        <div class="col-md-4">
+          <app-form-field
+            label="Contact Person"
+            type="text"
+            [(ngModel)]="formData.contactPerson"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+        <div class="col-md-4">
+          <app-form-field
+            label="Email"
+            type="email"
+            [(ngModel)]="formData.email"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+        <div class="col-md-4">
+          <app-form-field
+            label="Phone"
+            type="tel"
+            [(ngModel)]="formData.phoneNumber"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+
+        <!-- Address Info -->
+        <div class="col-12 mt-4">
+          <h6 class="text-muted mb-3">Address Details</h6>
+        </div>
+        <div class="col-12">
+          <app-form-field
+            label="Address"
+            type="text"
+            [(ngModel)]="formData.address"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+        <div class="col-md-3">
+          <app-form-field
+            label="City"
+            type="text"
+            [(ngModel)]="formData.city"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+        <div class="col-md-3">
+          <app-form-field
+            label="State"
+            type="text"
+            [(ngModel)]="formData.state"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+        <div class="col-md-3">
+          <app-form-field
+            label="Postal Code"
+            type="text"
+            [(ngModel)]="formData.postalCode"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+        <div class="col-md-3">
+          <app-form-field
+            label="Country"
+            type="text"
+            [(ngModel)]="formData.country"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+
+        <!-- Financial Info -->
+        <div class="col-12 mt-4">
+          <h6 class="text-muted mb-3">Financial Details</h6>
+        </div>
+        <div class="col-md-4">
+          <app-form-field
+            label="Tax ID"
+            type="text"
+            [(ngModel)]="formData.taxId"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+        <div class="col-md-4">
+          <app-form-field
+            label="Payment Terms"
+            type="text"
+            [(ngModel)]="formData.paymentTerms"
+            [disabled]="isViewMode"
+            placeholder="e.g. Net 30">
+          </app-form-field>
+        </div>
+        <div class="col-md-4">
+          <app-form-field
+            label="Credit Limit"
+            type="number"
+            [(ngModel)]="formData.creditLimit"
+            [disabled]="isViewMode">
+          </app-form-field>
+        </div>
+
+        <div class="col-12 mt-3" *ngIf="isEditMode || isViewMode">
+          <div class="form-check form-switch">
+             <input class="form-check-input" type="checkbox" id="isActive" [(ngModel)]="formData.isActive" [disabled]="isViewMode">
+             <label class="form-check-label" for="isActive">Active Supplier</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-5 pt-3 border-top">
+        <app-unified-button
+          variant="secondary"
+          [outlined]="true"
+          (clicked)="router.navigate(['/suppliers'])">
+          Cancel
+        </app-unified-button>
+
+        <app-unified-button
+          variant="primary"
+          *ngIf="isViewMode"
+          (clicked)="exportToPdf()"
+          icon="bi-printer"
+          iconLibrary="bi">
+          Export to PDF
+        </app-unified-button>
+
+        <app-unified-button
+          variant="primary"
+          *ngIf="!isViewMode"
+          [appHasPermission]="isEditMode ? 'Suppliers:Update' : 'Suppliers:Create'"
+          (clicked)="save()"
+          [loading]="saving"
+          icon="bi-save"
+          iconLibrary="bi">
+          {{ isEditMode ? 'Update' : 'Create' }} Supplier
+        </app-unified-button>
+      </div>
+    </app-unified-card>
+  </div>
+
+  <app-toast
+    *ngIf="showToast"
+    [message]="toastMessage"
+    [type]="toastType"
+    (close)="showToast = false">
+  </app-toast>
+</div>

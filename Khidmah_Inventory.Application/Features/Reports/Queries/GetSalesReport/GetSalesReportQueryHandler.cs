@@ -23,6 +23,16 @@ public class GetSalesReportQueryHandler : IRequestHandler<GetSalesReportQuery, R
         if (!companyId.HasValue)
             return Result<SalesReportDto>.Failure("Company context is required");
 
+        // Validate date range
+        if (request.FromDate == default || request.ToDate == default)
+            return Result<SalesReportDto>.Failure("Invalid date parameters");
+
+        if (request.FromDate >= request.ToDate)
+            return Result<SalesReportDto>.Failure("From date must be before To date");
+
+        if (request.ToDate > DateTime.UtcNow.AddDays(1))
+            return Result<SalesReportDto>.Failure("To date cannot be in the future");
+
         var query = _context.SalesOrders
             .Include(so => so.Customer)
             .Include(so => so.Items)
@@ -45,14 +55,27 @@ public class GetSalesReportQueryHandler : IRequestHandler<GetSalesReportQuery, R
             TotalOrders = orders.Count
         };
 
+        // If no orders found, return empty report
+        if (!orders.Any())
+        {
+            report.TotalCost = 0;
+            report.TotalProfit = 0;
+            report.ProfitMargin = 0;
+            report.Items = new List<SalesReportItemDto>();
+            return Result<SalesReportDto>.Success(report);
+        }
+
         // Calculate cost and profit
         decimal totalCost = 0;
         foreach (var order in orders)
         {
             foreach (var item in order.Items)
             {
+                if (item.Product == null)
+                    continue; // Skip items with missing product data
+
                 var stockLevel = await _context.StockLevels
-                    .FirstOrDefaultAsync(sl => sl.ProductId == item.ProductId && 
+                    .FirstOrDefaultAsync(sl => sl.ProductId == item.ProductId &&
                         sl.CompanyId == companyId.Value, cancellationToken);
 
                 var cost = stockLevel?.AverageCost ?? item.Product.PurchasePrice;
@@ -66,17 +89,33 @@ public class GetSalesReportQueryHandler : IRequestHandler<GetSalesReportQuery, R
             ? (report.TotalProfit / report.TotalSales) * 100 
             : 0;
 
+        // Get all product IDs from orders to fetch stock levels in one query
+        var productIds = orders.SelectMany(o => o.Items.Select(i => i.ProductId)).Distinct().ToList();
+        var stockLevels = new Dictionary<Guid, decimal?>();
+        if (productIds.Any())
+        {
+            var stockLevelList = await _context.StockLevels
+                .Where(sl => productIds.Contains(sl.ProductId) && sl.CompanyId == companyId.Value)
+                .ToListAsync(cancellationToken);
+
+            foreach (var sl in stockLevelList)
+            {
+                stockLevels[sl.ProductId] = sl.AverageCost;
+            }
+        }
+
         // Report items
         report.Items = orders.Select(order =>
         {
             decimal orderCost = 0;
             foreach (var item in order.Items)
             {
-                var stockLevel = _context.StockLevels
-                    .FirstOrDefault(sl => sl.ProductId == item.ProductId && 
-                        sl.CompanyId == companyId.Value);
+                if (item.Product == null)
+                    continue; // Skip items with missing product data
 
-                var cost = stockLevel?.AverageCost ?? item.Product.PurchasePrice;
+                var cost = stockLevels.TryGetValue(item.ProductId, out var averageCost) && averageCost.HasValue
+                    ? averageCost.Value
+                    : item.Product.PurchasePrice;
                 orderCost += item.Quantity * cost;
             }
 
@@ -84,7 +123,7 @@ public class GetSalesReportQueryHandler : IRequestHandler<GetSalesReportQuery, R
             {
                 Date = order.OrderDate,
                 OrderNumber = order.OrderNumber,
-                CustomerName = order.Customer.Name,
+                CustomerName = order.Customer?.Name ?? "Unknown Customer",
                 Amount = order.TotalAmount,
                 Cost = orderCost,
                 Profit = order.TotalAmount - orderCost

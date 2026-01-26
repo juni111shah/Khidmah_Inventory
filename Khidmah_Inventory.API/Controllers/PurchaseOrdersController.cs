@@ -1,40 +1,46 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.PurchaseOrders.Commands.CreatePurchaseOrder;
 using Khidmah_Inventory.Application.Features.PurchaseOrders.Queries.GetPurchaseOrder;
 using Khidmah_Inventory.Application.Features.PurchaseOrders.Queries.GetPurchaseOrdersList;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.PurchaseOrders.Base)]
 [Authorize]
-public class PurchaseOrdersController : BaseApiController
+public class PurchaseOrdersController : BaseController
 {
-    [HttpGet("{id}")]
-    [AuthorizePermission("PurchaseOrders:Read")]
-    public async Task<IActionResult> Get(Guid id)
+    public PurchaseOrdersController(IMediator mediator) : base(mediator)
     {
-        var query = new GetPurchaseOrderQuery { Id = id };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Purchase order retrieved successfully");
     }
 
-    [HttpPost("list")]
-    [AuthorizePermission("PurchaseOrders:List")]
-    public async Task<IActionResult> GetList([FromBody] GetPurchaseOrdersListQuery query)
+    [HttpPost(ApiRoutes.PurchaseOrders.Index)]
+    [ValidateApiCode(ApiValidationCodes.PurchaseOrdersModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.PurchaseOrdersPermissions.Controller, AuthorizePermissions.PurchaseOrdersPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll([FromBody] FilterRequest request)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Purchase orders retrieved successfully");
+        var query = new GetPurchaseOrdersListQuery { FilterRequest = request };
+        return await ExecuteRequest(query);
     }
 
-    [HttpPost]
-    [AuthorizePermission("PurchaseOrders:Create")]
+    [HttpGet(ApiRoutes.PurchaseOrders.GetById)]
+    [ValidateApiCode(ApiValidationCodes.PurchaseOrdersModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.PurchaseOrdersPermissions.Controller, AuthorizePermissions.PurchaseOrdersPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequestWithCache(new GetPurchaseOrderQuery { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.PurchaseOrders.Add)]
+    [ValidateApiCode(ApiValidationCodes.PurchaseOrdersModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.PurchaseOrdersPermissions.Controller, AuthorizePermissions.PurchaseOrdersPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreatePurchaseOrderCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Purchase order created successfully");
+        return await ExecuteRequest(command);
     }
 }
 

@@ -1,22 +1,26 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Khidmah_Inventory.Application.Features.Permissions.Queries.GetPermissionsList;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Features.Permissions.Queries.GetPermissionsList;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Permissions.Base)]
 [Authorize]
-public class PermissionsController : BaseApiController
+public class PermissionsController : BaseController
 {
-    [HttpGet]
-    [AuthorizePermission("Permissions:Read")]
-    public async Task<IActionResult> GetList([FromQuery] string? module)
+    public PermissionsController(IMediator mediator) : base(mediator)
     {
-        var query = new GetPermissionsListQuery { Module = module };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Permissions retrieved successfully");
+    }
+
+    [HttpGet(ApiRoutes.Permissions.Index)]
+    [ValidateApiCode(ApiValidationCodes.PermissionsModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.PermissionsPermissions.Controller, AuthorizePermissions.PermissionsPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll([FromQuery] string? module)
+    {
+        return await ExecuteRequest(new GetPermissionsListQuery { Module = module });
     }
 }
 

@@ -1,5 +1,10 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Users.Queries.GetUser;
 using Khidmah_Inventory.Application.Features.Users.Queries.GetUsersList;
 using Khidmah_Inventory.Application.Features.Users.Queries.GetCurrentUser;
@@ -7,74 +12,112 @@ using Khidmah_Inventory.Application.Features.Users.Commands.UpdateUserProfile;
 using Khidmah_Inventory.Application.Features.Users.Commands.ChangePassword;
 using Khidmah_Inventory.Application.Features.Users.Commands.ActivateUser;
 using Khidmah_Inventory.Application.Features.Users.Commands.DeactivateUser;
-using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.Application.Features.Users.Commands.UploadUserAvatar;
+using Khidmah_Inventory.Application.Features.Users.Commands.CreateUser;
+using Khidmah_Inventory.API.Models;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Users.Base)]
 [Authorize]
-public class UsersController : BaseApiController
+public class UsersController : BaseController
 {
-    [HttpGet("current")]
+    public UsersController(IMediator mediator) : base(mediator)
+    {
+    }
+
+    [HttpGet(ApiRoutes.Users.Current)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.ViewCurrent)]
     public async Task<IActionResult> GetCurrent()
     {
-        var query = new GetCurrentUserQuery();
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Current user retrieved successfully");
+        return await ExecuteRequest(new GetCurrentUserQuery());
     }
 
-    [HttpGet("{id}")]
-    [AuthorizePermission("Users:Read")]
-    public async Task<IActionResult> Get(Guid id)
+    [HttpGet(ApiRoutes.Users.New)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.Add)]
+    public IActionResult GetNewUserTemplate()
     {
-        var query = new GetUserQuery { Id = id };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "User retrieved successfully");
+        var template = new
+        {
+            email = "",
+            userName = "",
+            firstName = "",
+            lastName = "",
+            phoneNumber = "",
+            roles = new List<string>(),
+            companyId = (string?)null
+        };
+
+        return Ok(ApiResponse<object>.SuccessResponse(template, "New user template retrieved successfully", 200));
     }
 
-    [HttpPost("list")]
-    [AuthorizePermission("Users:List")]
-    public async Task<IActionResult> GetList([FromBody] GetUsersListQuery query)
+    [HttpPost(ApiRoutes.Users.Add)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.Add)]
+    public async Task<IActionResult> Create([FromBody] CreateUserCommand command)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Users retrieved successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPut("{id}/profile")]
-    [AuthorizePermission("Users:Update")]
+    [HttpGet(ApiRoutes.Users.GetById)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequestWithCache(new GetUserQuery { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Users.Index)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll([FromBody] FilterRequest request)
+    {
+        var query = new GetUsersListQuery { FilterRequest = request };
+        return await ExecuteRequest(query);
+    }
+
+    [HttpPut(ApiRoutes.Users.UpdateProfile)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.Update)]
     public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UpdateUserProfileCommand command)
     {
+        var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
         command.Id = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Profile updated successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPost("{id}/change-password")]
-    [AuthorizePermission("Users:Update")]
+    [HttpPost(ApiRoutes.Users.ChangePassword)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.ChangePassword)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.Update)]
     public async Task<IActionResult> ChangePassword(Guid id, [FromBody] ChangePasswordCommand command)
     {
         command.UserId = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Password changed successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPost("{id}/activate")]
-    [AuthorizePermission("Users:Update")]
+    [HttpPatch(ApiRoutes.Users.Activate)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.Update)]
     public async Task<IActionResult> Activate(Guid id)
     {
-        var command = new ActivateUserCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "User activated successfully");
+        return await ExecuteRequest(new ActivateUserCommand { Id = id });
     }
 
-    [HttpPost("{id}/deactivate")]
-    [AuthorizePermission("Users:Update")]
+    [HttpPatch(ApiRoutes.Users.Deactivate)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.Update)]
     public async Task<IActionResult> Deactivate(Guid id)
     {
-        var command = new DeactivateUserCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "User deactivated successfully");
+        return await ExecuteRequest(new DeactivateUserCommand { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Users.UploadAvatar)]
+    [ValidateApiCode(ApiValidationCodes.UsersModuleCode.UploadAvatar)]
+    [AuthorizeResource(AuthorizePermissions.UsersPermissions.Controller, AuthorizePermissions.UsersPermissions.Actions.Update)]
+    public async Task<IActionResult> UploadAvatar(Guid id, IFormFile file)
+    {
+        return await ExecuteRequest(new UploadUserAvatarCommand { UserId = id, File = file });
     }
 }
 

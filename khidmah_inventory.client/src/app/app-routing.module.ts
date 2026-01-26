@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { SettingsComponent } from './features/settings/settings.component';
 import { UsersListComponent } from './features/users/users-list/users-list.component';
 import { UserProfileComponent } from './features/users/user-profile/user-profile.component';
+import { UserFormComponent } from './features/users/user-form/user-form.component';
 import { RolesListComponent } from './features/roles/roles-list/roles-list.component';
 import { RoleFormComponent } from './features/roles/role-form/role-form.component';
 import { LoginComponent } from './features/auth/login/login.component';
@@ -20,9 +21,13 @@ import { ReportsComponent } from './features/reports/reports.component';
 import { BarcodeScannerComponent } from './features/products/barcode-scanner/barcode-scanner.component';
 import { SalesAnalyticsComponent } from './features/analytics/sales-analytics/sales-analytics.component';
 import { SuppliersListComponent } from './features/suppliers/suppliers-list/suppliers-list.component';
+import { SupplierFormComponent } from './features/suppliers/supplier-form/supplier-form.component';
 import { PurchaseOrdersListComponent } from './features/purchase-orders/purchase-orders-list/purchase-orders-list.component';
+import { PurchaseOrderFormComponent } from './features/purchase-orders/purchase-order-form/purchase-order-form.component';
 import { CustomersListComponent } from './features/customers/customers-list/customers-list.component';
+import { CustomerFormComponent } from './features/customers/customer-form/customer-form.component';
 import { SalesOrdersListComponent } from './features/sales-orders/sales-orders-list/sales-orders-list.component';
+import { SalesOrderFormComponent } from './features/sales-orders/sales-order-form/sales-order-form.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { PermissionGuard } from './core/guards/permission.guard';
 
@@ -30,13 +35,13 @@ const routes: Routes = [
   // Public routes
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
-  
+
   // Protected routes with permissions
-  { 
-    path: 'settings', 
-    component: SettingsComponent, 
+  {
+    path: 'settings',
+    component: SettingsComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: ['Settings:Company:Read', 'Settings:User:Read', 'Settings:System:Read', 'Settings:Notification:Read', 'Settings:UI:Read', 'Settings:Report:Read'],
       permissionMode: 'any',
       header: {
@@ -56,83 +61,95 @@ const routes: Routes = [
       }
     }
   },
-  { 
-    path: 'users', 
-    component: UsersListComponent, 
-    canActivate: [AuthGuard, PermissionGuard], 
-    data: { 
+  {
+    path: 'users',
+    component: UsersListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
       permission: 'Users:List',
       header: {
         title: 'Users',
         description: 'Manage system users and their access permissions'
       }
-    } 
+    }
   },
-  { 
-    path: 'users/:id', 
-    component: UserProfileComponent, 
-    canActivate: [AuthGuard, PermissionGuard], 
-    data: { 
+  {
+    path: 'users/new',
+    component: UserFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Users:Create',
+      header: {
+        title: 'Create User',
+        description: 'Add a new user to the system'
+      }
+    }
+  },
+  {
+    path: 'users/:id',
+    component: UserProfileComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
       permission: 'Users:Read',
       header: {
         title: 'User Details',
         description: 'View user information and details'
       }
-    } 
+    }
   },
-  { 
-    path: 'users/:id/edit', 
-    component: UserProfileComponent, 
-    canActivate: [AuthGuard, PermissionGuard], 
-    data: { 
+  {
+    path: 'users/:id/edit',
+    component: UserFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
       permission: 'Users:Update',
       header: {
         title: 'Edit User',
         description: 'Update user information and settings'
       }
-    } 
+    }
   },
-  { 
-    path: 'roles', 
-    component: RolesListComponent, 
-    canActivate: [AuthGuard, PermissionGuard], 
-    data: { 
+  {
+    path: 'roles',
+    component: RolesListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
       permission: 'Roles:List',
       header: {
         title: 'Roles',
         description: 'Manage user roles and their permissions'
       }
-    } 
+    }
   },
-  { 
-    path: 'roles/new', 
-    component: RoleFormComponent, 
-    canActivate: [AuthGuard, PermissionGuard], 
-    data: { 
+  {
+    path: 'roles/new',
+    component: RoleFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
       permission: 'Roles:Create',
       header: {
         title: 'New Role',
         description: 'Create a new role with custom permissions'
       }
-    } 
+    }
   },
-  { 
-    path: 'roles/:id', 
+  {
+    path: 'roles/:id',
     component: RoleFormComponent,
-    canActivate: [AuthGuard, PermissionGuard], 
-    data: { 
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
       permission: 'Roles:Read',
       header: {
         title: 'Role Details',
         description: 'View role information and permissions'
       }
-    } 
+    }
   },
   {
     path: 'roles/:id/edit',
     component: RoleFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Roles:Update',
       header: {
         title: 'Edit Role',
@@ -144,7 +161,7 @@ const routes: Routes = [
     path: 'categories',
     component: CategoriesListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Categories:List',
       header: {
         title: 'Categories',
@@ -156,7 +173,7 @@ const routes: Routes = [
     path: 'categories/new',
     component: CategoryFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Categories:Create',
       header: {
         title: 'New Category',
@@ -168,7 +185,7 @@ const routes: Routes = [
     path: 'categories/:id',
     component: CategoryFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Categories:Read',
       header: {
         title: 'Category Details',
@@ -180,7 +197,7 @@ const routes: Routes = [
     path: 'categories/:id/edit',
     component: CategoryFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Categories:Update',
       header: {
         title: 'Edit Category',
@@ -192,7 +209,7 @@ const routes: Routes = [
     path: 'products',
     component: ProductsListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Products:List',
       header: {
         title: 'Products',
@@ -204,7 +221,7 @@ const routes: Routes = [
     path: 'products/new',
     component: ProductFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Products:Create',
       header: {
         title: 'New Product',
@@ -216,7 +233,7 @@ const routes: Routes = [
     path: 'products/:id',
     component: ProductFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Products:Read',
       header: {
         title: 'Product Details',
@@ -228,7 +245,7 @@ const routes: Routes = [
     path: 'products/:id/edit',
     component: ProductFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Products:Update',
       header: {
         title: 'Edit Product',
@@ -251,7 +268,7 @@ const routes: Routes = [
     path: 'warehouses',
     component: WarehousesListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Warehouses:List',
       header: {
         title: 'Warehouses',
@@ -263,7 +280,7 @@ const routes: Routes = [
     path: 'warehouses/new',
     component: WarehouseFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Warehouses:Create',
       header: {
         title: 'New Warehouse',
@@ -275,7 +292,7 @@ const routes: Routes = [
     path: 'warehouses/:id',
     component: WarehouseFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Warehouses:Read',
       header: {
         title: 'Warehouse Details',
@@ -287,7 +304,7 @@ const routes: Routes = [
     path: 'warehouses/:id/edit',
     component: WarehouseFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Warehouses:Update',
       header: {
         title: 'Edit Warehouse',
@@ -299,7 +316,7 @@ const routes: Routes = [
     path: 'inventory/stock-levels',
     component: StockLevelsListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Inventory:StockLevel:List',
       header: {
         title: 'Stock Levels',
@@ -311,7 +328,7 @@ const routes: Routes = [
     path: 'inventory/transfer',
     component: StockTransferComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Inventory:StockTransaction:Create',
       header: {
         title: 'Transfer Stock',
@@ -320,10 +337,34 @@ const routes: Routes = [
     }
   },
   {
+    path: 'inventory/batches',
+    loadComponent: () => import('./features/inventory/batches-list/batches-list.component').then(m => m.BatchesListComponent),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Inventory:Batch:List',
+      header: {
+        title: 'Batches & Lots',
+        description: 'Manage product batches and expiry dates'
+      }
+    }
+  },
+  {
+    path: 'inventory/serial-numbers',
+    loadComponent: () => import('./features/inventory/serial-numbers-list/serial-numbers-list.component').then(m => m.SerialNumbersListComponent),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Inventory:SerialNumber:List',
+      header: {
+        title: 'Serial Numbers',
+        description: 'Manage unique item serial numbers'
+      }
+    }
+  },
+  {
     path: 'reports',
     component: ReportsComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: ['Reports:Sales:Read', 'Reports:Inventory:Read', 'Reports:Purchase:Read'],
       permissionMode: 'any',
       header: {
@@ -336,7 +377,7 @@ const routes: Routes = [
     path: 'analytics/sales',
     component: SalesAnalyticsComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Analytics:Sales:Read',
       header: {
         title: 'Sales Analytics',
@@ -348,7 +389,7 @@ const routes: Routes = [
     path: 'suppliers',
     component: SuppliersListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Suppliers:List',
       header: {
         title: 'Suppliers',
@@ -357,10 +398,46 @@ const routes: Routes = [
     }
   },
   {
+    path: 'suppliers/new',
+    component: SupplierFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Suppliers:Create',
+      header: {
+        title: 'New Supplier',
+        description: 'Register a new supplier'
+      }
+    }
+  },
+  {
+    path: 'suppliers/:id',
+    component: SupplierFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Suppliers:Read',
+      header: {
+        title: 'Supplier Details',
+        description: 'View supplier information'
+      }
+    }
+  },
+  {
+    path: 'suppliers/:id/edit',
+    component: SupplierFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Suppliers:Update',
+      header: {
+        title: 'Edit Supplier',
+        description: 'Update supplier information'
+      }
+    }
+  },
+  {
     path: 'purchase-orders',
     component: PurchaseOrdersListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'PurchaseOrders:List',
       header: {
         title: 'Purchase Orders',
@@ -369,10 +446,46 @@ const routes: Routes = [
     }
   },
   {
+    path: 'purchase-orders/new',
+    component: PurchaseOrderFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'PurchaseOrders:Create',
+      header: {
+        title: 'New Purchase Order',
+        description: 'Create a new purchase order'
+      }
+    }
+  },
+  {
+    path: 'purchase-orders/:id',
+    component: PurchaseOrderFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'PurchaseOrders:Read',
+      header: {
+        title: 'Purchase Order Details',
+        description: 'View purchase order details'
+      }
+    }
+  },
+  {
+    path: 'purchase-orders/:id/edit',
+    component: PurchaseOrderFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'PurchaseOrders:Update',
+      header: {
+        title: 'Edit Purchase Order',
+        description: 'Modify purchase order details'
+      }
+    }
+  },
+  {
     path: 'customers',
     component: CustomersListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Customers:List',
       header: {
         title: 'Customers',
@@ -381,10 +494,46 @@ const routes: Routes = [
     }
   },
   {
+    path: 'customers/new',
+    component: CustomerFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Customers:Create',
+      header: {
+        title: 'New Customer',
+        description: 'Register a new customer'
+      }
+    }
+  },
+  {
+    path: 'customers/:id',
+    component: CustomerFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Customers:Read',
+      header: {
+        title: 'Customer Details',
+        description: 'View customer information'
+      }
+    }
+  },
+  {
+    path: 'customers/:id/edit',
+    component: CustomerFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Customers:Update',
+      header: {
+        title: 'Edit Customer',
+        description: 'Update customer information'
+      }
+    }
+  },
+  {
     path: 'sales-orders',
     component: SalesOrdersListComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'SalesOrders:List',
       header: {
         title: 'Sales Orders',
@@ -392,13 +541,60 @@ const routes: Routes = [
       }
     }
   },
-  
+  {
+    path: 'sales-orders/new',
+    component: SalesOrderFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'SalesOrders:Create',
+      header: {
+        title: 'New Sales Order',
+        description: 'Create a new sales order'
+      }
+    }
+  },
+  {
+    path: 'sales-orders/:id',
+    component: SalesOrderFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'SalesOrders:Read',
+      header: {
+        title: 'Sales Order Details',
+        description: 'View sales order details'
+      }
+    }
+  },
+  {
+    path: 'sales-orders/:id/edit',
+    component: SalesOrderFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'SalesOrders:Update',
+      header: {
+        title: 'Edit Sales Order',
+        description: 'Modify sales order details'
+      }
+    }
+  },
+  {
+    path: 'pos',
+    loadChildren: () => import('./features/pos/pos.module').then(m => m.PosModule),
+    canActivate: [AuthGuard],
+    data: {
+      header: {
+        title: 'Point of Sale',
+        description: 'Process retail sales and manage register sessions'
+      }
+    }
+  },
+
   // Dashboard route
   {
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [AuthGuard, PermissionGuard],
-    data: { 
+    data: {
       permission: 'Dashboard:Read',
       header: {
         title: 'Dashboard',
@@ -406,7 +602,7 @@ const routes: Routes = [
       }
     }
   },
-  
+
   // Default route
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: '/dashboard' }

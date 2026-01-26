@@ -1,13 +1,13 @@
-import { Component, Input, Output, EventEmitter, OnInit, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FilterFieldComponent } from '../filter-field/filter-field.component';
-import { 
-  DataTableColumn, 
-  DataTableAction, 
-  DataTableConfig, 
+import {
+  DataTableColumn,
+  DataTableAction,
+  DataTableConfig,
   DataTableFilter,
-  DataTableSort 
+  DataTableSort
 } from '../../models/data-table.model';
 import { FilterRequest, SearchMode } from '../../../core/models/user.model';
 import { IconComponent } from '../icon/icon.component';
@@ -49,7 +49,7 @@ export class DataTableComponent<T = any> implements OnInit {
   @Input() actions: DataTableAction<T>[] = [];
   @Input() pagedResult: any = null; // PagedResult<T>
   @Input() filterRequest: FilterRequest = {};
-  
+
   @Output() filterChange = new EventEmitter<FilterRequest>();
   @Output() pageChange = new EventEmitter<number>();
   @Output() sortChange = new EventEmitter<DataTableSort>();
@@ -221,7 +221,7 @@ export class DataTableComponent<T = any> implements OnInit {
 
       this.filterRequest.pagination.sortBy = this.currentSort.column;
       this.filterRequest.pagination.sortOrder = this.currentSort.direction === 'asc' ? 'ascending' : 'descending';
-      
+
       this.sortChange.emit(this.currentSort);
       this.filterChange.emit(this.filterRequest);
     }
@@ -283,7 +283,7 @@ export class DataTableComponent<T = any> implements OnInit {
     }
 
     const value = (row as any)[column.key];
-    
+
     if (column.format) {
       return column.format(value);
     }
@@ -330,6 +330,15 @@ export class DataTableComponent<T = any> implements OnInit {
     }
   }
 
+  // Bind close on scroll to prevent detached menus
+  private onScroll = (): void => {
+    if (this.hasOpenActionDropdown()) {
+      this.ngZone.run(() => {
+        this.closeActionDropdown();
+      });
+    }
+  };
+
   toggleActionDropdown(row: T, event?: Event): void {
     if (event) {
       event.stopPropagation();
@@ -348,20 +357,31 @@ export class DataTableComponent<T = any> implements OnInit {
         const button = (event.target as HTMLElement).closest('button');
         if (button) {
           const rect = button.getBoundingClientRect();
+
+          // Calculate if menu should open upwards
+          const estimatedHeight = (this.currentActionDropdownActions.length * 40) + 16; // 40px per item + padding
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const openUpwards = spaceBelow < estimatedHeight && rect.top > estimatedHeight;
+
           this.dropdownPosition = {
-            top: rect.bottom + window.scrollY,
-            left: rect.right + window.scrollX - 200 // Align to right edge of button
+            top: openUpwards ? undefined : (rect.bottom + 5),
+            bottom: openUpwards ? (window.innerHeight - rect.top + 5) : undefined,
+            right: window.innerWidth - rect.right
           };
+
+          // Add scroll listener to close dropdown on scroll
+          window.addEventListener('scroll', this.onScroll, true);
         }
       }
     }
   }
 
-  dropdownPosition: { top: number; left: number } | null = null;
+  dropdownPosition: { top?: number; bottom?: number; right: number } | null = null;
 
   closeActionDropdown(): void {
     this.currentActionDropdownRow = null;
     this.currentActionDropdownActions = [];
+    window.removeEventListener('scroll', this.onScroll, true);
   }
 
   hasOpenActionDropdown(): boolean {
@@ -423,5 +443,5 @@ export class DataTableComponent<T = any> implements OnInit {
     return this.effectiveConfig.searchPlaceholder || 'Search...';
   }
 
-  constructor(public permissionService: PermissionService) {}
+  constructor(public permissionService: PermissionService, private ngZone: NgZone) {}
 }

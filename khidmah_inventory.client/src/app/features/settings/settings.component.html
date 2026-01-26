@@ -7,66 +7,278 @@
     (close)="showToast = false">
   </app-toast>
 
-  <div class="d-flex justify-content-end mb-4 gap-2">
-    <app-unified-button variant="secondary" [outlined]="true" (clicked)="resetSettings()" [disabled]="saving" icon="bi-arrow-counterclockwise" iconLibrary="bi">
-      Reset
+  <!-- Action Bar -->
+  <div class="actions-container d-flex justify-content-end gap-3 mb-4 animate__animated animate__fadeIn">
+    <app-unified-button
+      variant="secondary"
+      [outlined]="true"
+      size="sm"
+      (clicked)="resetSettings()"
+      [disabled]="saving"
+      icon="arrow-counterclockwise"
+      iconLibrary="bi">
+      Reset to Default
     </app-unified-button>
-    <app-unified-button variant="primary" (clicked)="saveSettings()" [loading]="saving" icon="bi-check-lg" iconLibrary="bi">
-      Save Changes
+    <app-unified-button
+      variant="primary"
+      size="sm"
+      (clicked)="saveSettings()"
+      [loading]="saving"
+      icon="check-lg"
+      iconLibrary="bi">
+      Save All Changes
     </app-unified-button>
   </div>
 
-  <!-- Navigation Tabs -->
-  <ul class="nav nav-tabs mb-4">
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeSection === 'colors'" (click)="setActiveSection('colors')">
-        <i class="bi bi-palette-fill me-2"></i>Colors
+  <div class="settings-content-wrapper p-0">
+    <!-- Standard Application Tabs Header -->
+    <div class="tabs-header px-4 pt-3 animate__animated animate__fadeIn">
+      <button class="tab-button" [class.active]="activeTab === 'colors'" (click)="setActiveTab('colors')">
+        <i class="bi bi-palette-fill"></i>
+        <span>Theme Colors</span>
       </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeSection === 'components'" (click)="setActiveSection('components')">
-        <i class="bi bi-sliders me-2"></i>Components
+      <button class="tab-button" [class.active]="activeTab === 'layout'" (click)="setActiveTab('layout')">
+        <i class="bi bi-layout-sidebar"></i>
+        <span>Layout</span>
       </button>
-    </li>
-  </ul>
+      <button class="tab-button" [class.active]="activeTab === 'radius'" (click)="setActiveTab('radius')">
+        <i class="bi bi-bounding-box"></i>
+        <span>Radius</span>
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'buttons'" (click)="setActiveTab('buttons')">
+        <i class="bi bi-square-fill"></i>
+        <span>Buttons</span>
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'cards'" (click)="setActiveTab('cards')">
+        <i class="bi bi-card-heading"></i>
+        <span>Cards</span>
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'fields'" (click)="setActiveTab('fields')">
+        <i class="bi bi-input-cursor-text"></i>
+        <span>Inputs</span>
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'typography'" (click)="setActiveTab('typography')">
+        <i class="bi bi-fonts"></i>
+        <span>Typography</span>
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'animations'" (click)="setActiveTab('animations')">
+        <i class="bi bi-lightning-fill"></i>
+        <span>Motion</span>
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'components'" (click)="setActiveTab('components')">
+        <i class="bi bi-grid-3x3-gap-fill"></i>
+        <span>UI</span>
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'effects'" (click)="setActiveTab('effects')">
+        <i class="bi bi-stars"></i>
+        <span>Effects</span>
+      </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="settings-content-area animate__animated animate__fadeIn px-4">
+
 
   <!-- Tab Content -->
   <div class="tab-content">
-    <!-- Colors Section -->
-    <div *ngIf="activeSection === 'colors'" class="tab-pane fade show active">
+
+    <!-- COLORS & THEME TAB -->
+    <div *ngIf="activeTab === 'colors'" class="tab-pane fade show active">
       <div class="row g-4">
         <div class="col-lg-8">
-          <app-unified-card header="Color Customization" customClass="border-0 shadow-sm">
+          <app-unified-card header="Color Palette" customClass="border-0 shadow-sm mb-4">
             <div class="row g-3">
-              <div *ngFor="let color of ['primaryColor', 'secondaryColor', 'accentColor', 'successColor', 'warningColor', 'dangerColor', 'infoColor']" class="col-md-6">
-                <label class="form-label text-capitalize">{{ color.replace('Color', '') }} Color</label>
-                <div class="input-group">
-                  <input type="color" class="form-control form-control-color" [value]="$any(settings)[color]" (input)="updateColor($any(color), $any($event.target).value)" style="width: 50px;">
-                  <input type="text" class="form-control" [value]="$any(settings)[color]" (input)="updateColor($any(color), $any($event.target).value)">
+              <!-- Primary Colors -->
+              <div class="col-12">
+                <h6 class="fw-bold mb-3">Primary Colors</h6>
+              </div>
+              <div *ngFor="let color of ['primaryColor', 'secondaryColor', 'accentColor']" class="col-md-4">
+                <label class="form-label text-capitalize">{{ color.replace('Color', '') }}</label>
+                <div class="color-picker-wrapper">
+                  <input type="color" class="form-control-color" [value]="$any(settings)[color]" (input)="updateSetting($any(color), $any($event.target).value)">
+                  <input type="text" class="color-value" [value]="$any(settings)[color]" (input)="updateSetting($any(color), $any($event.target).value)">
                 </div>
+              </div>
+
+              <!-- Status Colors -->
+              <div class="col-12 mt-4">
+                <h6 class="fw-bold mb-3">Status Colors</h6>
+              </div>
+              <div *ngFor="let color of ['successColor', 'warningColor', 'dangerColor', 'infoColor']" class="col-md-3">
+                <label class="form-label text-capitalize">{{ color.replace('Color', '') }}</label>
+                <div class="color-picker-wrapper">
+                  <input type="color" class="form-control-color" [value]="$any(settings)[color]" (input)="updateSetting($any(color), $any($event.target).value)">
+                  <input type="text" class="color-value" [value]="$any(settings)[color]" (input)="updateSetting($any(color), $any($event.target).value)">
+                </div>
+              </div>
+
+              <!-- Background & Text Colors -->
+              <div class="col-12 mt-4">
+                <h6 class="fw-bold mb-3">Background & Text</h6>
+              </div>
+              <div *ngFor="let color of ['backgroundColor', 'surfaceColor', 'textColor', 'textSecondaryColor', 'borderColor']" class="col-md-4">
+                <label class="form-label text-capitalize">{{ color.replace('Color', ' ') }}</label>
+                <div class="color-picker-wrapper">
+                  <input type="color" class="form-control-color" [value]="$any(settings)[color]" (input)="updateSetting($any(color), $any($event.target).value)">
+                  <input type="text" class="color-value" [value]="$any(settings)[color]" (input)="updateSetting($any(color), $any($event.target).value)">
+                </div>
+              </div>
+            </div>
+          </app-unified-card>
+
+          <app-unified-card header="Theme Mode" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Theme Mode"
+                  type="select"
+                  [options]="themeModeOptions"
+                  [(ngModel)]="settings.themeMode"
+                  (ngModelChange)="updateSetting('themeMode', $event)">
+                </app-form-field>
               </div>
             </div>
           </app-unified-card>
         </div>
 
         <div class="col-lg-4">
-          <app-unified-card header="Live Preview" customClass="border-0 shadow-sm h-100">
-            <p class="text-muted small mb-4">This is how your colors will look in the application.</p>
-            
-            <div class="card mb-4" [style.border-color]="settings.primaryColor">
-              <div class="card-header fw-bold" [style.background-color]="settings.primaryColor + '10'" [style.color]="settings.primaryColor">Sample Card</div>
-              <div class="card-body">
-                <p class="small">Interactive elements will use your chosen palette.</p>
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <button class="btn btn-sm text-white" [style.background-color]="settings.primaryColor">Primary</button>
-                  <button class="btn btn-sm btn-outline-secondary" [style.border-color]="settings.secondaryColor" [style.color]="settings.secondaryColor">Secondary</button>
+          <div class="preview-card-container">
+            <h5 class="settings-section-title">Live Preview</h5>
+            <div class="preview-window">
+              <div class="preview-header">
+                <div class="dot" style="background: #ff5f56"></div>
+                <div class="dot" style="background: #ffbd2e"></div>
+                <div class="dot" style="background: #27c93f"></div>
+              </div>
+              <div class="p-4" [style.background-color]="settings.backgroundColor">
+                <div class="card p-3 mb-3 border-0 shadow-sm" [style.background-color]="settings.surfaceColor" [style.border-radius]="settings.cardBorderRadius">
+                  <h6 class="fw-bold mb-2" [style.color]="settings.primaryColor">Modern Dashboard</h6>
+                  <p class="small mb-3" [style.color]="settings.textSecondaryColor">Experience real-time personalization</p>
+
+                  <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button class="btn btn-sm text-white border-0" [style.background-color]="settings.primaryColor" [style.border-radius]="settings.buttonBorderRadius">Action</button>
+                    <button class="btn btn-sm text-white border-0" [style.background-color]="settings.accentColor" [style.border-radius]="settings.buttonBorderRadius">New</button>
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-2">
+                    <span class="badge" [style.background-color]="settings.successColor" [style.border-radius]="settings.badgeBorderRadius">Paid</span>
+                    <span class="badge" [style.background-color]="settings.dangerColor" [style.border-radius]="settings.badgeBorderRadius">Urgent</span>
+                  </div>
                 </div>
-                <div class="d-flex flex-wrap gap-1">
-                  <span class="badge" [style.background-color]="settings.successColor">Success</span>
-                  <span class="badge" [style.background-color]="settings.warningColor">Warning</span>
-                  <span class="badge" [style.background-color]="settings.dangerColor">Danger</span>
-                  <span class="badge" [style.background-color]="settings.infoColor">Info</span>
-                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAYOUT & SPACING TAB -->
+    <div *ngIf="activeTab === 'layout'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <app-unified-card header="Spacing Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Spacing Mode"
+                  type="select"
+                  [options]="spacingOptions"
+                  [(ngModel)]="settings.spacing"
+                  (ngModelChange)="updateSetting('spacing', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Spacing Value"
+                  type="text"
+                  [(ngModel)]="settings.spacingValue"
+                  (ngModelChange)="updateSetting('spacingValue', $event)"
+                  placeholder="16px">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Container Max Width"
+                  type="text"
+                  [(ngModel)]="settings.containerMaxWidth"
+                  (ngModelChange)="updateSetting('containerMaxWidth', $event)"
+                  placeholder="1400px">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Content Padding"
+                  type="text"
+                  [(ngModel)]="settings.contentPadding"
+                  (ngModelChange)="updateSetting('contentPadding', $event)"
+                  placeholder="24px">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-6">
+          <app-unified-card header="Sidebar Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Sidebar Style"
+                  type="select"
+                  [options]="sidebarStyleOptions"
+                  [(ngModel)]="settings.sidebarStyle"
+                  (ngModelChange)="updateSetting('sidebarStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Sidebar Width"
+                  type="text"
+                  [(ngModel)]="settings.sidebarWidth"
+                  (ngModelChange)="updateSetting('sidebarWidth', $event)"
+                  placeholder="280px">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Item Style"
+                  type="select"
+                  [options]="sidebarItemStyleOptions"
+                  [(ngModel)]="settings.sidebarItemStyle"
+                  (ngModelChange)="updateSetting('sidebarItemStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Item Spacing"
+                  type="text"
+                  [(ngModel)]="settings.sidebarItemSpacing"
+                  (ngModelChange)="updateSetting('sidebarItemSpacing', $event)"
+                  placeholder="4px">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+
+          <app-unified-card header="Header Settings" customClass="border-0 shadow-sm mt-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Header Style"
+                  type="select"
+                  [options]="headerStyleOptions"
+                  [(ngModel)]="settings.headerStyle"
+                  (ngModelChange)="updateSetting('headerStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Header Height"
+                  type="text"
+                  [(ngModel)]="settings.headerHeight"
+                  (ngModelChange)="updateSetting('headerHeight', $event)"
+                  placeholder="72px">
+                </app-form-field>
               </div>
             </div>
           </app-unified-card>
@@ -74,46 +286,780 @@
       </div>
     </div>
 
-    <!-- Components Section -->
-    <div *ngIf="activeSection === 'components'" class="tab-pane fade show active">
+    <!-- BORDER RADIUS TAB -->
+    <div *ngIf="activeTab === 'radius'" class="tab-pane fade show active">
       <div class="row g-4">
         <div class="col-lg-8">
-          <app-unified-card header="Component Styles" customClass="border-0 shadow-sm">
+          <app-unified-card header="Border Radius Settings" customClass="border-0 shadow-sm">
             <div class="row g-3">
-              <div class="col-md-6">
-                <app-form-field label="Border Radius" type="text" [(ngModel)]="settings.borderRadius" (ngModelChange)="updateComponentStyle('borderRadius', $event)" placeholder="8px"></app-form-field>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Global Border Radius"
+                  type="text"
+                  [(ngModel)]="settings.borderRadius"
+                  (ngModelChange)="updateSetting('borderRadius', $event)"
+                  placeholder="8px">
+                </app-form-field>
               </div>
-              <div class="col-md-6">
-                <app-form-field label="Button Style" type="select" [options]="buttonStyleOptions" [(ngModel)]="settings.buttonStyle" (ngModelChange)="updateComponentStyle('buttonStyle', $event)"></app-form-field>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Button Radius"
+                  type="text"
+                  [(ngModel)]="settings.buttonBorderRadius"
+                  (ngModelChange)="updateSetting('buttonBorderRadius', $event)"
+                  placeholder="8px">
+                </app-form-field>
               </div>
-              <div class="col-md-6">
-                <app-form-field label="Card Style" type="select" [options]="cardStyleOptions" [(ngModel)]="settings.cardStyle" (ngModelChange)="updateComponentStyle('cardStyle', $event)"></app-form-field>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Card Radius"
+                  type="text"
+                  [(ngModel)]="settings.cardBorderRadius"
+                  (ngModelChange)="updateSetting('cardBorderRadius', $event)"
+                  placeholder="16px">
+                </app-form-field>
               </div>
-              <div class="col-md-6">
-                <app-form-field label="Card Elevation" type="number" [(ngModel)]="settings.cardElevation" (ngModelChange)="updateComponentStyle('cardElevation', $event)"></app-form-field>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Input Radius"
+                  type="text"
+                  [(ngModel)]="settings.inputBorderRadius"
+                  (ngModelChange)="updateSetting('inputBorderRadius', $event)"
+                  placeholder="8px">
+                </app-form-field>
               </div>
-              <div class="col-md-6">
-                <app-unified-checkbox label="Enable Animations" [(ngModel)]="settings.animationsEnabled" (ngModelChange)="updateComponentStyle('animationsEnabled', $event)"></app-unified-checkbox>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Modal Radius"
+                  type="text"
+                  [(ngModel)]="settings.modalBorderRadius"
+                  (ngModelChange)="updateSetting('modalBorderRadius', $event)"
+                  placeholder="16px">
+                </app-form-field>
               </div>
-              <div class="col-md-6">
-                <app-form-field label="Animation Speed" type="select" [options]="animationSpeedOptions" [(ngModel)]="settings.animationSpeed" (ngModelChange)="updateComponentStyle('animationSpeed', $event)"></app-form-field>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Dropdown Radius"
+                  type="text"
+                  [(ngModel)]="settings.dropdownBorderRadius"
+                  (ngModelChange)="updateSetting('dropdownBorderRadius', $event)"
+                  placeholder="12px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Badge Radius"
+                  type="text"
+                  [(ngModel)]="settings.badgeBorderRadius"
+                  (ngModelChange)="updateSetting('badgeBorderRadius', $event)"
+                  placeholder="50px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Table Radius"
+                  type="text"
+                  [(ngModel)]="settings.tableBorderRadius"
+                  (ngModelChange)="updateSetting('tableBorderRadius', $event)"
+                  placeholder="0px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Chart Radius"
+                  type="text"
+                  [(ngModel)]="settings.chartBorderRadius"
+                  (ngModelChange)="updateSetting('chartBorderRadius', $event)"
+                  placeholder="15px">
+                </app-form-field>
               </div>
             </div>
           </app-unified-card>
         </div>
 
         <div class="col-lg-4">
-          <app-unified-card header="Component Preview" customClass="border-0 shadow-sm h-100">
-            <div class="card p-3 shadow-sm mb-3" [style.border-radius]="settings.borderRadius" [class.shadow]="settings.cardStyle === 'elevated'">
-              <h6 class="fw-bold">Card Preview</h6>
-              <p class="small text-muted">This card demonstrates the current card style and border radius settings.</p>
-              <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-sm" [style.border-radius]="settings.borderRadius" [class.shadow-sm]="settings.buttonStyle === 'raised'">Button Preview</button>
+          <app-unified-card header="Radius Preview" customClass="border-0 shadow-sm sticky-top" style="top: 20px;">
+            <div class="d-flex flex-column gap-3">
+              <button class="btn btn-primary" [style.border-radius]="settings.buttonBorderRadius">Button</button>
+              <div class="card p-3" [style.border-radius]="settings.cardBorderRadius">Card</div>
+              <input type="text" class="form-control" placeholder="Input" [style.border-radius]="settings.inputBorderRadius">
+              <span class="badge bg-primary" [style.border-radius]="settings.badgeBorderRadius">Badge</span>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUTTONS TAB -->
+    <div *ngIf="activeTab === 'buttons'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Button Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <app-form-field
+                  label="Button Style"
+                  type="select"
+                  [options]="buttonStyleOptions"
+                  [(ngModel)]="settings.buttonStyle"
+                  (ngModelChange)="updateSetting('buttonStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Button Size"
+                  type="select"
+                  [options]="buttonSizeOptions"
+                  [(ngModel)]="settings.buttonSize"
+                  (ngModelChange)="updateSetting('buttonSize', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Hover Effect"
+                  type="select"
+                  [options]="buttonHoverEffectOptions"
+                  [(ngModel)]="settings.buttonHoverEffect"
+                  (ngModelChange)="updateSetting('buttonHoverEffect', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Padding"
+                  type="text"
+                  [(ngModel)]="settings.buttonPadding"
+                  (ngModelChange)="updateSetting('buttonPadding', $event)"
+                  placeholder="12px 24px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Font Size"
+                  type="text"
+                  [(ngModel)]="settings.buttonFontSize"
+                  (ngModelChange)="updateSetting('buttonFontSize', $event)"
+                  placeholder="14px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Font Weight"
+                  type="text"
+                  [(ngModel)]="settings.buttonFontWeight"
+                  (ngModelChange)="updateSetting('buttonFontWeight', $event)"
+                  placeholder="600">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Text Transform"
+                  type="select"
+                  [options]="textTransformOptions"
+                  [(ngModel)]="settings.buttonTextTransform"
+                  (ngModelChange)="updateSetting('buttonTextTransform', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Shadow"
+                  type="text"
+                  [(ngModel)]="settings.buttonShadow"
+                  (ngModelChange)="updateSetting('buttonShadow', $event)"
+                  placeholder="0 2px 4px rgba(0,0,0,0.1)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Button Preview" customClass="border-0 shadow-sm sticky-top" style="top: 20px;">
+            <div class="d-flex flex-column gap-3">
+              <button class="btn btn-primary"
+                [style.padding]="settings.buttonPadding"
+                [style.font-size]="settings.buttonFontSize"
+                [style.font-weight]="settings.buttonFontWeight"
+                [style.text-transform]="settings.buttonTextTransform"
+                [style.border-radius]="settings.buttonBorderRadius"
+                [style.box-shadow]="settings.buttonShadow">
+                Primary Button
+              </button>
+              <button class="btn btn-secondary"
+                [style.padding]="settings.buttonPadding"
+                [style.font-size]="settings.buttonFontSize"
+                [style.font-weight]="settings.buttonFontWeight"
+                [style.text-transform]="settings.buttonTextTransform"
+                [style.border-radius]="settings.buttonBorderRadius">
+                Secondary Button
+              </button>
+              <button class="btn btn-outline-primary"
+                [style.padding]="settings.buttonPadding"
+                [style.font-size]="settings.buttonFontSize"
+                [style.font-weight]="settings.buttonFontWeight"
+                [style.text-transform]="settings.buttonTextTransform"
+                [style.border-radius]="settings.buttonBorderRadius">
+                Outlined Button
+              </button>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARDS TAB -->
+    <div *ngIf="activeTab === 'cards'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Card Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <app-form-field
+                  label="Card Style"
+                  type="select"
+                  [options]="cardStyleOptions"
+                  [(ngModel)]="settings.cardStyle"
+                  (ngModelChange)="updateSetting('cardStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Card Elevation"
+                  type="number"
+                  [(ngModel)]="settings.cardElevation"
+                  (ngModelChange)="updateSetting('cardElevation', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Hover Effect"
+                  type="select"
+                  [options]="cardHoverEffectOptions"
+                  [(ngModel)]="settings.cardHoverEffect"
+                  (ngModelChange)="updateSetting('cardHoverEffect', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Padding"
+                  type="text"
+                  [(ngModel)]="settings.cardPadding"
+                  (ngModelChange)="updateSetting('cardPadding', $event)"
+                  placeholder="24px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Shadow"
+                  type="text"
+                  [(ngModel)]="settings.cardShadow"
+                  (ngModelChange)="updateSetting('cardShadow', $event)"
+                  placeholder="0 2px 8px rgba(0,0,0,0.08)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Hover Shadow"
+                  type="text"
+                  [(ngModel)]="settings.cardHoverShadow"
+                  (ngModelChange)="updateSetting('cardHoverShadow', $event)"
+                  placeholder="0 8px 20px rgba(0,0,0,0.12)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Card Preview" customClass="border-0 shadow-sm sticky-top" style="top: 20px;">
+            <div class="card preview-card"
+              [style.padding]="settings.cardPadding"
+              [style.border-radius]="settings.cardBorderRadius"
+              [style.box-shadow]="settings.cardShadow">
+              <h6 class="fw-bold mb-2">Sample Card</h6>
+              <p class="text-muted small mb-0">This is how your cards will look with the current settings.</p>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM FIELDS TAB -->
+    <div *ngIf="activeTab === 'fields'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Form Field Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <app-form-field
+                  label="Input Style"
+                  type="select"
+                  [options]="inputStyleOptions"
+                  [(ngModel)]="settings.inputStyle"
+                  (ngModelChange)="updateSetting('inputStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Input Size"
+                  type="select"
+                  [options]="inputSizeOptions"
+                  [(ngModel)]="settings.inputSize"
+                  (ngModelChange)="updateSetting('inputSize', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Label Position"
+                  type="select"
+                  [options]="labelPositionOptions"
+                  [(ngModel)]="settings.labelPosition"
+                  (ngModelChange)="updateSetting('labelPosition', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Padding"
+                  type="text"
+                  [(ngModel)]="settings.inputPadding"
+                  (ngModelChange)="updateSetting('inputPadding', $event)"
+                  placeholder="12px 16px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Font Size"
+                  type="text"
+                  [(ngModel)]="settings.inputFontSize"
+                  (ngModelChange)="updateSetting('inputFontSize', $event)"
+                  placeholder="14px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Border Width"
+                  type="text"
+                  [(ngModel)]="settings.inputBorderWidth"
+                  (ngModelChange)="updateSetting('inputBorderWidth', $event)"
+                  placeholder="1px">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Focus Effect"
+                  type="select"
+                  [options]="inputFocusEffectOptions"
+                  [(ngModel)]="settings.inputFocusEffect"
+                  (ngModelChange)="updateSetting('inputFocusEffect', $event)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Field Preview" customClass="border-0 shadow-sm sticky-top" style="top: 20px;">
+            <div class="mb-3">
+              <label class="form-label">Sample Input</label>
+              <input type="text" class="form-control" placeholder="Enter text..."
+                [style.padding]="settings.inputPadding"
+                [style.font-size]="settings.inputFontSize"
+                [style.border-width]="settings.inputBorderWidth"
+                [style.border-radius]="settings.inputBorderRadius">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Sample Textarea</label>
+              <textarea class="form-control" rows="3" placeholder="Enter text..."
+                [style.padding]="settings.inputPadding"
+                [style.font-size]="settings.inputFontSize"
+                [style.border-width]="settings.inputBorderWidth"
+                [style.border-radius]="settings.inputBorderRadius"></textarea>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- TYPOGRAPHY TAB -->
+    <div *ngIf="activeTab === 'typography'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Typography Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Font Family"
+                  type="text"
+                  [(ngModel)]="settings.fontFamily"
+                  (ngModelChange)="updateSetting('fontFamily', $event)"
+                  placeholder="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Heading Font Family"
+                  type="text"
+                  [(ngModel)]="settings.headingFontFamily"
+                  (ngModelChange)="updateSetting('headingFontFamily', $event)"
+                  placeholder="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
+                </app-form-field>
+              </div>
+              <div class="col-md-3">
+                <app-form-field
+                  label="Font Size"
+                  type="text"
+                  [(ngModel)]="settings.fontSize"
+                  (ngModelChange)="updateSetting('fontSize', $event)"
+                  placeholder="14px">
+                </app-form-field>
+              </div>
+              <div class="col-md-3">
+                <app-form-field
+                  label="Font Weight"
+                  type="text"
+                  [(ngModel)]="settings.fontWeight"
+                  (ngModelChange)="updateSetting('fontWeight', $event)"
+                  placeholder="400">
+                </app-form-field>
+              </div>
+              <div class="col-md-3">
+                <app-form-field
+                  label="Line Height"
+                  type="text"
+                  [(ngModel)]="settings.lineHeight"
+                  (ngModelChange)="updateSetting('lineHeight', $event)"
+                  placeholder="1.5">
+                </app-form-field>
+              </div>
+              <div class="col-md-3">
+                <app-form-field
+                  label="Heading Weight"
+                  type="text"
+                  [(ngModel)]="settings.headingFontWeight"
+                  (ngModelChange)="updateSetting('headingFontWeight', $event)"
+                  placeholder="700">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Typography Preview" customClass="border-0 shadow-sm sticky-top" style="top: 20px;">
+            <div [style.font-family]="settings.fontFamily">
+              <h1 [style.font-family]="settings.headingFontFamily" [style.font-weight]="settings.headingFontWeight">Heading 1</h1>
+              <h3 [style.font-family]="settings.headingFontFamily" [style.font-weight]="settings.headingFontWeight">Heading 3</h3>
+              <p [style.font-size]="settings.fontSize" [style.font-weight]="settings.fontWeight" [style.line-height]="settings.lineHeight">
+                This is a sample paragraph to demonstrate how your typography settings will look in the application. The quick brown fox jumps over the lazy dog.
+              </p>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANIMATIONS TAB -->
+    <div *ngIf="activeTab === 'animations'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Animation Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-unified-checkbox
+                  label="Enable Animations"
+                  [(ngModel)]="settings.animationsEnabled"
+                  (ngModelChange)="updateSetting('animationsEnabled', $event)">
+                </app-unified-checkbox>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Animation Speed"
+                  type="select"
+                  [options]="animationSpeedOptions"
+                  [(ngModel)]="settings.animationSpeed"
+                  (ngModelChange)="updateSetting('animationSpeed', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Transition Duration (ms)"
+                  type="number"
+                  [(ngModel)]="settings.transitionDuration"
+                  (ngModelChange)="updateSetting('transitionDuration', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Easing Function"
+                  type="text"
+                  [(ngModel)]="settings.animationEasing"
+                  (ngModelChange)="updateSetting('animationEasing', $event)"
+                  placeholder="cubic-bezier(0.4, 0, 0.2, 1)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Hover Transform"
+                  type="text"
+                  [(ngModel)]="settings.hoverTransform"
+                  (ngModelChange)="updateSetting('hoverTransform', $event)"
+                  placeholder="translateY(-3px)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Page Transition"
+                  type="select"
+                  [options]="pageTransitionOptions"
+                  [(ngModel)]="settings.pageTransition"
+                  (ngModelChange)="updateSetting('pageTransition', $event)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Animation Preview" customClass="border-0 shadow-sm sticky-top" style="top: 20px;">
+            <button class="btn btn-primary w-100 mb-3"
+              [style.transition]="'all ' + settings.transitionDuration + 'ms ' + settings.animationEasing">
+              Hover Me
+            </button>
+            <div class="card p-3"
+              [style.transition]="'all ' + settings.transitionDuration + 'ms ' + settings.animationEasing">
+              Animated Card
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPONENTS TAB -->
+    <div *ngIf="activeTab === 'components'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <app-unified-card header="Table Settings" customClass="border-0 shadow-sm mb-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Table Style"
+                  type="select"
+                  [options]="tableStyleOptions"
+                  [(ngModel)]="settings.tableStyle"
+                  (ngModelChange)="updateSetting('tableStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Header Style"
+                  type="select"
+                  [options]="tableHeaderStyleOptions"
+                  [(ngModel)]="settings.tableHeaderStyle"
+                  (ngModelChange)="updateSetting('tableHeaderStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Row Hover Effect"
+                  type="select"
+                  [options]="tableRowHoverEffectOptions"
+                  [(ngModel)]="settings.tableRowHoverEffect"
+                  (ngModelChange)="updateSetting('tableRowHoverEffect', $event)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+
+          <app-unified-card header="Modal Settings" customClass="border-0 shadow-sm mb-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Backdrop Style"
+                  type="select"
+                  [options]="modalBackdropOptions"
+                  [(ngModel)]="settings.modalBackdrop"
+                  (ngModelChange)="updateSetting('modalBackdrop', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Animation"
+                  type="select"
+                  [options]="modalAnimationOptions"
+                  [(ngModel)]="settings.modalAnimation"
+                  (ngModelChange)="updateSetting('modalAnimation', $event)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+
+          <app-unified-card header="Badge Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Badge Style"
+                  type="select"
+                  [options]="badgeStyleOptions"
+                  [(ngModel)]="settings.badgeStyle"
+                  (ngModelChange)="updateSetting('badgeStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Badge Size"
+                  type="select"
+                  [options]="badgeSizeOptions"
+                  [(ngModel)]="settings.badgeSize"
+                  (ngModelChange)="updateSetting('badgeSize', $event)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-6">
+          <app-unified-card header="Dropdown Settings" customClass="border-0 shadow-sm mb-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Dropdown Style"
+                  type="select"
+                  [options]="dropdownStyleOptions"
+                  [(ngModel)]="settings.dropdownStyle"
+                  (ngModelChange)="updateSetting('dropdownStyle', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Animation"
+                  type="select"
+                  [options]="dropdownAnimationOptions"
+                  [(ngModel)]="settings.dropdownAnimation"
+                  (ngModelChange)="updateSetting('dropdownAnimation', $event)">
+                </app-form-field>
+              </div>
+            </div>
+          </app-unified-card>
+
+          <app-unified-card header="Chart Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-form-field
+                  label="Color Scheme"
+                  type="select"
+                  [options]="chartColorSchemeOptions"
+                  [(ngModel)]="settings.chartColorScheme"
+                  (ngModelChange)="updateSetting('chartColorScheme', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Animation Speed (ms)"
+                  type="number"
+                  [(ngModel)]="settings.chartAnimationSpeed"
+                  (ngModelChange)="updateSetting('chartAnimationSpeed', $event)">
+                </app-form-field>
               </div>
             </div>
           </app-unified-card>
         </div>
       </div>
     </div>
+
+    <!-- EFFECTS TAB -->
+    <div *ngIf="activeTab === 'effects'" class="tab-pane fade show active">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <app-unified-card header="Visual Effects" customClass="border-0 shadow-sm mb-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-unified-checkbox
+                  label="Enable Glass Effect"
+                  [(ngModel)]="settings.glassEffect"
+                  (ngModelChange)="updateSetting('glassEffect', $event)">
+                </app-unified-checkbox>
+              </div>
+              <div class="col-md-6">
+                <app-form-field
+                  label="Shadow Intensity"
+                  type="select"
+                  [options]="shadowIntensityOptions"
+                  [(ngModel)]="settings.shadowIntensity"
+                  (ngModelChange)="updateSetting('shadowIntensity', $event)">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <app-form-field
+                  label="Glass Blur"
+                  type="text"
+                  [(ngModel)]="settings.glassBlur"
+                  (ngModelChange)="updateSetting('glassBlur', $event)"
+                  placeholder="10px">
+                </app-form-field>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Glass Opacity</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  [(ngModel)]="settings.glassOpacity"
+                  (ngModelChange)="updateSetting('glassOpacity', $event)"
+                  min="0"
+                  max="1"
+                  step="0.1">
+              </div>
+            </div>
+          </app-unified-card>
+
+          <app-unified-card header="Scrollbar Settings" customClass="border-0 shadow-sm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <app-unified-checkbox
+                  label="Custom Scrollbar"
+                  [(ngModel)]="settings.customScrollbar"
+                  (ngModelChange)="updateSetting('customScrollbar', $event)">
+                </app-unified-checkbox>
+              </div>
+              <div class="col-md-3">
+                <app-form-field
+                  label="Width"
+                  type="text"
+                  [(ngModel)]="settings.scrollbarWidth"
+                  (ngModelChange)="updateSetting('scrollbarWidth', $event)"
+                  placeholder="8px">
+                </app-form-field>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Color</label>
+                <input type="color" class="form-control form-control-color w-100"
+                  [value]="settings.scrollbarColor"
+                  (input)="updateSetting('scrollbarColor', $any($event.target).value)">
+              </div>
+            </div>
+          </app-unified-card>
+        </div>
+
+        <div class="col-lg-4">
+          <app-unified-card header="Effects Preview" customClass="border-0 shadow-sm sticky-top" style="top: 20px;">
+            <div class="card p-3 mb-3"
+              [class.glass-effect]="settings.glassEffect"
+              [style.backdrop-filter]="settings.glassEffect ? 'blur(' + settings.glassBlur + ')' : 'none'"
+              [style.opacity]="settings.glassEffect ? settings.glassOpacity : 1">
+              Glass Effect Card
+            </div>
+            <div class="scrollbar-preview"
+              [class.custom-scrollbar]="settings.customScrollbar"
+              style="height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
+              <p>Scroll to see custom scrollbar</p>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+              <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
+              <p>Duis aute irure dolor in reprehenderit in voluptate velit.</p>
+            </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </div>
+      </div>
+    </main>
   </div>
 </div>

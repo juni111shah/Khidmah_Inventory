@@ -1,6 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ThemeConfig, DEFAULT_THEME } from '../models/theme.model';
 import { ThemeApiService } from './theme-api.service';
 
@@ -34,9 +35,10 @@ export class ThemeService {
     // Try to load from localStorage first
     const storedTheme = this.loadFromLocalStorage();
     if (storedTheme) {
-      this.currentTheme = storedTheme;
-      this.applyTheme(storedTheme);
-      this.themeSubject.next(storedTheme);
+      // Merge with DEFAULT_THEME to ensure all properties exist
+      this.currentTheme = { ...DEFAULT_THEME, ...storedTheme };
+      this.applyTheme(this.currentTheme);
+      this.themeSubject.next(this.currentTheme);
     } else {
       // Try to load from backend
       this.loadFromBackend();
@@ -58,20 +60,34 @@ export class ThemeService {
   private loadFromBackend(): void {
     // Try user theme first, fallback to global
     this.themeApi.getUserTheme().subscribe({
-      next: (theme) => {
-        this.updateTheme(theme, false);
+      next: (response) => {
+        if (response.success && response.data) {
+          this.updateTheme(response.data, false);
+        } else {
+          // If user theme fails, try global theme
+          this.loadGlobalTheme();
+        }
       },
       error: () => {
         // If user theme fails, try global theme
-        this.themeApi.getGlobalTheme().subscribe({
-          next: (theme) => {
-            this.updateTheme(theme, false);
-          },
-          error: () => {
-            // Use default theme if backend fails
-            this.updateTheme(DEFAULT_THEME, false);
-          }
-        });
+        this.loadGlobalTheme();
+      }
+    });
+  }
+
+  private loadGlobalTheme(): void {
+    this.themeApi.getGlobalTheme().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.updateTheme(response.data, false);
+        } else {
+          // Use default theme if backend fails
+          this.updateTheme(DEFAULT_THEME, false);
+        }
+      },
+      error: () => {
+        // Use default theme if backend fails
+        this.updateTheme(DEFAULT_THEME, false);
       }
     });
   }
@@ -91,7 +107,8 @@ export class ThemeService {
   }
 
   updateTheme(theme: Partial<ThemeConfig>, saveToBackend: boolean = true): void {
-    this.currentTheme = { ...this.currentTheme, ...theme };
+    // Merge with DEFAULT_THEME first, then current theme, then new values
+    this.currentTheme = { ...DEFAULT_THEME, ...this.currentTheme, ...theme };
     this.applyTheme(this.currentTheme);
     this.themeSubject.next(this.currentTheme);
     this.saveToLocalStorage(this.currentTheme);
@@ -132,10 +149,18 @@ export class ThemeService {
     root.style.setProperty('--text-color', theme.textColor);
     root.style.setProperty('--text-secondary-color', theme.textSecondaryColor);
 
+    // Additional Colors
+    root.style.setProperty('--success-color', theme.successColor);
+    root.style.setProperty('--danger-color', theme.dangerColor);
+    root.style.setProperty('--warning-color', theme.warningColor);
+    root.style.setProperty('--info-color', theme.infoColor);
+
     // Animations
     root.style.setProperty('--animations-enabled', theme.animationsEnabled ? '1' : '0');
     const speedMultiplier = theme.animationSpeed === 'slow' ? 1.5 : theme.animationSpeed === 'fast' ? 0.5 : 1;
     root.style.setProperty('--transition-duration', `${theme.transitionDuration * speedMultiplier}ms`);
+    root.style.setProperty('--animation-easing', theme.animationEasing);
+    root.style.setProperty('--hover-transform', theme.hoverTransform);
 
     // Buttons
     root.style.setProperty('--button-style', theme.buttonStyle);
@@ -147,6 +172,12 @@ export class ThemeService {
     root.style.setProperty('--card-border-radius', theme.cardBorderRadius);
     root.style.setProperty('--card-elevation', theme.cardElevation.toString());
     root.style.setProperty('--card-shadow', theme.cardShadow);
+    root.style.setProperty('--card-hover-shadow', theme.cardHoverShadow);
+
+    // Charts
+    root.style.setProperty('--chart-border-radius', theme.chartBorderRadius);
+    root.style.setProperty('--chart-animation-speed', theme.chartAnimationSpeed.toString());
+    root.style.setProperty('--chart-animation-easing', theme.chartAnimationEasing);
 
     // Layout
     root.style.setProperty('--border-radius', theme.borderRadius);
@@ -163,7 +194,14 @@ export class ThemeService {
   }
 
   uploadLogo(file: File): Observable<{ logoUrl: string }> {
-    return this.themeApi.uploadLogo(file);
+    return this.themeApi.uploadLogo(file).pipe(
+      map(response => {
+        if (response.success && response.data) {
+          return response.data;
+        }
+        throw new Error(response.message || 'Failed to upload logo');
+      })
+    );
   }
 
   setLogo(logoUrl: string): void {

@@ -14,8 +14,12 @@ import { HasPermissionDirective } from '../../../shared/directives/has-permissio
 import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
 import { UnifiedButtonComponent } from '../../../shared/components/unified-button/unified-button.component';
 import { HeaderService } from '../../../core/services/header.service';
+import { ExportService } from '../../../core/services/export.service';
 import { UnifiedCardComponent } from '../../../shared/components/unified-card/unified-card.component';
 import { UnifiedCheckboxComponent } from '../../../shared/components/unified-checkbox/unified-checkbox.component';
+import { TabsComponent, TabComponent } from '../../../shared/components/tabs/tabs.component';
+import { AiApiService } from '../../../core/services/ai-api.service';
+import { ChartComponent } from '../../../shared/components/chart/chart.component';
 
 @Component({
   selector: 'app-product-form',
@@ -30,7 +34,10 @@ import { UnifiedCheckboxComponent } from '../../../shared/components/unified-che
     FormFieldComponent,
     UnifiedButtonComponent,
     UnifiedCardComponent,
-    UnifiedCheckboxComponent
+    UnifiedCheckboxComponent,
+    TabsComponent,
+    TabComponent,
+    ChartComponent
   ],
   templateUrl: './product-form.component.html'
 })
@@ -40,6 +47,11 @@ export class ProductFormComponent implements OnInit {
   loading = false;
   saving = false;
   isEditMode = false;
+  isViewMode = false;
+  activeTab = 0;
+  forecastData: any = null;
+  forecastChartData: any = null;
+
 
   formData = {
     name: '',
@@ -99,17 +111,22 @@ export class ProductFormComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     public permissionService: PermissionService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private exportService: ExportService,
+    private aiApiService: AiApiService
   ) {}
 
   ngOnInit(): void {
     const productId = this.route.snapshot.paramMap.get('id');
-    const isEditPath = this.route.snapshot.url.some(segment => segment.path === 'edit');
-    this.isEditMode = !!productId && isEditPath;
+    const url = this.router.url;
+
+    // If we have an ID but URL doesn't end with /edit, we are in View Mode
+    this.isEditMode = !!productId && url.includes('/edit');
+    this.isViewMode = !!productId && !url.includes('/edit');
 
     this.headerService.setHeaderInfo({
-      title: this.isEditMode ? 'Edit Product' : 'Create Product',
-      description: this.isEditMode ? 'Modify existing product details' : 'Add a new product to inventory'
+      title: this.isViewMode ? 'Product Details' : (this.isEditMode ? 'Edit Product' : 'Create Product'),
+      description: this.isViewMode ? 'View product details' : (this.isEditMode ? 'Modify existing product details' : 'Add a new product to inventory')
     });
 
     this.loadCategories();
@@ -153,12 +170,44 @@ export class ProductFormComponent implements OnInit {
           this.showToastMessage('error', response.message || 'Failed to load product');
         }
         this.loading = false;
+
+        if (this.isViewMode) {
+          this.loadForecast();
+        }
       },
       error: () => {
         this.showToastMessage('error', 'Error loading product');
         this.loading = false;
       }
     });
+  }
+
+  loadForecast() {
+    if (!this.product) return;
+    this.aiApiService.getDemandForecast(this.product.id).subscribe(res => {
+      if (res.success) {
+        this.forecastData = res.data;
+        this.prepareForecastChart();
+      }
+    });
+  }
+
+  prepareForecastChart() {
+    if (!this.forecastData) return;
+
+    this.forecastChartData = {
+      labels: this.forecastData.forecastDates.map((d: string) => new Date(d).toLocaleDateString()),
+      datasets: [
+        {
+          label: 'Predicted Demand',
+          data: this.forecastData.forecastQuantities,
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    };
   }
 
   loadCategories(): void {
@@ -275,6 +324,39 @@ export class ProductFormComponent implements OnInit {
     setTimeout(() => {
       this.showToast = false;
     }, 3000);
+  }
+
+  async exportToPdf(): Promise<void> {
+    if (!this.product) return;
+
+    const details = [
+      { label: 'Name', value: this.formData.name },
+      { label: 'SKU', value: this.formData.sku },
+      { label: 'Barcode', value: this.formData.barcode },
+      { label: 'Category', value: this.categories.find(c => c.id === this.formData.categoryId)?.name },
+      { label: 'Brand', value: this.brands.find(b => b.id === this.formData.brandId)?.name }, // Simplified
+      { label: 'Unit Of Measure', value: this.unitOfMeasures.find(u => u.id === this.formData.unitOfMeasureId)?.name },
+      { label: 'Purchase Price', value: this.formData.purchasePrice },
+      { label: 'Sale Price', value: this.formData.salePrice },
+      { label: 'Cost Price', value: this.formData.costPrice },
+      { label: 'Min Stock', value: this.formData.minStockLevel },
+      { label: 'Max Stock', value: this.formData.maxStockLevel },
+      { label: 'Reorder Point', value: this.formData.reorderPoint },
+      { label: 'Weight', value: `${this.formData.weight} ${this.formData.weightUnit}` },
+      { label: 'Dimensions', value: `${this.formData.length} x ${this.formData.width} x ${this.formData.height} ${this.formData.dimensionsUnit}` }
+    ];
+
+    try {
+      await this.exportService.exportEntityDetails(
+        details,
+        `Product Details: ${this.formData.name}`,
+        `product_details_${this.formData.sku}`
+      );
+      this.showToastMessage('success', 'PDF exported successfully');
+    } catch (error) {
+      console.error(error);
+      this.showToastMessage('error', 'Failed to export PDF');
+    }
   }
 
   getCategoryOptions(): { value: any; label: string }[] {

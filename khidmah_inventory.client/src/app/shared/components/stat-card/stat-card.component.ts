@@ -49,27 +49,53 @@ export class StatCardComponent implements OnInit, OnChanges {
       type: 'bar',
       height: 200,
       toolbar: { show: false },
-      animations: { enabled: true, easing: 'easeInOutQuart', speed: 1000 }
+      animations: { enabled: true, easing: 'easeinout', speed: 800 },
+      sparkline: { enabled: false },
+      background: 'transparent'
     },
     plotOptions: {
       bar: {
-        borderRadius: 4,
-        columnWidth: '60%',
+        borderRadius: 20,
+        borderRadiusApplication: 'around', // Rounded on both ends
+        columnWidth: '35%',
         distributed: false
       }
     },
-    colors: ['#0d6efd'],
+    colors: ['#f43f5e'], // Pink/Rose as in image
     dataLabels: { enabled: false },
     xaxis: {
       categories: [],
-      labels: { style: { fontSize: '11px' } }
+      labels: {
+        style: { fontSize: '10px', colors: '#64748b', fontWeight: 500 }
+      },
+      axisBorder: { show: false },
+      axisTicks: { show: false }
     },
     yaxis: {
-      labels: { style: { fontSize: '11px' } },
-      title: { text: 'Performance' }
+      labels: {
+        style: { fontSize: '10px', colors: '#64748b', fontWeight: 500 }
+      },
+      tickAmount: 4
     },
     grid: {
-      show: false
+      show: true,
+      borderColor: '#f1f5f9',
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'light',
+        type: 'vertical',
+        shadeIntensity: 0.5,
+        gradientToColors: ['#fb7185'], // Lighter pink
+        inverseColors: true,
+        opacityFrom: 1,
+        opacityTo: 0.7,
+        stops: [0, 100]
+      }
     },
     tooltip: {
       theme: 'light',

@@ -44,6 +44,7 @@ public interface IApplicationDbContext
     DbSet<Customer> Customers { get; }
     DbSet<SalesOrder> SalesOrders { get; }
     DbSet<SalesOrderItem> SalesOrderItems { get; }
+    DbSet<PosSession> PosSessions { get; }
 
     // Settings
     DbSet<Settings> Settings { get; }

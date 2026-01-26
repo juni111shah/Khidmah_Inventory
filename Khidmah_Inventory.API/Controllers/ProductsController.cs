@@ -1,6 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Khidmah_Inventory.API.Attributes;
+using Khidmah_Inventory.API.Constants;
+using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Products.Commands.CreateProduct;
 using Khidmah_Inventory.Application.Features.Products.Commands.UpdateProduct;
 using Khidmah_Inventory.Application.Features.Products.Commands.DeleteProduct;
@@ -8,72 +11,88 @@ using Khidmah_Inventory.Application.Features.Products.Commands.ActivateProduct;
 using Khidmah_Inventory.Application.Features.Products.Commands.DeactivateProduct;
 using Khidmah_Inventory.Application.Features.Products.Queries.GetProduct;
 using Khidmah_Inventory.Application.Features.Products.Queries.GetProductsList;
+using Khidmah_Inventory.Application.Features.Products.Commands.UploadProductImage;
 
 namespace Khidmah_Inventory.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
+[Route(ApiRoutes.Products.Base)]
 [Authorize]
-public class ProductsController : BaseApiController
+public class ProductsController : BaseController
 {
-    [HttpGet("{id}")]
-    [AuthorizePermission("Products:Read")]
-    public async Task<IActionResult> Get(Guid id)
+    public ProductsController(IMediator mediator) : base(mediator)
     {
-        var query = new GetProductQuery { Id = id };
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Product retrieved successfully");
     }
 
-    [HttpPost("list")]
-    [AuthorizePermission("Products:List")]
-    public async Task<IActionResult> GetList([FromBody] GetProductsListQuery query)
+    [HttpPost(ApiRoutes.Products.Index)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.ViewAll)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.ViewAll)]
+    public async Task<IActionResult> GetAll([FromBody] FilterRequest request)
     {
-        var result = await Mediator.Send(query);
-        return HandleResult(result, "Products retrieved successfully");
+        var query = new GetProductsListQuery { FilterRequest = request };
+        return await ExecuteRequest(query);
     }
 
-    [HttpPost]
-    [AuthorizePermission("Products:Create")]
+    [HttpGet(ApiRoutes.Products.GetById)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequestWithCache(new GetProductQuery { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Products.Add)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.Add)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreateProductCommand command)
     {
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Product created successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpPut("{id}")]
-    [AuthorizePermission("Products:Update")]
+    [HttpPut(ApiRoutes.Products.Update)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.Update)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductCommand command)
     {
         command.Id = id;
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Product updated successfully");
+        return await ExecuteRequest(command);
     }
 
-    [HttpDelete("{id}")]
-    [AuthorizePermission("Products:Delete")]
+    [HttpDelete(ApiRoutes.Products.Delete)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.Delete)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.Delete)]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var command = new DeleteProductCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Product deleted successfully");
+        return await ExecuteRequest(new DeleteProductCommand { Id = id });
     }
 
-    [HttpPost("{id}/activate")]
-    [AuthorizePermission("Products:Update")]
+    [HttpPatch(ApiRoutes.Products.Activate)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.Update)]
     public async Task<IActionResult> Activate(Guid id)
     {
-        var command = new ActivateProductCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Product activated successfully");
+        return await ExecuteRequest(new ActivateProductCommand { Id = id });
     }
 
-    [HttpPost("{id}/deactivate")]
-    [AuthorizePermission("Products:Update")]
+    [HttpPatch(ApiRoutes.Products.Deactivate)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.UpdateStatus)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.Update)]
     public async Task<IActionResult> Deactivate(Guid id)
     {
-        var command = new DeactivateProductCommand { Id = id };
-        var result = await Mediator.Send(command);
-        return HandleResult(result, "Product deactivated successfully");
+        return await ExecuteRequest(new DeactivateProductCommand { Id = id });
+    }
+
+    [HttpPost(ApiRoutes.Products.UploadImage)]
+    [ValidateApiCode(ApiValidationCodes.ProductsModuleCode.UploadImage)]
+    [AuthorizeResource(AuthorizePermissions.ProductsPermissions.Controller, AuthorizePermissions.ProductsPermissions.Actions.Update)]
+    public async Task<IActionResult> UploadImage(Guid id, IFormFile file, [FromForm] string? altText, [FromForm] bool isPrimary = false)
+    {
+        var command = new UploadProductImageCommand
+        {
+            ProductId = id,
+            File = file,
+            AltText = altText,
+            IsPrimary = isPrimary
+        };
+        return await ExecuteRequest(command);
     }
 }
