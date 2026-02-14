@@ -11,6 +11,7 @@ public class CreateSalesOrderCommand : IRequest<Result<SalesOrderDto>>
     public DateTime? ExpectedDeliveryDate { get; set; }
     public string? Notes { get; set; }
     public string? TermsAndConditions { get; set; }
+    public string? Status { get; set; }
     public List<CreateSalesOrderItemDto> Items { get; set; } = new();
 }
 

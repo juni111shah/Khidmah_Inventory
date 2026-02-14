@@ -1,0 +1,73 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <div class="row g-4 mb-4">
+        <div class="col-lg-4"><app-skeleton-chart [chartHeight]="200" [showSubtitle]="false" titleWidth="140px"></app-skeleton-chart></div>
+        <div class="col-lg-8"><div class="rounded-3 border-0 shadow-sm p-4 bg-white"><app-skeleton-list [itemCount]="4" [showAvatar]="false"></app-skeleton-list></div></div>
+      </div>
+      <div class="row g-4 mb-4">
+        <div class="col-lg-6"><app-unified-card header="" customClass="border-0 shadow-sm"><app-skeleton-list [itemCount]="5" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+        <div class="col-lg-6"><app-skeleton-side-panel [lineCount]="6" [showBlock]="true"></app-skeleton-side-panel></div>
+      </div>
+      <div class="row g-4 mb-4">
+        <div class="col-lg-6"><app-skeleton-chart [chartHeight]="220" [showSubtitle]="true" titleWidth="160px"></app-skeleton-chart></div>
+        <div class="col-lg-6"><app-unified-card header="" customClass="border-0 shadow-sm"><app-skeleton-list [itemCount]="4" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+      </div>
+      <div class="row g-4 mb-4">
+        <div class="col-12"><app-skeleton-table [rows]="4" [columns]="4" [showHeader]="true"></app-skeleton-table></div>
+      </div>
+      <div class="row g-4">
+        <div class="col-12"><app-skeleton-table [rows]="5" [columns]="5" [showHeader]="true"></app-skeleton-table></div>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="summary">
+    <div class="row g-4 mb-4 equal-height-cards">
+      <div class="col-lg-4">
+        <app-business-health-gauge [health]="summary.businessHealth" [showFactors]="true"></app-business-health-gauge>
+      </div>
+      <div class="col-lg-8">
+        <app-management-story [story]="summary.managementStory"></app-management-story>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4 equal-height-cards">
+      <div class="col-lg-6">
+        <app-unified-card header="Explainable insights" customClass="border-0 shadow-sm">
+          <p class="small text-muted mb-2">Why the system recommends these actions.</p>
+          <div class="list-group list-group-flush">
+            <button type="button" *ngFor="let i of summary.explainableInsights" class="list-group-item list-group-item-action d-flex justify-content-between"
+              (click)="selectInsight(i)" [class.active]="selectedInsight?.entityId === i.entityId">
+              <span>{{ i.title }}</span>
+              <span class="badge bg-{{ i.severity === 'critical' ? 'danger' : i.severity === 'warning' ? 'warning' : 'info' }}">{{ i.severity }}</span>
+            </button>
+          </div>
+        </app-unified-card>
+      </div>
+      <div class="col-lg-6">
+        <app-explainable-ai-panel [insight]="selectedInsight"></app-explainable-ai-panel>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4 equal-height-cards">
+      <div class="col-lg-6">
+        <app-what-if-simulator></app-what-if-simulator>
+      </div>
+      <div class="col-lg-6">
+        <app-optimization-list [suggestions]="summary.optimizationSuggestions"></app-optimization-list>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4 equal-height-cards">
+      <div class="col-12">
+        <app-opportunity-finder [opportunities]="summary.opportunities"></app-opportunity-finder>
+      </div>
+    </div>
+
+    <div class="row g-4 equal-height-cards">
+      <div class="col-12">
+        <app-anomaly-list [anomalies]="summary.anomalies"></app-anomaly-list>
+      </div>
+    </div>
+    </ng-container>
+  </app-content-loader>
+</div>

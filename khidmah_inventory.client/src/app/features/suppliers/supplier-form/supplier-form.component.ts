@@ -13,6 +13,9 @@ import { UnifiedButtonComponent } from '../../../shared/components/unified-butto
 import { UnifiedCardComponent } from '../../../shared/components/unified-card/unified-card.component';
 import { HeaderService } from '../../../core/services/header.service';
 import { ExportService } from '../../../core/services/export.service';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonDetailHeaderComponent } from '../../../shared/components/skeleton-detail-header/skeleton-detail-header.component';
+import { SkeletonFormComponent } from '../../../shared/components/skeleton-form/skeleton-form.component';
 
 @Component({
   selector: 'app-supplier-form',
@@ -26,7 +29,10 @@ import { ExportService } from '../../../core/services/export.service';
     HasPermissionDirective,
     FormFieldComponent,
     UnifiedButtonComponent,
-    UnifiedCardComponent
+    UnifiedCardComponent,
+    ContentLoaderComponent,
+    SkeletonDetailHeaderComponent,
+    SkeletonFormComponent
   ],
   templateUrl: './supplier-form.component.html'
 })

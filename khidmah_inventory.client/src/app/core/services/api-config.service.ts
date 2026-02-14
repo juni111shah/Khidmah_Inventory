@@ -13,6 +13,9 @@ export class ApiConfigService {
   getApiUrl(endpoint: string): string {
     // Remove leading slash if present to avoid double slashes
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    if (!cleanEndpoint) {
+      return environment.apiUrl;
+    }
     return `${environment.apiUrl}/${cleanEndpoint}`;
   }
 

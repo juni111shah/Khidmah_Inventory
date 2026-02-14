@@ -1,0 +1,82 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-stat-cards [cardCount]="7" class="mb-4"></app-skeleton-stat-cards>
+    </ng-container>
+    <div *ngIf="data" class="kpi-content">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <label class="small text-muted mb-0">From</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateFrom" />
+        <label class="small text-muted mb-0">To</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateTo" />
+        <button class="btn btn-sm btn-primary" (click)="load()">Refresh</button>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.revenue.label"
+            [value]="formatKpiValue(data.revenue)"
+            icon="bi-currency-dollar"
+            [theme]="themeForKpi(data.revenue, true)"
+            [trendPercent]="trendPercent(data.revenue)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.cogs.label"
+            [value]="formatKpiValue(data.cogs)"
+            icon="bi-cart"
+            [theme]="themeForKpi(data.cogs, false)"
+            [trendPercent]="trendPercent(data.cogs)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.grossProfit.label"
+            [value]="formatKpiValue(data.grossProfit)"
+            icon="bi-graph-up-arrow"
+            [theme]="themeForKpi(data.grossProfit, true)"
+            [trendPercent]="trendPercent(data.grossProfit)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.grossMarginPercent.label"
+            [value]="formatKpiValue(data.grossMarginPercent)"
+            icon="bi-percent"
+            [theme]="themeForKpi(data.grossMarginPercent, true)"
+            [trendPercent]="trendPercent(data.grossMarginPercent)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.averageOrderValue.label"
+            [value]="formatKpiValue(data.averageOrderValue)"
+            icon="bi-basket"
+            [theme]="themeForKpi(data.averageOrderValue, true)"
+            [trendPercent]="trendPercent(data.averageOrderValue)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.orderCount.label"
+            [value]="formatKpiValue(data.orderCount)"
+            icon="bi-receipt"
+            [theme]="themeForKpi(data.orderCount, true)"
+            [trendPercent]="trendPercent(data.orderCount)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.salesGrowthPercent.label"
+            [value]="formatKpiValue(data.salesGrowthPercent)"
+            icon="bi-graph-up"
+            [theme]="themeForKpi(data.salesGrowthPercent, true)"
+            [trendPercent]="trendPercent(data.salesGrowthPercent)">
+          </app-kpi-stat-card>
+        </div>
+      </div>
+    </div>
+  </app-content-loader>
+</div>

@@ -14,6 +14,10 @@ import { UnifiedCardComponent } from '../../shared/components/unified-card/unifi
 import { UnifiedButtonComponent } from '../../shared/components/unified-button/unified-button.component';
 import { HeaderService } from '../../core/services/header.service';
 import { ExportService } from '../../core/services/export.service';
+import { ContentLoaderComponent } from '../../shared/components/content-loader/content-loader.component';
+import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { SkeletonStatCardsComponent } from '../../shared/components/skeleton-stat-cards/skeleton-stat-cards.component';
+import { SkeletonTableComponent } from '../../shared/components/skeleton-table/skeleton-table.component';
 
 @Component({
   selector: 'app-reports',
@@ -27,7 +31,11 @@ import { ExportService } from '../../core/services/export.service';
     DataTableComponent,
     IconComponent,
     UnifiedCardComponent,
-    UnifiedButtonComponent
+    UnifiedButtonComponent,
+    ContentLoaderComponent,
+    SkeletonLoaderComponent,
+    SkeletonStatCardsComponent,
+    SkeletonTableComponent
   ],
   templateUrl: './reports.component.html'
 })

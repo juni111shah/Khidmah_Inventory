@@ -1,0 +1,40 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="8" [columns]="8" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <app-unified-card *ngIf="data" header="Ranking" customClass="border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Branch</th>
+            <th>Type</th>
+            <th>Revenue</th>
+            <th>Growth</th>
+            <th>Orders</th>
+            <th>Stock health</th>
+            <th>Low stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of data.branches">
+            <td><span class="badge bg-dark">#{{ b.rank }}</span></td>
+            <td><strong>{{ b.name }}</strong></td>
+            <td><span class="badge bg-secondary">{{ b.type }}</span></td>
+            <td>{{ formatCurrency(b.revenue) }}</td>
+            <td><span class="text-{{ b.revenueGrowth >= 0 ? 'success' : 'danger' }}">{{ b.revenueGrowth }}%</span></td>
+            <td>{{ b.orderCount }}</td>
+            <td><span class="badge bg-{{ healthClass(b.stockHealthScore) }}">{{ b.stockHealthScore }}</span></td>
+            <td>{{ b.lowStockCount }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="small text-muted mt-2">Period: {{ data.periodFrom }} to {{ data.periodTo }}</div>
+  </app-unified-card>
+  </app-content-loader>
+</div>

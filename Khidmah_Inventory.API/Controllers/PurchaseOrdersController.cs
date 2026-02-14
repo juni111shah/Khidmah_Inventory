@@ -5,6 +5,7 @@ using Khidmah_Inventory.API.Attributes;
 using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.PurchaseOrders.Commands.CreatePurchaseOrder;
+using Khidmah_Inventory.Application.Features.PurchaseOrders.Commands.UpdatePurchaseOrder;
 using Khidmah_Inventory.Application.Features.PurchaseOrders.Queries.GetPurchaseOrder;
 using Khidmah_Inventory.Application.Features.PurchaseOrders.Queries.GetPurchaseOrdersList;
 
@@ -40,6 +41,15 @@ public class PurchaseOrdersController : BaseController
     [AuthorizeResource(AuthorizePermissions.PurchaseOrdersPermissions.Controller, AuthorizePermissions.PurchaseOrdersPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreatePurchaseOrderCommand command)
     {
+        return await ExecuteRequest(command);
+    }
+
+    [HttpPut(ApiRoutes.PurchaseOrders.Update)]
+    [ValidateApiCode(ApiValidationCodes.PurchaseOrdersModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.PurchaseOrdersPermissions.Controller, AuthorizePermissions.PurchaseOrdersPermissions.Actions.Update)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePurchaseOrderCommand command)
+    {
+        command.Id = id;
         return await ExecuteRequest(command);
     }
 }

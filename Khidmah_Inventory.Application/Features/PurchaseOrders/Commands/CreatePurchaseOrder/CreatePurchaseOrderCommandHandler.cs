@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Khidmah_Inventory.Application.Common.Constants;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
+using Khidmah_Inventory.Application.Features.Notifications.Commands.CreateNotification;
 using Khidmah_Inventory.Application.Features.PurchaseOrders.Models;
 using Khidmah_Inventory.Domain.Entities;
 
@@ -11,11 +13,15 @@ public class CreatePurchaseOrderCommandHandler : IRequestHandler<CreatePurchaseO
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IMediator _mediator;
+    private readonly IOperationsBroadcast? _broadcast;
 
-    public CreatePurchaseOrderCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
+    public CreatePurchaseOrderCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser, IMediator mediator, IOperationsBroadcast? broadcast = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _mediator = mediator;
+        _broadcast = broadcast;
     }
 
     public async Task<Result<PurchaseOrderDto>> Handle(CreatePurchaseOrderCommand request, CancellationToken cancellationToken)
@@ -37,6 +43,10 @@ public class CreatePurchaseOrderCommandHandler : IRequestHandler<CreatePurchaseO
         // Create purchase order
         var purchaseOrder = new PurchaseOrder(companyId.Value, orderNumber, request.SupplierId, request.OrderDate, _currentUser.UserId);
         purchaseOrder.Update(request.SupplierId, request.OrderDate, request.ExpectedDeliveryDate, request.Notes, request.TermsAndConditions, _currentUser.UserId);
+        if (!string.IsNullOrWhiteSpace(request.Status))
+        {
+            purchaseOrder.UpdateStatus(request.Status.Trim(), _currentUser.UserId);
+        }
 
         // Validate and add items
         foreach (var itemDto in request.Items)
@@ -62,6 +72,35 @@ public class CreatePurchaseOrderCommandHandler : IRequestHandler<CreatePurchaseO
         purchaseOrder.CalculateTotals();
         _context.PurchaseOrders.Add(purchaseOrder);
         await _context.SaveChangesAsync(cancellationToken);
+
+        await _mediator.Send(new CreateNotificationCommand
+        {
+            CompanyId = companyId.Value,
+            UserId = null,
+            Title = "Purchase order created",
+            Message = $"Purchase order {purchaseOrder.OrderNumber} has been created.",
+            Type = "Success",
+            EntityType = "PurchaseOrder",
+            EntityId = purchaseOrder.Id
+        }, cancellationToken);
+
+        if (_broadcast != null)
+        {
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.PurchaseCreated,
+                companyId.Value,
+                purchaseOrder.Id,
+                "PurchaseOrder",
+                new { OrderNumber = purchaseOrder.OrderNumber, TotalAmount = purchaseOrder.TotalAmount },
+                cancellationToken);
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.OrderCreated,
+                companyId.Value,
+                purchaseOrder.Id,
+                "PurchaseOrder",
+                new { OrderNumber = purchaseOrder.OrderNumber },
+                cancellationToken);
+        }
 
         var dto = await MapToDtoAsync(purchaseOrder.Id, companyId.Value, cancellationToken);
         return Result<PurchaseOrderDto>.Success(dto);

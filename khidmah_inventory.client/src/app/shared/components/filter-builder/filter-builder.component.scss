@@ -1,0 +1,13 @@
+.filter-builder {
+  background: var(--surface-color, var(--bs-body-bg, #fff));
+  border-radius: 0.5rem;
+}
+
+.rule-row {
+  padding: 0.25rem 0;
+}
+
+.rule-row select,
+.rule-row input {
+  max-width: 200px;
+}

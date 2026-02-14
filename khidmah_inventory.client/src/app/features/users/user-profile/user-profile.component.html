@@ -1,9 +1,19 @@
 <div class="user-profile-container py-4">
-  <div *ngIf="loading" class="loading-container">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!loading && user" class="profile-content">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-detail-header [actionCount]="0" class="mb-4"></app-skeleton-detail-header>
+      <div class="d-flex gap-4 mb-4">
+        <app-skeleton-loader [width]="'120px'" [height]="'120px'" [shape]="'circle'"></app-skeleton-loader>
+        <div class="flex-grow-1">
+          <app-skeleton-loader [width]="'60%'" [height]="'28px'" class="mb-2"></app-skeleton-loader>
+          <app-skeleton-loader [width]="'40%'" [height]="'20px'"></app-skeleton-loader>
+        </div>
+      </div>
+      <app-unified-card>
+        <app-skeleton-form [fieldCount]="4" [showLabels]="true" [showActions]="false"></app-skeleton-form>
+      </app-unified-card>
+    </ng-container>
+    <div *ngIf="!loading && user" class="profile-content">
     <div class="d-flex justify-content-start mb-4">
       <app-unified-button variant="secondary" [outlined]="true" (clicked)="router.navigate(['/users'])">
         <app-icon name="arrow-left" customClass="me-2"></app-icon>
@@ -263,6 +273,7 @@
       </div>
     </div>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

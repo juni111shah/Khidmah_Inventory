@@ -1,0 +1,37 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <app-unified-card header="Cash Flow Statement" customClass="border-0 shadow-sm">
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-3">
+          <label class="form-label small">From</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="filter.fromDate" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small">To</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="filter.toDate" />
+        </div>
+        <div class="col-md-6 d-flex gap-2">
+          <button class="btn btn-sm btn-primary" (click)="load()">Apply</button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="exportCsv()" [disabled]="!report">Export CSV</button>
+        </div>
+      </div>
+
+      <div *ngIf="report" class="table-responsive">
+        <table class="table table-sm">
+          <tbody>
+            <tr><th>Operating Inflow</th><td class="text-end">{{ report.operatingInflow | number:'1.2-2' }}</td></tr>
+            <tr><th>Operating Outflow</th><td class="text-end">{{ report.operatingOutflow | number:'1.2-2' }}</td></tr>
+            <tr><th>Net Operating</th><td class="text-end">{{ report.netOperating | number:'1.2-2' }}</td></tr>
+            <tr><th>Investing Inflow</th><td class="text-end">{{ report.investingInflow | number:'1.2-2' }}</td></tr>
+            <tr><th>Investing Outflow</th><td class="text-end">{{ report.investingOutflow | number:'1.2-2' }}</td></tr>
+            <tr><th>Net Investing</th><td class="text-end">{{ report.netInvesting | number:'1.2-2' }}</td></tr>
+            <tr><th>Financing Inflow</th><td class="text-end">{{ report.financingInflow | number:'1.2-2' }}</td></tr>
+            <tr><th>Financing Outflow</th><td class="text-end">{{ report.financingOutflow | number:'1.2-2' }}</td></tr>
+            <tr><th>Net Financing</th><td class="text-end">{{ report.netFinancing | number:'1.2-2' }}</td></tr>
+            <tr class="table-active"><th>Net Cash Change</th><td class="text-end fw-semibold">{{ report.netCashChange | number:'1.2-2' }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </app-unified-card>
+  </app-content-loader>
+</div>

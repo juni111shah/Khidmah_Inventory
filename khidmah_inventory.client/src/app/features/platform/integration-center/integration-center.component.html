@@ -1,0 +1,288 @@
+<div class="integration-center container-fluid py-4">
+  <app-toast *ngIf="showToast" [message]="toastMessage" [type]="toastType" (close)="showToast = false"></app-toast>
+
+  <div class="tabs-header mb-4">
+    <button type="button" class="tab-btn" [class.active]="activeTab === 'api-keys'" (click)="setActiveTab('api-keys')">
+      <i class="bi bi-key-fill"></i> API Keys
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab === 'webhooks'" (click)="setActiveTab('webhooks')">
+      <i class="bi bi-link-45deg"></i> Webhooks
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab === 'integrations'" (click)="setActiveTab('integrations')">
+      <i class="bi bi-plug-fill"></i> Integrations
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab === 'scheduled-reports'" (click)="setActiveTab('scheduled-reports')">
+      <i class="bi bi-calendar-check"></i> Scheduled Reports
+    </button>
+    <button type="button" class="tab-btn" [class.active]="activeTab === 'usage'" (click)="setActiveTab('usage')">
+      <i class="bi bi-graph-up"></i> API Usage
+    </button>
+  </div>
+
+  <!-- API Keys -->
+  <div *ngIf="activeTab === 'api-keys'" class="tab-content">
+    <app-unified-card header="API Keys" footer="Manage keys for external and automation access">
+      <div class="d-flex justify-content-end mb-3">
+        <app-unified-button variant="primary" size="sm" (clicked)="openCreateKey()" icon="plus" iconLibrary="bi">Create API Key</app-unified-button>
+      </div>
+      <div *ngIf="apiKeysLoading" class="text-muted">Loading...</div>
+      <div *ngIf="!apiKeysLoading && apiKeys.length === 0" class="text-muted">No API keys yet. Create one to allow external access.</div>
+      <div *ngIf="!apiKeysLoading && apiKeys.length > 0" class="table-responsive">
+        <table class="table table-sm">
+          <thead><tr><th>Name</th><th>Prefix</th><th>Permissions</th><th>Last used</th><th>Calls / Errors</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let k of apiKeys">
+              <td>{{ k.name }}</td>
+              <td><code>{{ k.keyPrefix }}...</code></td>
+              <td><small>{{ k.permissions || '-' }}</small></td>
+              <td>{{ k.lastUsedAt ? (k.lastUsedAt | date:'short') : 'Never' }}</td>
+              <td>{{ k.requestCount }} / {{ k.errorCount }}</td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" *ngIf="k.isActive" (click)="revokeKey(k.id)">Revoke</button>
+                <span *ngIf="!k.isActive" class="badge bg-secondary">Revoked</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-unified-card>
+    <!-- Create key modal -->
+    <div *ngIf="createKeyModal" class="modal show d-block" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Create API Key</h5>
+            <button type="button" class="btn-close" (click)="createKeyModal = false; createdPlainKey = null"></button>
+          </div>
+          <div class="modal-body">
+            <div *ngIf="!createdPlainKey">
+              <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-control" [(ngModel)]="newKey.name" placeholder="e.g. Mobile app" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Permissions (comma-separated)</label>
+                <input type="text" class="form-control" [(ngModel)]="newKey.permissions" placeholder="Products:Read, Stock:Read, Orders:Read" />
+              </div>
+            </div>
+            <div *ngIf="createdPlainKey" class="alert alert-warning">
+              <strong>Copy this key now.</strong> It won't be shown again.
+              <div class="mt-2 d-flex gap-2">
+                <code class="flex-grow-1 p-2 bg-dark text-light rounded">{{ createdPlainKey }}</code>
+                <button type="button" class="btn btn-sm btn-outline-light" (click)="copyToClipboard(createdPlainKey!)">Copy</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="createKeyModal = false; createdPlainKey = null">Close</button>
+            <button *ngIf="!createdPlainKey" type="button" class="btn btn-primary" (click)="createApiKey()">Create</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Webhooks -->
+  <div *ngIf="activeTab === 'webhooks'" class="tab-content">
+    <app-unified-card header="Webhooks" footer="Register URLs for event notifications">
+      <div class="d-flex justify-content-end mb-3">
+        <app-unified-button variant="primary" size="sm" (clicked)="openWebhookForm()" icon="plus" iconLibrary="bi">Add Webhook</app-unified-button>
+      </div>
+      <div *ngIf="webhooksLoading" class="text-muted">Loading...</div>
+      <div *ngIf="!webhooksLoading && webhooks.length === 0" class="text-muted">No webhooks. Add one to receive OrderCreated, SaleCompleted, StockLow, ApprovalDone.</div>
+      <div *ngIf="!webhooksLoading && webhooks.length > 0" class="row g-3">
+        <div *ngFor="let w of webhooks" class="col-12 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="card-title">{{ w.name }}</h6>
+              <p class="card-text small text-muted">{{ w.url }}</p>
+              <p class="small">Events: {{ w.events || '-' }}</p>
+              <span class="badge" [ngClass]="w.isActive ? 'bg-success' : 'bg-secondary'">{{ w.isActive ? 'Active' : 'Disabled' }}</span>
+              <div class="mt-2">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="openWebhookLogs(w.id)">Logs</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="openWebhookForm(w)">Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteWebhook(w.id)">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-unified-card>
+    <!-- Webhook form modal -->
+    <div *ngIf="webhookModal" class="modal show d-block" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">{{ webhookForm.id ? 'Edit' : 'Add' }} Webhook</h5><button type="button" class="btn-close" (click)="webhookModal = false"></button></div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" [(ngModel)]="webhookForm.name" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">URL</label>
+              <input type="url" class="form-control" [(ngModel)]="webhookForm.url" placeholder="https://..." />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Events (comma-separated)</label>
+              <input type="text" class="form-control" [(ngModel)]="webhookForm.events" placeholder="OrderCreated, SaleCompleted, StockLow, ApprovalDone" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <input type="text" class="form-control" [(ngModel)]="webhookForm.description" />
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="whActive" [(ngModel)]="webhookForm.isActive" />
+              <label class="form-check-label" for="whActive">Active</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="webhookModal = false">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveWebhook()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Logs modal -->
+    <div *ngIf="webhookLogsModal" class="modal show d-block" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">Delivery logs</h5><button type="button" class="btn-close" (click)="webhookLogsModal = false"></button></div>
+          <div class="modal-body">
+            <table class="table table-sm">
+              <thead><tr><th>Event</th><th>Time</th><th>Status</th><th>Retries</th><th>Error</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let l of selectedWebhookLogs">
+                  <td>{{ l.eventName }}</td>
+                  <td>{{ l.deliveredAt | date:'short' }}</td>
+                  <td><span class="badge" [ngClass]="l.success ? 'bg-success' : 'bg-danger'">{{ l.httpStatusCode }}</span></td>
+                  <td>{{ l.retryCount }}</td>
+                  <td><small class="text-danger">{{ l.errorMessage || '-' }}</small></td>
+                </tr>
+              </tbody>
+            </table>
+            <p *ngIf="selectedWebhookLogs.length === 0" class="text-muted">No logs yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integrations -->
+  <div *ngIf="activeTab === 'integrations'" class="tab-content">
+    <app-unified-card header="Integration Center" footer="Enable or disable integrations per company">
+      <div *ngIf="integrationsLoading" class="text-muted">Loading...</div>
+      <div *ngIf="!integrationsLoading" class="row g-3">
+        <div *ngFor="let i of integrations" class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100">
+            <div class="card-body">
+              <h6 class="card-title">{{ i.displayName }}</h6>
+              <p class="card-text small text-muted">{{ i.description || 'No description' }}</p>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="badge" [ngClass]="i.isEnabled ? 'bg-success' : 'bg-secondary'">{{ i.isEnabled ? 'Enabled' : 'Disabled' }}</span>
+                <button type="button" class="btn btn-sm" [class.btn-outline-success]="!i.isEnabled" [class.btn-outline-secondary]="i.isEnabled" [disabled]="integrationToggling === i.integrationType" (click)="toggleIntegration(i)">
+                  {{ i.isEnabled ? 'Disable' : 'Enable' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-unified-card>
+  </div>
+
+  <!-- Scheduled Reports -->
+  <div *ngIf="activeTab === 'scheduled-reports'" class="tab-content">
+    <app-unified-card title="Scheduled Reports" subtitle="Automatically send reports by email">
+      <div class="d-flex justify-content-end mb-3">
+        <app-unified-button variant="primary" size="sm" (clicked)="openReportForm()" icon="plus" iconLibrary="bi">Add schedule</app-unified-button>
+      </div>
+      <div *ngIf="scheduledReportsLoading" class="text-muted">Loading...</div>
+      <div *ngIf="!scheduledReportsLoading && scheduledReports.length === 0" class="text-muted">No scheduled reports.</div>
+      <div *ngIf="!scheduledReportsLoading && scheduledReports.length > 0" class="table-responsive">
+        <table class="table table-sm">
+          <thead><tr><th>Name</th><th>Report</th><th>Frequency</th><th>Next run</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let r of scheduledReports">
+              <td>{{ r.name }}</td>
+              <td>{{ r.reportType }}</td>
+              <td>{{ r.frequency }}</td>
+              <td>{{ r.nextRunAt ? (r.nextRunAt | date:'short') : '-' }}</td>
+              <td><span class="badge" [ngClass]="r.isActive ? 'bg-success' : 'bg-secondary'">{{ r.isActive ? 'Active' : 'Paused' }}</span></td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="openReportForm(r)">Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteScheduledReport(r.id)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-unified-card>
+    <!-- Report form modal -->
+    <div *ngIf="reportModal" class="modal show d-block" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header"><h5 class="modal-title">{{ reportForm.id ? 'Edit' : 'Add' }} Scheduled Report</h5><button type="button" class="btn-close" (click)="reportModal = false"></button></div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" [(ngModel)]="reportForm.name" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Report type</label>
+              <select class="form-select" [(ngModel)]="reportForm.reportType">
+                <option *ngFor="let t of reportTypes" [value]="t">{{ t }}</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Frequency</label>
+              <select class="form-select" [(ngModel)]="reportForm.frequency">
+                <option *ngFor="let f of frequencies" [value]="f">{{ f }}</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Recipients (JSON array of emails)</label>
+              <input type="text" class="form-control" [(ngModel)]="reportForm.recipientsJson" placeholder='["user@example.com"]' />
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="repActive" [(ngModel)]="reportForm.isActive" />
+              <label class="form-check-label" for="repActive">Active</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="reportModal = false">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveScheduledReport()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Usage -->
+  <div *ngIf="activeTab === 'usage'" class="tab-content">
+    <app-unified-card header="API Usage" footer="Calls, errors, and last access">
+      <div *ngIf="usageLoading" class="text-muted">Loading...</div>
+      <div *ngIf="!usageLoading && usage">
+        <div class="row g-3 mb-4">
+          <div class="col"><div class="card"><div class="card-body"><h6 class="text-muted">Total calls</h6><h4>{{ usage.totalCalls }}</h4></div></div></div>
+          <div class="col"><div class="card"><div class="card-body"><h6 class="text-muted">Errors</h6><h4>{{ usage.errorCalls }}</h4></div></div></div>
+          <div class="col"><div class="card"><div class="card-body"><h6 class="text-muted">Last access</h6><h6>{{ usage.lastAccessAt ? (usage.lastAccessAt | date:'medium') : 'Never' }}</h6></div></div></div>
+        </div>
+        <h6>Recent requests</h6>
+        <table class="table table-sm">
+          <thead><tr><th>Method</th><th>Path</th><th>Status</th><th>Time (ms)</th><th>At</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let l of usage.recentLogs">
+              <td>{{ l.method }}</td>
+              <td><code>{{ l.path }}</code></td>
+              <td><span class="badge" [ngClass]="l.success ? 'bg-success' : 'bg-danger'">{{ l.statusCode }}</span></td>
+              <td>{{ l.elapsedMs }}</td>
+              <td>{{ l.createdAt | date:'short' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p *ngIf="!usage.recentLogs?.length" class="text-muted">No recent logs.</p>
+      </div>
+      <p *ngIf="!usageLoading && !usage" class="text-muted">No usage data.</p>
+    </app-unified-card>
+  </div>
+</div>

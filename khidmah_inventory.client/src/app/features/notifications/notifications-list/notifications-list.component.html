@@ -1,0 +1,49 @@
+<div class="notifications-list container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+      <h5 class="mb-0">Notifications</h5>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="unreadOnly" [(ngModel)]="unreadOnly" (ngModelChange)="pageNo=1; load()">
+        <label class="form-check-label small" for="unreadOnly">Unread only</label>
+      </div>
+    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm" (click)="markAllRead()">
+      <i class="bi bi-check-all me-1"></i>Mark all read
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5 text-muted">
+    <div class="spinner-border" role="status"></div>
+    <p class="mt-2 mb-0">Loading...</p>
+  </div>
+
+  <div *ngIf="!loading && notifications.length === 0" class="alert alert-light text-center py-5">
+    No notifications.
+  </div>
+
+  <div *ngIf="!loading && notifications.length > 0" class="list-group">
+    <a *ngFor="let n of notifications" href="javascript:void(0)" class="list-group-item list-group-item-action d-flex gap-3" [class.list-group-item-light]="!n.isRead" (click)="go(n); $event.preventDefault()">
+      <i class="bi flex-shrink-0 mt-1" [ngClass]="getIcon(n.type)" style="font-size: 1.25rem;"></i>
+      <div class="flex-grow-1 min-w-0">
+        <div class="d-flex justify-content-between align-items-start">
+          <h6 class="mb-1">{{ n.title }}</h6>
+          <small class="text-muted flex-shrink-0">{{ n.createdAt | date:'short' }}</small>
+        </div>
+        <p class="mb-0 text-muted small">{{ n.message }}</p>
+        <span *ngIf="!n.isRead" class="badge bg-primary mt-1">New</span>
+      </div>
+    </a>
+  </div>
+
+  <nav *ngIf="!loading && totalPages > 1" class="mt-3 d-flex justify-content-center">
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item" [class.disabled]="pageNo <= 1">
+        <a class="page-link" href="javascript:void(0)" (click)="pageNo > 1 && onPageChange(pageNo - 1); $event.preventDefault()">Previous</a>
+      </li>
+      <li class="page-item disabled"><span class="page-link">{{ pageNo }} / {{ totalPages }}</span></li>
+      <li class="page-item" [class.disabled]="pageNo >= totalPages">
+        <a class="page-link" href="javascript:void(0)" (click)="pageNo < totalPages && onPageChange(pageNo + 1); $event.preventDefault()">Next</a>
+      </li>
+    </ul>
+  </nav>
+</div>

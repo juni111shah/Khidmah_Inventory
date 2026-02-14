@@ -106,10 +106,19 @@ builder.Services.AddScoped<IAuthorizationHandler, Khidmah_Inventory.API.Authoriz
 // Add SignalR
 builder.Services.AddSignalR();
 
+// Register Operations (real-time) broadcast - tenant-aware events from MediatR handlers
+builder.Services.AddScoped<Khidmah_Inventory.Application.Common.Interfaces.IOperationsBroadcast, Khidmah_Inventory.API.Services.OperationsBroadcastService>();
+
 // Register Analytics Broadcast Service
 builder.Services.AddSingleton<Khidmah_Inventory.API.Services.AnalyticsBroadcastService>();
 builder.Services.AddHostedService(provider =>
     provider.GetRequiredService<Khidmah_Inventory.API.Services.AnalyticsBroadcastService>());
+
+// Platform: Webhook delivery channel and background service
+builder.Services.AddSingleton(System.Threading.Channels.Channel.CreateUnbounded<Khidmah_Inventory.API.Services.WebhookDeliveryItem>());
+builder.Services.AddScoped<Khidmah_Inventory.Application.Common.Interfaces.IWebhookDispatchService, Khidmah_Inventory.API.Services.WebhookDispatchService>();
+builder.Services.AddHttpClient();
+builder.Services.AddHostedService<Khidmah_Inventory.API.Services.WebhookDeliveryBackgroundService>();
 
 // Add Application and Infrastructure layers
 builder.Services.AddApplication();
@@ -151,6 +160,8 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
+app.UseMiddleware<ApiKeyUsageMiddleware>();
 app.UseAuthorization();
 
 // Custom middleware
@@ -175,8 +186,9 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.MapControllers();
 
-// Map SignalR Hub
+// Map SignalR Hubs
 app.MapHub<Khidmah_Inventory.API.Hubs.AnalyticsHub>("/hubs/analytics");
+app.MapHub<Khidmah_Inventory.API.Hubs.OperationsHub>("/hubs/operations");
 
 app.MapFallbackToFile("/index.html");
 

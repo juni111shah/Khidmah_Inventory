@@ -1,0 +1,64 @@
+<div class="filter-builder p-3">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="text-muted small">Match</span>
+    <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="logic">
+      <option value="and">All (AND)</option>
+      <option value="or">Any (OR)</option>
+    </select>
+    <span class="text-muted small">of the following:</span>
+  </div>
+
+  <div class="rules-list">
+    <div *ngFor="let rule of rules; trackBy: trackByRuleId" class="rule-row d-flex flex-wrap align-items-center gap-2 mb-2">
+      <select class="form-select form-select-sm" style="min-width: 140px;" [(ngModel)]="rule.column">
+        <option value="">Select column</option>
+        <option *ngFor="let col of columns" [value]="col.key">{{ col.label }}</option>
+      </select>
+
+      <select class="form-select form-select-sm" style="min-width: 140px;" [(ngModel)]="rule.operator" (ngModelChange)="onOperatorChange(rule)">
+        <option *ngFor="let op of getOperatorsForColumn(rule.column)" [value]="op.value">{{ op.label }}</option>
+      </select>
+
+      <!-- Single value -->
+      <ng-container *ngIf="rule.operator && rule.operator !== 'between' && rule.operator !== 'inList'">
+        <select *ngIf="columnHasOptions(rule.column)" class="form-select form-select-sm" style="min-width: 120px;" [(ngModel)]="rule.value">
+          <option [ngValue]="null"></option>
+          <option *ngFor="let opt of getColumnOptions(rule.column)" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+        <input *ngIf="!columnHasOptions(rule.column)"
+               class="form-control form-control-sm" style="min-width: 120px;" type="text"
+               [type]="getColumnType(rule.column) === 'number' ? 'number' : 'text'"
+               [(ngModel)]="rule.value" placeholder="Value">
+      </ng-container>
+      <!-- Between -->
+      <ng-container *ngIf="rule.operator === 'between'">
+        <input class="form-control form-control-sm" style="min-width: 100px;" type="text" [(ngModel)]="rule.value" placeholder="From">
+        <span class="text-muted">and</span>
+        <input class="form-control form-control-sm" style="min-width: 100px;" type="text" [(ngModel)]="rule.value2" placeholder="To">
+      </ng-container>
+      <!-- In list (comma-separated) -->
+      <ng-container *ngIf="rule.operator === 'inList'">
+        <input class="form-control form-control-sm" style="min-width: 180px;" type="text"
+               [ngModel]="getInListDisplay(rule)"
+               (ngModelChange)="setInListValue(rule, $event)"
+               placeholder="Value1, Value2, ...">
+      </ng-container>
+
+      <button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removeRule(rules.indexOf(rule))" [title]="'Remove rule'">
+        <i class="bi bi-dash-circle"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <app-unified-button variant="secondary" [outlined]="true" (clicked)="addRule()" icon="bi-plus-lg">
+      Add rule
+    </app-unified-button>
+    <app-unified-button variant="secondary" [outlined]="true" (clicked)="clearFilters()">
+      Clear
+    </app-unified-button>
+    <app-unified-button variant="primary" (clicked)="applyFilters()" icon="bi-check-lg">
+      Apply filters
+    </app-unified-button>
+  </div>
+</div>

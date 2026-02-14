@@ -1,59 +1,29 @@
 <div class="stat-card">
-  <!-- Header -->
-  <div class="stat-card-header">
-    <div class="header-left">
-      <div class="title-row">
-        <h3 class="stat-title">{{ title }}</h3>
-        <app-icon 
-          *ngIf="icon" 
-          [name]="icon" 
-          [style.color]="iconColor"
-          class="title-icon">
-        </app-icon>
+  <!-- Header block: same structure as Stock Analysis (title row + subtitle) -->
+  <div class="stat-card-header-block">
+    <div class="stat-card-top-row">
+      <h3 class="stat-title mb-0">{{ title }}</h3>
+      <div class="timeframe-nav">
+        <button class="timeframe-btn" [class.active]="selectedTimeFrame === 'day'" (click)="selectTimeFrame('day')">Day</button>
+        <button class="timeframe-btn" [class.active]="selectedTimeFrame === 'week'" (click)="selectTimeFrame('week')">Week</button>
+        <button class="timeframe-btn" [class.active]="selectedTimeFrame === 'month'" (click)="selectTimeFrame('month')">Month</button>
       </div>
-      <p class="stat-source" *ngIf="source">Source: {{ source }}</p>
     </div>
-    <button class="menu-button" (click)="onMenuClick()" type="button" aria-label="Menu">
-      <app-icon name="more_vert"></app-icon>
-    </button>
+    <p class="stat-card-subtitle text-muted small mb-0" *ngIf="range || period">
+      <span class="stat-range" *ngIf="range">{{ range }}</span><span *ngIf="range && period" class="stat-sep"> · </span><span class="stat-period" *ngIf="period">{{ period }}</span>
+    </p>
   </div>
 
-  <!-- Timeframe Navigation -->
-  <div class="timeframe-nav">
-    <button 
-      class="timeframe-btn" 
-      [class.active]="selectedTimeFrame === 'day'"
-      (click)="selectTimeFrame('day')">
-      Day
-    </button>
-    <button 
-      class="timeframe-btn" 
-      [class.active]="selectedTimeFrame === 'week'"
-      (click)="selectTimeFrame('week')">
-      Week
-    </button>
-    <button 
-      class="timeframe-btn" 
-      [class.active]="selectedTimeFrame === 'month'"
-      (click)="selectTimeFrame('month')">
-      Month
-    </button>
-  </div>
-
-  <!-- Summary Statistics -->
-  <div class="stat-summary">
-    <div class="stat-range" *ngIf="range">{{ range }}</div>
-    <div class="stat-period" *ngIf="period">{{ period }}</div>
-  </div>
-
-  <!-- ApexCharts Bar Chart -->
-  <div class="stat-chart" *ngIf="chartData">
-    <app-chart
-      type="bar"
-      [data]="chartData"
-      [options]="chartOptions"
-      [height]="180">
-    </app-chart>
+  <!-- Chart body: same padding as Stock Analysis chart area -->
+  <div class="stat-card-chart-wrap">
+    <div class="stat-chart" *ngIf="chartData">
+      <app-chart
+        type="bar"
+        [data]="chartData"
+        [options]="chartOptions"
+        [height]="chartHeight">
+      </app-chart>
+    </div>
   </div>
 
   <!-- Footer -->

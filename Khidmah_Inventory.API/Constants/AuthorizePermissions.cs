@@ -63,6 +63,7 @@ public static class AuthorizePermissions
         public static class Actions
         {
             public const string ViewAll = "List";
+            public const string ViewById = "Read";
             public const string Add = "Create";
             public const string Update = "Update";
         }
@@ -85,6 +86,9 @@ public static class AuthorizePermissions
         public const string Controller = "Companies";
         public static class Actions
         {
+            public const string ViewAll = "List";
+            public const string ViewById = "Read";
+            public const string Add = "Create";
             public const string Update = "Update";
         }
     }
@@ -97,6 +101,7 @@ public static class AuthorizePermissions
             public const string ViewAll = "List";
             public const string ViewById = "Read";
             public const string Add = "Create";
+            public const string Update = "Update";
         }
     }
 
@@ -108,6 +113,7 @@ public static class AuthorizePermissions
             public const string ViewAll = "List";
             public const string ViewById = "Read";
             public const string Add = "Create";
+            public const string Update = "Update";
         }
     }
 
@@ -125,6 +131,30 @@ public static class AuthorizePermissions
         }
     }
 
+    public static class KpiPermissions
+    {
+        public const string Controller = "Kpi";
+        public static class Actions
+        {
+            public const string Read = "Read";
+        }
+    }
+
+    public static class FinancePermissions
+    {
+        public const string Controller = "Finance";
+        public static class Actions
+        {
+            public const string AccountsList = "Accounts:List";
+            public const string AccountsRead = "Accounts:Read";
+            public const string AccountsCreate = "Accounts:Create";
+            public const string AccountsUpdate = "Accounts:Update";
+            public const string AccountsDelete = "Accounts:Delete";
+            public const string JournalsRead = "Journals:Read";
+            public const string StatementsRead = "Statements:Read";
+        }
+    }
+
     public static class WarehousesPermissions
     {
         public const string Controller = "Warehouses";
@@ -135,6 +165,34 @@ public static class AuthorizePermissions
             public const string Add = "Create";
             public const string Update = "Update";
             public const string Delete = "Delete";
+        }
+    }
+
+    /// <summary>
+    /// Digital warehouse map (autonomous warehouse spatial model).
+    /// </summary>
+    public static class WarehouseMapPermissions
+    {
+        public const string Controller = "Warehouses";
+        public static class Actions
+        {
+            public const string ViewAll = "List";
+            public const string ViewById = "Read";
+            public const string Add = "Create";
+            public const string Update = "Update";
+            public const string Delete = "Delete";
+        }
+    }
+
+    /// <summary>
+    /// Copilot actions respect user permissions (e.g. PurchaseOrders:Create for create PO).
+    /// </summary>
+    public static class CopilotPermissions
+    {
+        public const string Controller = "Dashboard";
+        public static class Actions
+        {
+            public const string Execute = "Read";
         }
     }
 
@@ -305,6 +363,29 @@ public static class AuthorizePermissions
         }
     }
 
+    public static class CurrencyPermissions
+    {
+        public const string Controller = "Currency";
+        public static class Actions
+        {
+            public const string List = "List";
+            public const string Read = "Read";
+            public const string Create = "Create";
+            public const string Update = "Update";
+            public const string Delete = "Delete";
+        }
+    }
+
+    public static class ExchangeRatesPermissions
+    {
+        public const string Controller = "ExchangeRates";
+        public static class Actions
+        {
+            public const string List = "List";
+            public const string Create = "Create";
+        }
+    }
+
     public static class PosPermissions
     {
         public const string Controller = "Pos";
@@ -313,6 +394,30 @@ public static class AuthorizePermissions
             public const string Session = "Session";
             public const string StartSession = "StartSession";
             public const string EndSession = "EndSession";
+        }
+    }
+
+    public static class PlatformPermissions
+    {
+        public const string Controller = "Platform";
+        public static class Actions
+        {
+            public const string ApiKeysList = "ApiKeys:List";
+            public const string ApiKeysCreate = "ApiKeys:Create";
+            public const string ApiKeysUpdate = "ApiKeys:Update";
+            public const string ApiKeysRevoke = "ApiKeys:Revoke";
+            public const string ApiKeysUsage = "ApiKeys:Usage";
+            public const string WebhooksList = "Webhooks:List";
+            public const string WebhooksCreate = "Webhooks:Create";
+            public const string WebhooksUpdate = "Webhooks:Update";
+            public const string WebhooksDelete = "Webhooks:Delete";
+            public const string WebhooksLogs = "Webhooks:Logs";
+            public const string IntegrationsList = "Integrations:List";
+            public const string IntegrationsToggle = "Integrations:Toggle";
+            public const string ScheduledReportsList = "ScheduledReports:List";
+            public const string ScheduledReportsCreate = "ScheduledReports:Create";
+            public const string ScheduledReportsUpdate = "ScheduledReports:Update";
+            public const string ScheduledReportsDelete = "ScheduledReports:Delete";
         }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
+using Khidmah_Inventory.Application.Features.Notifications.Commands.CreateNotification;
 using Khidmah_Inventory.Application.Features.Workflows.Models;
 using Khidmah_Inventory.Domain.Entities;
 
@@ -12,11 +13,13 @@ public class StartWorkflowCommandHandler : IRequestHandler<StartWorkflowCommand,
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IMediator _mediator;
 
-    public StartWorkflowCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
+    public StartWorkflowCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser, IMediator mediator)
     {
         _context = context;
         _currentUser = currentUser;
+        _mediator = mediator;
     }
 
     public async Task<Result<WorkflowInstanceDto>> Handle(StartWorkflowCommand request, CancellationToken cancellationToken)
@@ -70,6 +73,20 @@ public class StartWorkflowCommandHandler : IRequestHandler<StartWorkflowCommand,
 
         _context.WorkflowInstances.Add(instance);
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (instance.CurrentAssigneeId.HasValue)
+        {
+            await _mediator.Send(new CreateNotificationCommand
+            {
+                CompanyId = companyId.Value,
+                UserId = instance.CurrentAssigneeId,
+                Title = "Workflow awaiting approval",
+                Message = $"Workflow \"{workflow.Name}\" is waiting for your approval (step: {instance.CurrentStep}).",
+                Type = "Info",
+                EntityType = "WorkflowInstance",
+                EntityId = instance.Id
+            }, cancellationToken);
+        }
 
         var dto = new WorkflowInstanceDto
         {

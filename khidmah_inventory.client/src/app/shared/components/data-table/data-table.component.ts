@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, HostListener, NgZone } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FilterFieldComponent } from '../filter-field/filter-field.component';
@@ -17,6 +17,7 @@ import { EmptyStateComponent } from '../empty-state/empty-state.component';
 import { DropdownComponent } from '../dropdown/dropdown.component';
 import { SkeletonTableComponent } from '../skeleton-table/skeleton-table.component';
 import { PermissionService } from '../../../core/services/permission.service';
+import { ApiConfigService } from '../../../core/services/api-config.service';
 import { UnifiedButtonComponent } from '../unified-button/unified-button.component';
 import { UnifiedCheckboxComponent } from '../unified-checkbox/unified-checkbox.component';
 import { ListingHeaderComponent } from '../listing-header/listing-header.component';
@@ -41,7 +42,7 @@ import { ListingHeaderComponent } from '../listing-header/listing-header.compone
   templateUrl: './data-table.component.html',
   styleUrls: ['./data-table.component.scss']
 })
-export class DataTableComponent<T = any> implements OnInit {
+export class DataTableComponent<T = any> implements OnInit, OnChanges {
   @Input() columns: DataTableColumn<T>[] = [];
   @Input() data: T[] = [];
   @Input() loading: boolean = false;
@@ -130,6 +131,25 @@ export class DataTableComponent<T = any> implements OnInit {
 
     if (!this.filterRequest.filters) {
       this.filterRequest.filters = [];
+    }
+    this.syncSortFromRequest();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['filterRequest'] && this.filterRequest?.pagination) {
+      this.syncSortFromRequest();
+    }
+  }
+
+  private syncSortFromRequest(): void {
+    const p = this.filterRequest?.pagination;
+    if (p?.sortBy) {
+      this.currentSort = {
+        column: p.sortBy,
+        direction: (p.sortOrder === 'descending' || p.sortOrder === 'desc') ? 'desc' : 'asc'
+      };
+    } else {
+      this.currentSort = null;
     }
   }
 
@@ -277,6 +297,11 @@ export class DataTableComponent<T = any> implements OnInit {
     this.rowSelect.emit(Array.from(this.selectedRows));
   }
 
+  /** Raw value for the cell (used by image type, etc.). */
+  getRawCellValue(row: T, column: DataTableColumn<T>): any {
+    return (row as any)[column.key];
+  }
+
   getCellValue(row: T, column: DataTableColumn<T>): string {
     if (column.render) {
       return column.render(row, column);
@@ -357,16 +382,26 @@ export class DataTableComponent<T = any> implements OnInit {
         const button = (event.target as HTMLElement).closest('button');
         if (button) {
           const rect = button.getBoundingClientRect();
+          const menuMinWidth = 180;
+          const itemHeight = 44;
+          const padding = 16;
+          const estimatedHeight = (this.currentActionDropdownActions.length * itemHeight) + padding;
+          const gap = 5;
+          // Pagination + footer zone: don't let menu extend into bottom 200px so it never overlaps rows or pagination
+          const paginationZoneHeight = 200;
+          const menuBottomIfDown = rect.bottom + gap + estimatedHeight;
+          const wouldOverlapPagination = menuBottomIfDown > window.innerHeight - paginationZoneHeight;
+          const spaceAbove = rect.top;
+          const openUpwards = spaceAbove >= estimatedHeight && (wouldOverlapPagination || menuBottomIfDown > window.innerHeight - 80);
 
-          // Calculate if menu should open upwards
-          const estimatedHeight = (this.currentActionDropdownActions.length * 40) + 16; // 40px per item + padding
-          const spaceBelow = window.innerHeight - rect.bottom;
-          const openUpwards = spaceBelow < estimatedHeight && rect.top > estimatedHeight;
-
+          // Keep menu in viewport horizontally: align right edge with button; if that would go off left, pin left instead
+          const rightPx = window.innerWidth - rect.right;
+          const useLeftClamp = rect.right - menuMinWidth < 8;
           this.dropdownPosition = {
             top: openUpwards ? undefined : (rect.bottom + 5),
             bottom: openUpwards ? (window.innerHeight - rect.top + 5) : undefined,
-            right: window.innerWidth - rect.right
+            left: useLeftClamp ? 8 : undefined,
+            right: useLeftClamp ? undefined : rightPx
           };
 
           // Add scroll listener to close dropdown on scroll
@@ -376,7 +411,7 @@ export class DataTableComponent<T = any> implements OnInit {
     }
   }
 
-  dropdownPosition: { top?: number; bottom?: number; right: number } | null = null;
+  dropdownPosition: { top?: number; bottom?: number; left?: number; right?: number } | null = null;
 
   closeActionDropdown(): void {
     this.currentActionDropdownRow = null;
@@ -418,6 +453,10 @@ export class DataTableComponent<T = any> implements OnInit {
     this.rowClick.emit(row);
   }
 
+  getRowClass(row: T): string {
+    return this.effectiveConfig.rowClass?.(row as any) || '';
+  }
+
   trackByFn(index: number, item: T): any {
     return (item as any).id || index;
   }
@@ -434,6 +473,10 @@ export class DataTableComponent<T = any> implements OnInit {
     return headers;
   }
 
+  getSkeletonHeaderWidths(): string[] {
+    return this.getSkeletonHeaders().map(h => h.width || 'auto');
+  }
+
   getDefaultPageSize(): number {
     const options = this.effectiveConfig.pageSizeOptions;
     return options && options.length > 0 ? options[0] : 10;
@@ -443,5 +486,19 @@ export class DataTableComponent<T = any> implements OnInit {
     return this.effectiveConfig.searchPlaceholder || 'Search...';
   }
 
-  constructor(public permissionService: PermissionService, private ngZone: NgZone) {}
+  constructor(
+    public permissionService: PermissionService,
+    private apiConfig: ApiConfigService,
+    private ngZone: NgZone
+  ) {}
+
+  /** Resolve image URL: relative paths (e.g. /uploads/...) become absolute API base URL. */
+  getImageUrl(value: string | null | undefined): string | null | undefined {
+    if (value == null || value === '') return value;
+    if (typeof value !== 'string') return value;
+    if (value.startsWith('/')) {
+      return `${this.apiConfig.getBaseUrl()}${value}`;
+    }
+    return value;
+  }
 }

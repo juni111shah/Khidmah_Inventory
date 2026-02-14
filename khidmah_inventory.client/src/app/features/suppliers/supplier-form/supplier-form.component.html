@@ -1,9 +1,12 @@
 <div class="supplier-form-container container-fluid py-4">
-  <div *ngIf="loading" class="d-flex justify-content-center align-items-center py-5">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!loading" class="form-content max-width-1000 mx-auto">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-detail-header [actionCount]="0" class="mb-4"></app-skeleton-detail-header>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-form [fieldCount]="6" [showLabels]="true" [showActions]="true"></app-skeleton-form>
+      </app-unified-card>
+    </ng-container>
+    <div *ngIf="!loading" class="form-content max-width-1000 mx-auto">
     <div class="d-flex justify-content-start mb-4">
       <app-unified-button
         variant="secondary"
@@ -183,6 +186,7 @@
       </div>
     </app-unified-card>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

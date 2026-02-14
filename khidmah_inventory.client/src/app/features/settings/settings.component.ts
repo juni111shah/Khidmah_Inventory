@@ -2,7 +2,9 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppearanceSettingsService } from '../../core/services/appearance-settings.service';
+import { SettingsApiService } from '../../core/services/settings-api.service';
 import { AppearanceSettings, DEFAULT_APPEARANCE_SETTINGS } from '../../core/models/appearance-settings.model';
+import { SystemSettings, DEFAULT_SYSTEM_SETTINGS } from '../../core/models/app-settings.model';
 import { HeaderService } from '../../core/services/header.service';
 import { ToastComponent } from '../../shared/components/toast/toast.component';
 import { Subscription } from 'rxjs';
@@ -11,7 +13,7 @@ import { UnifiedCardComponent } from '../../shared/components/unified-card/unifi
 import { UnifiedCheckboxComponent } from '../../shared/components/unified-checkbox/unified-checkbox.component';
 import { FormFieldComponent } from '../../shared/components/form-field/form-field.component';
 
-type SettingsTab = 'colors' | 'layout' | 'radius' | 'buttons' | 'cards' | 'fields' | 'typography' | 'animations' | 'components' | 'effects';
+type SettingsTab = 'colors' | 'layout' | 'radius' | 'buttons' | 'cards' | 'fields' | 'typography' | 'animations' | 'components' | 'effects' | 'numbering';
 
 @Component({
   selector: 'app-settings',
@@ -33,6 +35,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   // Active tab
   activeTab: SettingsTab = 'colors';
+
+  // Numbering sequences (system settings)
+  numberingSettings: SystemSettings | null = null;
+  numberingLoading = false;
 
   // Toast
   showToast = false;
@@ -240,6 +246,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   ];
 
   constructor(
+    private settingsApi: SettingsApiService,
     private appearanceService: AppearanceSettingsService,
     private headerService: HeaderService
   ) {}
@@ -269,6 +276,32 @@ export class SettingsComponent implements OnInit, OnDestroy {
   // Tab Navigation
   setActiveTab(tab: SettingsTab): void {
     this.activeTab = tab;
+    if (tab === 'numbering' && !this.numberingSettings) this.loadNumberingSettings();
+  }
+
+  loadNumberingSettings(): void {
+    this.numberingLoading = true;
+    this.settingsApi.getSystemSettings().subscribe({
+      next: (res) => {
+        this.numberingLoading = false;
+        if (res.success && res.data) this.numberingSettings = res.data;
+        else this.numberingSettings = { ...DEFAULT_SYSTEM_SETTINGS };
+      },
+      error: () => { this.numberingLoading = false; this.numberingSettings = { ...DEFAULT_SYSTEM_SETTINGS }; }
+    });
+  }
+
+  saveNumberingSettings(): void {
+    if (!this.numberingSettings) return;
+    this.saving = true;
+    this.settingsApi.saveSystemSettings(this.numberingSettings).subscribe({
+      next: (res) => {
+        this.saving = false;
+        if (res.success) this.showToastNotification('Numbering settings saved', 'success');
+        else this.showToastNotification(res.message || 'Save failed', 'error');
+      },
+      error: () => { this.saving = false; this.showToastNotification('Save failed', 'error'); }
+    });
   }
 
   // Update Setting (Real-time)

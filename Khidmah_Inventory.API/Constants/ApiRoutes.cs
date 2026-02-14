@@ -58,7 +58,9 @@ public static class ApiRoutes
     {
         public const string Base = "api/customers";
         public const string Index = "list";
+        public const string GetById = "{id}";
         public const string Add = "";
+        public const string Update = "{id}";
         public const string UploadImage = "{id}/image";
     }
 
@@ -84,6 +86,8 @@ public static class ApiRoutes
         public const string GetById = "{id}";
         public const string Add = "";
         public const string Update = "{id}";
+        public const string Activate = "{id}/activate";
+        public const string Deactivate = "{id}/deactivate";
         public const string UploadLogo = "{id}/logo";
     }
 
@@ -132,6 +136,50 @@ public static class ApiRoutes
         public const string Deactivate = "{id}/deactivate";
     }
 
+    public static class HandsFree
+    {
+        public const string Base = "api/warehouse/handsfree";
+        public const string Tasks = "tasks";
+        public const string Complete = "complete";
+        public const string ValidateBarcode = "validate-barcode";
+        public const string Sessions = "sessions";
+    }
+
+    /// <summary>
+    /// Digital warehouse map (spatial model for autonomous warehouse).
+    /// </summary>
+    /// <summary>
+    /// Autonomous warehouse: tasks, routes, assignment.
+    /// </summary>
+    public static class AutonomousWarehouse
+    {
+        public const string Base = "api/warehouse";
+        public const string Tasks = "tasks";
+        public const string Plan = "plan";
+        public const string Assign = "assign";
+        public const string Routes = "routes";
+        public const string Complete = "tasks/{taskId}/complete";
+        public const string RobotPosition = "robot/position";
+        public const string RobotComplete = "robot/complete";
+    }
+
+    public static class WarehouseMap
+    {
+        public const string Base = "api/warehouse-map";
+        public const string GetById = "{id}";
+        public const string Add = "";
+        public const string Update = "{id}";
+        public const string Delete = "{id}";
+        public const string Zones = "{mapId}/zones";
+        public const string ZoneById = "{mapId}/zones/{zoneId}";
+        public const string Aisles = "zones/{zoneId}/aisles";
+        public const string AisleById = "zones/{zoneId}/aisles/{aisleId}";
+        public const string Racks = "aisles/{aisleId}/racks";
+        public const string RackById = "aisles/{aisleId}/racks/{rackId}";
+        public const string Bins = "racks/{rackId}/bins";
+        public const string BinById = "racks/{rackId}/bins/{binId}";
+    }
+
     public static class Inventory
     {
         public const string Base = "api/inventory";
@@ -173,6 +221,15 @@ public static class ApiRoutes
         public const string Notification = "notification";
         public const string UI = "ui";
         public const string Report = "reports";
+    }
+
+    public static class Notifications
+    {
+        public const string Base = "api/notifications";
+        public const string List = "list";
+        public const string UnreadCount = "unread-count";
+        public const string MarkRead = "mark-read/{id}";
+        public const string MarkAllRead = "mark-all-read";
     }
 
     public static class Theme
@@ -257,5 +314,92 @@ public static class ApiRoutes
         public const string Session = "session";
         public const string StartSession = "session/start";
         public const string EndSession = "session/end";
+    }
+
+    public static class Kpi
+    {
+        public const string Base = "api/kpi";
+        public const string Executive = "executive";
+        public const string Sales = "sales";
+        public const string Inventory = "inventory";
+        public const string Customers = "customers";
+    }
+
+    public static class Finance
+    {
+        public const string Base = "api/finance";
+        public const string Accounts = "accounts";
+        public const string AccountById = "accounts/{id}";
+        public const string AccountsTree = "accounts/tree";
+        public const string ImportChart = "accounts/import-standard";
+        public const string Journals = "journals";
+        public const string StatementsPl = "statements/pl";
+        public const string StatementsBalanceSheet = "statements/balance-sheet";
+        public const string StatementsCashFlow = "statements/cash-flow";
+    }
+
+    public static class Intelligence
+    {
+        public const string Base = "api/intelligence";
+        public const string Product = "product/{productId}";
+        public const string Dashboard = "dashboard";
+        public const string Recommendations = "recommendations";
+        public const string Inventory = "inventory";
+        public const string WarehouseMetrics = "warehouse-metrics";
+        public const string SupplierAnalytics = "supplier-analytics";
+        public const string CustomerIntelligence = "customers";
+        public const string PosHints = "pos/hints";
+    }
+
+    public static class Automation
+    {
+        public const string Base = "api/automation";
+        public const string Rules = "rules";
+        public const string RuleById = "rules/{id}";
+        public const string RuleToggle = "rules/{id}/toggle";
+        public const string Executions = "executions";
+    }
+
+    public static class Currency
+    {
+        public const string Base = "api/currency";
+        public const string List = "";
+        public const string GetById = "{id}";
+        public const string Add = "";
+        public const string Update = "{id}";
+        public const string Delete = "{id}";
+    }
+
+    public static class ExchangeRates
+    {
+        public const string Base = "api/exchange-rates";
+        public const string List = "";
+        public const string Add = "";
+    }
+
+    public static class Copilot
+    {
+        public const string Base = "api/copilot";
+        public const string Execute = "execute";
+    }
+
+    public static class Platform
+    {
+        public const string Base = "api/platform";
+        public const string ApiKeys = "api-keys";
+        public const string ApiKeysList = "api-keys/list";
+        public const string ApiKeyById = "api-keys/{id}";
+        public const string ApiKeyRevoke = "api-keys/{id}/revoke";
+        public const string ApiKeyUsage = "api-keys/usage";
+        public const string Webhooks = "webhooks";
+        public const string WebhooksList = "webhooks/list";
+        public const string WebhookById = "webhooks/{id}";
+        public const string WebhookLogs = "webhooks/{id}/logs";
+        public const string Integrations = "integrations";
+        public const string IntegrationsList = "integrations/list";
+        public const string IntegrationToggle = "integrations/{type}/toggle";
+        public const string ScheduledReports = "scheduled-reports";
+        public const string ScheduledReportsList = "scheduled-reports/list";
+        public const string ScheduledReportById = "scheduled-reports/{id}";
     }
 }

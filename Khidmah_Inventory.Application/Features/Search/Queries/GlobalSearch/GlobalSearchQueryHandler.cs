@@ -1,10 +1,11 @@
 using MediatR;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
+using Khidmah_Inventory.Application.Features.Search.Models;
 
 namespace Khidmah_Inventory.Application.Features.Search.Queries.GlobalSearch;
 
-public class GlobalSearchQueryHandler : IRequestHandler<GlobalSearchQuery, Result<SearchResult>>
+public class GlobalSearchQueryHandler : IRequestHandler<GlobalSearchQuery, Result<GlobalSearchResultDto>>
 {
     private readonly ISearchService _searchService;
 
@@ -13,13 +14,13 @@ public class GlobalSearchQueryHandler : IRequestHandler<GlobalSearchQuery, Resul
         _searchService = searchService;
     }
 
-    public async Task<Result<SearchResult>> Handle(GlobalSearchQuery request, CancellationToken cancellationToken)
+    public async Task<Result<GlobalSearchResultDto>> Handle(GlobalSearchQuery request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.SearchTerm))
-            return Result<SearchResult>.Failure("Search term is required.");
+            return Result<GlobalSearchResultDto>.Failure("Search term is required.");
 
-        var result = await _searchService.SearchAsync(request.SearchTerm, request.EntityTypes, request.Limit);
-        return Result<SearchResult>.Success(result);
+        var result = await _searchService.SearchGroupedAsync(request.SearchTerm, request.LimitPerGroup);
+        return Result<GlobalSearchResultDto>.Success(result);
     }
 }
 

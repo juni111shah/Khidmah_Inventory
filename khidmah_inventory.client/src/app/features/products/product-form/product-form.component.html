@@ -1,10 +1,16 @@
 <div class="product-form-container container-fluid py-4">
-  <div *ngIf="loading" class="d-flex justify-content-center align-items-center py-5">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!loading && (product || !isEditMode && !isViewMode)" class="form-content">
-    <div class="d-flex justify-content-start mb-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-detail-header [actionCount]="2" class="mb-4"></app-skeleton-detail-header>
+      <app-unified-card header="" customClass="mb-4 border-0 shadow-sm">
+        <app-skeleton-form [fieldCount]="8" [showActions]="false"></app-skeleton-form>
+      </app-unified-card>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-form [fieldCount]="4" [showActions]="true"></app-skeleton-form>
+      </app-unified-card>
+    </ng-container>
+    <div *ngIf="product || !isEditMode && !isViewMode" class="form-content" data-onboarding="product-form-shell">
+    <div class="d-flex justify-content-between align-items-center mb-4" data-onboarding="product-form-header-actions">
       <app-unified-button
         variant="secondary"
         [outlined]="true"
@@ -14,15 +20,17 @@
         iconLibrary="bi">
         Back to Products
       </app-unified-button>
+      <app-unified-button *ngIf="product?.id" variant="secondary" [outlined]="true" size="sm" (clicked)="activityPanelOpen = true" icon="bi-chat-left-text" iconLibrary="bi">Activity & comments</app-unified-button>
     </div>
+    <app-activity-feed-panel *ngIf="product?.id" [entityType]="'Product'" [entityId]="product!.id" [(open)]="activityPanelOpen" title="Product activity"></app-activity-feed-panel>
 
-    <app-tabs [(activeTab)]="activeTab">
+    <app-tabs [(activeTab)]="activeTab" data-onboarding="product-form-tabs">
       <app-tab label="Product Details" icon="bi-info-circle">
         <div class="row g-4 pt-4">
           <!-- Left Column: Core Info & Pricing -->
           <div class="col-lg-8">
             <!-- Basic Information -->
-            <app-unified-card header="Basic Information" customClass="mb-4 border-0 shadow-sm">
+            <app-unified-card header="Basic Information" customClass="mb-4 border-0 shadow-sm" data-onboarding="product-form-basic-info">
               <div class="row g-3">
                 <div class="col-12">
                   <app-form-field
@@ -57,7 +65,7 @@
                   <app-form-field
                     label="Category"
                     type="select"
-                    [options]="getCategoryOptions()"
+                    [options]="categoryOptions"
                     [(ngModel)]="formData.categoryId"
                     [disabled]="isViewMode">
                   </app-form-field>
@@ -67,7 +75,7 @@
                   <app-form-field
                     label="Brand"
                     type="select"
-                    [options]="getBrandOptions()"
+                    [options]="brandOptions"
                     [(ngModel)]="formData.brandId"
                     [disabled]="isViewMode">
                   </app-form-field>
@@ -77,7 +85,7 @@
                   <app-form-field
                     label="Unit of Measure"
                     type="select"
-                    [options]="getUnitOfMeasureOptions()"
+                    [options]="unitOfMeasureOptions"
                     [(ngModel)]="formData.unitOfMeasureId"
                     [disabled]="isViewMode"
                     [required]="true">
@@ -97,7 +105,7 @@
             </app-unified-card>
 
             <!-- Pricing -->
-            <app-unified-card header="Pricing" customClass="border-0 shadow-sm">
+            <app-unified-card header="Pricing" customClass="border-0 shadow-sm" data-onboarding="product-form-pricing">
               <div class="row g-3">
                 <div class="col-md-4">
                   <app-form-field
@@ -137,7 +145,7 @@
           <!-- Right Column: Stock & Attributes -->
           <div class="col-lg-4">
             <!-- Stock Management -->
-            <app-unified-card header="Stock Management" customClass="mb-4 border-0 shadow-sm">
+            <app-unified-card header="Stock Management" customClass="mb-4 border-0 shadow-sm" data-onboarding="product-form-stock">
               <div class="row g-3">
                 <div class="col-12">
                   <app-form-field
@@ -213,10 +221,14 @@
                 </div>
               </div>
             </app-unified-card>
+
+            <div class="mt-4" *ngIf="product?.id">
+              <app-product-intelligence-panel [productId]="product?.id ?? null"></app-product-intelligence-panel>
+            </div>
           </div>
         </div>
 
-        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top" data-onboarding="product-form-save-actions">
           <app-unified-button
             variant="secondary"
             [outlined]="true"
@@ -283,6 +295,51 @@
               </div>
               <p class="text-muted">Generating intelligent demand insights...</p>
             </div>
+
+            <div class="mt-4" *ngIf="product?.id">
+              <app-forecast-confidence [productId]="product?.id ?? null"></app-forecast-confidence>
+            </div>
+            <div class="mt-4" *ngIf="product">
+              <app-what-if-simulator
+                [productId]="product.id"
+                [currentPrice]="formData.salePrice"
+                [currentStock]="0"
+                [dailyDemand]="forecastData?.averageDailyDemand ?? 0">
+              </app-what-if-simulator>
+            </div>
+          </app-unified-card>
+        </div>
+      </app-tab>
+
+      <app-tab label="AI Price Suggestion" icon="bi-currency-dollar" *ngIf="(isViewMode || isEditMode) && product">
+        <div class="pt-4">
+          <app-unified-card header="AI Price Suggestion" customClass="border-0 shadow-sm">
+            <div *ngIf="loadingPrice" class="text-center py-4"><app-loading-spinner></app-loading-spinner></div>
+            <div *ngIf="!loadingPrice && priceSuggestion" class="row g-3">
+              <div class="col-md-4">
+                <div class="p-3 bg-light rounded">
+                  <div class="small text-muted">Current price</div>
+                  <div class="h4 mb-0">{{ priceSuggestion.currentPrice | number:'1.2-2' }}</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-3 bg-light rounded">
+                  <div class="small text-muted">Recommended price</div>
+                  <div class="h4 mb-0 text-primary">{{ priceSuggestion.recommendedPrice | number:'1.2-2' }}</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-3 bg-light rounded">
+                  <div class="small text-muted">Margin impact</div>
+                  <div class="h4 mb-0">{{ priceSuggestion.recommendedMargin != null ? (priceSuggestion.recommendedMargin | number:'1.1-1') + '%' : '-' }}</div>
+                </div>
+              </div>
+              <div class="col-12">
+                <p class="text-muted small mb-2">{{ priceSuggestion.recommendation }}</p>
+                <app-unified-button *ngIf="!isViewMode" variant="primary" size="sm" (clicked)="applySuggestedPrice()" icon="bi-check2" iconLibrary="bi">Apply suggested price</app-unified-button>
+              </div>
+            </div>
+            <div *ngIf="!loadingPrice && !priceSuggestion" class="text-center text-muted py-4">No price suggestion available.</div>
           </app-unified-card>
         </div>
       </app-tab>
@@ -299,6 +356,7 @@
       </app-tab>
     </app-tabs>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

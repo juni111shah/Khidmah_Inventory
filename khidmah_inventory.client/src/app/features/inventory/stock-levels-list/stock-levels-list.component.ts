@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { InventoryApiService } from '../../../core/services/inventory-api.service';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductApiService } from '../../../core/services/product-api.service';
 import { WarehouseApiService } from '../../../core/services/warehouse-api.service';
 import { StockLevel, GetStockLevelsListQuery } from '../../../core/models/inventory.model';
@@ -22,52 +23,51 @@ import { ExportComponent } from '../../../shared/components/export/export.compon
 import { HeaderService } from '../../../core/services/header.service';
 import { UnifiedModalComponent } from '../../../shared/components/unified-modal/unified-modal.component';
 import { DataTableAction } from '../../../shared/models/data-table.model';
+import { TableStateService } from '../../../core/services/table-state.service';
+import { SavedViewsService } from '../../../core/services/saved-views.service';
+import { FilterBuilderComponent } from '../../../shared/components/filter-builder/filter-builder.component';
+import { FilterBuilderColumn } from '../../../core/models/table-state.model';
+import { SavedViewsDropdownComponent } from '../../../shared/components/saved-views-dropdown/saved-views-dropdown.component';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonListingHeaderComponent } from '../../../shared/components/skeleton-listing-header/skeleton-listing-header.component';
+import { SkeletonTableComponent } from '../../../shared/components/skeleton-table/skeleton-table.component';
+import { TableState, SortColumn } from '../../../core/models/table-state.model';
 import jsPDF from 'jspdf';
+import { RealtimeSyncService } from '../../../core/services/realtime-sync.service';
+import { InventoryStore } from '../../../core/stores/inventory.store';
 
 @Component({
   selector: 'app-stock-levels-list',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    DataTableComponent,
-    ToastComponent,
-    HasPermissionDirective,
-    IconComponent,
-    ListingContainerComponent,
-    UnifiedButtonComponent,
-    FilterFieldComponent,
-    FilterPanelComponent,
-    ExportComponent,
-    UnifiedModalComponent
+    CommonModule, FormsModule, ReactiveFormsModule, DataTableComponent, ToastComponent, HasPermissionDirective, IconComponent,
+    ListingContainerComponent, UnifiedButtonComponent, FilterFieldComponent, FilterPanelComponent, ExportComponent, UnifiedModalComponent,
+    FilterBuilderComponent, SavedViewsDropdownComponent,
+    ContentLoaderComponent, SkeletonListingHeaderComponent, SkeletonTableComponent
   ],
   templateUrl: './stock-levels-list.component.html'
 })
-export class StockLevelsListComponent implements OnInit {
+export class StockLevelsListComponent implements OnInit, OnDestroy {
+  readonly tableId = 'stock-levels';
   stockLevels: StockLevel[] = [];
   loading = false;
   searchTerm = '';
   selectedProductId: string | null = null;
   selectedWarehouseId: string | null = null;
   lowStockOnly = false;
+  private searchSubject = new Subject<string>();
+  private realtimeRefreshSubject = new Subject<void>();
+  private subs = new Subscription();
+  showFilterBuilder = false;
+  private touchedAtById = new Map<string, string>();
   pagedResult: any = null;
   selectedStockLevel: StockLevel | null = null;
   showDetailsModal = false;
 
   filterRequest: FilterRequest = {
-    pagination: {
-      pageNo: 1,
-      pageSize: 10,
-      sortBy: 'productName',
-      sortOrder: 'ascending'
-    },
-    search: {
-      term: '',
-      searchFields: ['productName', 'productSKU', 'warehouseName'],
-      mode: SearchMode.Contains,
-      isCaseSensitive: false
-    }
+    pagination: { pageNo: 1, pageSize: 10, sortBy: 'productName', sortOrder: 'ascending' },
+    search: { term: '', searchFields: ['productName', 'productSKU', 'warehouseName'], mode: SearchMode.Contains, isCaseSensitive: false },
+    filters: []
   };
 
   columns: DataTableColumn<StockLevel>[] = [
@@ -91,7 +91,8 @@ export class StockLevelsListComponent implements OnInit {
     pageSizeOptions: [5, 10, 25, 50, 100],
     searchPlaceholder: 'Search stock levels...',
     emptyMessage: 'No stock levels found',
-    loadingMessage: 'Loading stock levels...'
+    loadingMessage: 'Loading stock levels...',
+    rowClass: (row: StockLevel) => this.getRealtimeRowClass(row.id)
   };
 
   actions: DataTableAction<StockLevel>[] = [
@@ -125,23 +126,76 @@ export class StockLevelsListComponent implements OnInit {
 
   filterPanelValues: { [key: string]: any } = {};
 
+  filterBuilderColumns: FilterBuilderColumn[] = [
+    { key: 'productName', label: 'Product', type: 'text' },
+    { key: 'productSKU', label: 'SKU', type: 'text' },
+    { key: 'warehouseName', label: 'Warehouse', type: 'text' },
+    { key: 'quantity', label: 'Quantity', type: 'number' },
+    { key: 'availableQuantity', label: 'Available', type: 'number' },
+    { key: 'reservedQuantity', label: 'Reserved', type: 'number' }
+  ];
+
+  get currentTableState(): { filterRequest: FilterRequest; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] } {
+    const sortColumns = this.filterRequest.pagination?.sortBy ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }] : [];
+    return { filterRequest: this.filterRequest as any, sortColumns, visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key) };
+  }
+
   constructor(
-    private inventoryApiService: InventoryApiService,
     private warehouseApiService: WarehouseApiService,
     private productApiService: ProductApiService,
     public router: Router,
     public permissionService: PermissionService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private tableState: TableStateService,
+    private savedViews: SavedViewsService,
+    private realtimeSync: RealtimeSyncService,
+    private inventoryStore: InventoryStore
   ) {}
 
   ngOnInit(): void {
-    this.headerService.setHeaderInfo({
-      title: 'Stock Levels',
-      description: 'Monitor product quantities across warehouses'
-    });
+    this.headerService.setHeaderInfo({ title: 'Stock Levels', description: 'Monitor product quantities across warehouses' });
     this.initializeFilterPanel();
+    this.restoreTableState();
     this.loadWarehouses();
     this.loadStockLevels();
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(term => {
+      this.searchTerm = term;
+      if (this.filterRequest.search) this.filterRequest.search.term = term;
+      if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+      this.persistTableState();
+      this.loadStockLevels();
+    });
+    this.subs.add(this.realtimeSync.watchEntityType('StockLevel').subscribe(() => this.realtimeRefreshSubject.next()));
+    this.subs.add(this.realtimeSync.watchEntityType('StockTransaction').subscribe(() => this.realtimeRefreshSubject.next()));
+    this.subs.add(this.realtimeRefreshSubject.pipe(debounceTime(220)).subscribe(() => this.loadStockLevels()));
+    this.subs.add(this.inventoryStore.touchedAt$.subscribe(map => { this.touchedAtById = map; }));
+  }
+
+  ngOnDestroy(): void { this.subs.unsubscribe(); }
+
+  private restoreTableState(): void {
+    const state = this.tableState.getState(this.tableId);
+    if (!state) return;
+    if (state.filterRequest?.pagination) this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination } as any;
+    if (state.filterRequest?.search?.term != null) {
+      if (!this.filterRequest.search) this.filterRequest.search = { term: '', searchFields: ['productName', 'productSKU', 'warehouseName'], mode: SearchMode.Contains, isCaseSensitive: false };
+      this.filterRequest.search.term = state.filterRequest.search.term;
+      this.searchTerm = state.filterRequest.search.term;
+    }
+    if (state.filterRequest?.filters?.length) this.filterRequest.filters = [...state.filterRequest.filters];
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) this.columns.forEach(col => { col.visible = state.visibleColumnKeys!.includes(col.key); });
+  }
+
+  private persistTableState(): void {
+    this.tableState.patchState(this.tableId, {
+      filterRequest: this.filterRequest as any,
+      sortColumns: this.filterRequest.pagination?.sortBy ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }] : [],
+      visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key)
+    });
   }
 
   loadWarehouses(): void {
@@ -198,14 +252,12 @@ export class StockLevelsListComponent implements OnInit {
     };
   }
 
-  onSearch(term: string): void {
-    this.searchTerm = term;
-    if (this.filterRequest.search) {
-      this.filterRequest.search.term = term;
-    }
-    if (this.filterRequest.pagination) {
-      this.filterRequest.pagination.pageNo = 1;
-    }
+  onSearchTermChange(term: string): void { this.searchSubject.next(term ?? ''); }
+  onSearchImmediate(term: string): void {
+    this.searchTerm = term ?? '';
+    if (this.filterRequest.search) this.filterRequest.search.term = term ?? '';
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
     this.loadStockLevels();
   }
 
@@ -252,6 +304,7 @@ export class StockLevelsListComponent implements OnInit {
 
   onColumnToggle(column: DataTableColumn<StockLevel>): void {
     column.visible = column.visible === false ? true : false;
+    this.persistTableState();
   }
 
   loadStockLevels(): void {
@@ -263,7 +316,7 @@ export class StockLevelsListComponent implements OnInit {
       lowStockOnly: this.lowStockOnly
     };
 
-    this.inventoryApiService.getStockLevels(query).subscribe({
+    this.inventoryStore.fetchLevels(query).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.pagedResult = response.data;
@@ -281,24 +334,48 @@ export class StockLevelsListComponent implements OnInit {
   }
 
   onFilterChange(filterRequest?: any): void {
-    if (filterRequest) {
-      this.filterRequest = filterRequest;
-    }
+    if (filterRequest) this.filterRequest = filterRequest;
+    this.persistTableState();
     this.loadStockLevels();
   }
-
   onPageChange(pageNo: number): void {
-    if (this.filterRequest.pagination) {
-      this.filterRequest.pagination.pageNo = pageNo;
-    }
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = pageNo;
+    this.persistTableState();
     this.loadStockLevels();
   }
-
   onSortChange(sort: any): void {
     if (this.filterRequest.pagination) {
       this.filterRequest.pagination.sortBy = sort.column;
       this.filterRequest.pagination.sortOrder = sort.direction === 'asc' ? 'ascending' : 'descending';
     }
+    this.persistTableState();
+    this.loadStockLevels();
+  }
+  onSavedViewLoad(state: Partial<{ filterRequest: any; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] }>): void {
+    if (state.filterRequest) {
+      this.filterRequest = { ...this.filterRequest, ...state.filterRequest };
+      if (state.filterRequest.pagination) this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination };
+      if (state.filterRequest.search) { this.filterRequest.search = { ...this.filterRequest.search, ...state.filterRequest.search }; this.searchTerm = this.filterRequest.search?.term ?? ''; }
+      if (state.filterRequest.filters) this.filterRequest.filters = [...state.filterRequest.filters];
+    }
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination!.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination!.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) this.columns.forEach(col => { col.visible = state.visibleColumnKeys!.includes(col.key); });
+    this.tableState.patchState(this.tableId, { filterRequest: state.filterRequest as any, sortColumns: state.sortColumns?.map(s => ({ column: s.column, direction: (s.direction === 'desc' ? 'desc' : 'asc') as SortColumn['direction'] })), visibleColumnKeys: state.visibleColumnKeys });
+    this.loadStockLevels();
+  }
+  onFilterBuilderApply(filters: any[]): void {
+    this.filterRequest.filters = filters;
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
+    this.loadStockLevels();
+    this.showFilterBuilder = false;
+  }
+  onFilterBuilderClear(): void {
+    this.filterRequest.filters = [];
+    this.persistTableState();
     this.loadStockLevels();
   }
 
@@ -368,6 +445,12 @@ export class StockLevelsListComponent implements OnInit {
     this.toastMessage = message;
     this.showToast = true;
     setTimeout(() => { this.showToast = false; }, 3000);
+  }
+
+  private getRealtimeRowClass(rowId: string): string {
+    const touchedAt = this.touchedAtById.get(rowId);
+    if (!touchedAt) return '';
+    return Date.now() - new Date(touchedAt).getTime() <= 8000 ? 'row-realtime-updated' : '';
   }
 }
 

@@ -39,7 +39,7 @@ export class ThemeService {
     infoColor: '#2196F3',
     borderRadius: '8px',
     spacing: '16px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+    fontFamily: "'Bricolage Grotesque', sans-serif",
     buttonStyle: 'raised',
     cardStyle: 'elevated',
     cardElevation: 2

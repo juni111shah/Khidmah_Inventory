@@ -1,0 +1,30 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a routerLink="/automation/builder" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg me-1"></i> New rule</a>
+  </div>
+
+  <app-toast *ngIf="showToast" [message]="toastMessage" [type]="toastType" (close)="showToast = false"></app-toast>
+
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-listing-header [buttonCount]="1" class="mb-4"></app-skeleton-listing-header>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="8" [columns]="6" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <app-unified-card *ngIf="!loading" customClass="border-0 shadow-sm">
+      <app-data-table
+        [columns]="columns"
+        [data]="pagedResult?.items ?? []"
+        [loading]="loading"
+        [config]="config"
+        [actions]="actions"
+        [pagedResult]="pagedResult"
+        [filterRequest]="filterRequest"
+        (filterChange)="onFilterChange($event)"
+        (pageChange)="onPageChange($event)"
+        (sortChange)="onSortChange($event)">
+      </app-data-table>
+    </app-unified-card>
+  </app-content-loader>
+</div>

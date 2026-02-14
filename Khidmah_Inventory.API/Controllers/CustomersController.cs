@@ -5,8 +5,11 @@ using Khidmah_Inventory.API.Attributes;
 using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Customers.Commands.CreateCustomer;
+using Khidmah_Inventory.Application.Features.Customers.Commands.UpdateCustomer;
 using Khidmah_Inventory.Application.Features.Customers.Queries.GetCustomersList;
+using Khidmah_Inventory.Application.Features.Customers.Queries.GetCustomer;
 using Khidmah_Inventory.Application.Features.Customers.Commands.UploadCustomerImage;
+using Khidmah_Inventory.Application.Features.Customers.Models;
 
 namespace Khidmah_Inventory.API.Controllers;
 
@@ -27,11 +30,28 @@ public class CustomersController : BaseController
         return await ExecuteRequest(query);
     }
 
+    [HttpGet(ApiRoutes.Customers.GetById)]
+    [ValidateApiCode(ApiValidationCodes.CustomersModuleCode.ViewById)]
+    [AuthorizeResource(AuthorizePermissions.CustomersPermissions.Controller, AuthorizePermissions.CustomersPermissions.Actions.ViewById)]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        return await ExecuteRequest<GetCustomerQuery, CustomerDto>(new GetCustomerQuery { Id = id });
+    }
+
     [HttpPost(ApiRoutes.Customers.Add)]
     [ValidateApiCode(ApiValidationCodes.CustomersModuleCode.Add)]
     [AuthorizeResource(AuthorizePermissions.CustomersPermissions.Controller, AuthorizePermissions.CustomersPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreateCustomerCommand command)
     {
+        return await ExecuteRequest(command);
+    }
+
+    [HttpPut(ApiRoutes.Customers.Update)]
+    [ValidateApiCode(ApiValidationCodes.CustomersModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.CustomersPermissions.Controller, AuthorizePermissions.CustomersPermissions.Actions.Update)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCustomerCommand command)
+    {
+        command.Id = id;
         return await ExecuteRequest(command);
     }
 

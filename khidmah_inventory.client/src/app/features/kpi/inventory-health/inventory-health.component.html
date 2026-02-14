@@ -1,0 +1,84 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-stat-cards [cardCount]="6" class="mb-4"></app-skeleton-stat-cards>
+    </ng-container>
+    <div *ngIf="data" class="kpi-content">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <label class="small text-muted mb-0">From</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateFrom" />
+        <label class="small text-muted mb-0">To</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateTo" />
+        <button class="btn btn-sm btn-primary" (click)="load()">Refresh</button>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.stockValue.label"
+            [value]="formatKpiValue(data.stockValue)"
+            icon="bi-currency-dollar"
+            [theme]="themeForKpi(data.stockValue, true)"
+            [trendPercent]="trendPercent(data.stockValue)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.inventoryTurnover.label"
+            [value]="formatKpiValue(data.inventoryTurnover)"
+            icon="bi-arrow-repeat"
+            [theme]="themeForKpi(data.inventoryTurnover, true)"
+            [trendPercent]="trendPercent(data.inventoryTurnover)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.daysOfInventory.label"
+            [value]="formatKpiValue(data.daysOfInventory)"
+            icon="bi-calendar3"
+            [theme]="themeForKpi(data.daysOfInventory, false)"
+            [trendPercent]="trendPercent(data.daysOfInventory)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.sellThroughRate.label"
+            [value]="formatKpiValue(data.sellThroughRate)"
+            icon="bi-percent"
+            theme="info"
+            [trendPercent]="trendPercent(data.sellThroughRate)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.deadStockCount.label"
+            [value]="formatKpiValue(data.deadStockCount)"
+            icon="bi-box-seam"
+            [theme]="themeForKpi(data.deadStockCount, false)"
+            [trendPercent]="trendPercent(data.deadStockCount)">
+          </app-kpi-stat-card>
+        </div>
+      </div>
+
+      <app-unified-card header="Stock aging (value by days since last movement)" customClass="border-0 shadow-sm">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <ul class="list-unstyled mb-0">
+              <li *ngFor="let label of agingChartLabels; let i = index" class="d-flex justify-content-between py-1">
+                <span class="text-muted">{{ label }}</span>
+                <span>{{ formatCurrency(agingChartValues[i] || 0) }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-6" *ngIf="agingChartData">
+            <app-chart
+              type="donut"
+              [data]="agingChartData"
+              [height]="220">
+            </app-chart>
+          </div>
+        </div>
+      </app-unified-card>
+    </div>
+  </app-content-loader>
+</div>

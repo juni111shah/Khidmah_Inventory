@@ -58,7 +58,9 @@ export class ApiCodeService {
 
     // Customers
     ['POST:/api/customers/list', ApiValidationCodes.Customers.ViewAll],
+    ['GET:/api/customers/{id}', ApiValidationCodes.Customers.ViewById],
     ['POST:/api/customers', ApiValidationCodes.Customers.Add],
+    ['PUT:/api/customers/{id}', ApiValidationCodes.Customers.Update],
     ['POST:/api/customers/{id}/image', ApiValidationCodes.Customers.UploadImage],
 
     // Users
@@ -74,17 +76,25 @@ export class ApiCodeService {
     ['POST:/api/users/{id}/avatar', ApiValidationCodes.Users.UploadAvatar],
 
     // Companies
+    ['POST:/api/companies/list', ApiValidationCodes.Companies.ViewAll],
+    ['GET:/api/companies/{id}', ApiValidationCodes.Companies.ViewById],
+    ['POST:/api/companies', ApiValidationCodes.Companies.Add],
+    ['PUT:/api/companies/{id}', ApiValidationCodes.Companies.Update],
+    ['PATCH:/api/companies/{id}/activate', ApiValidationCodes.Companies.UpdateStatus],
+    ['PATCH:/api/companies/{id}/deactivate', ApiValidationCodes.Companies.UpdateStatus],
     ['POST:/api/companies/{id}/logo', ApiValidationCodes.Companies.UploadLogo],
 
     // Sales Orders
     ['POST:/api/salesorders/list', ApiValidationCodes.SalesOrders.ViewAll],
     ['GET:/api/salesorders/{id}', ApiValidationCodes.SalesOrders.ViewById],
     ['POST:/api/salesorders', ApiValidationCodes.SalesOrders.Add],
+    ['PUT:/api/salesorders/{id}', ApiValidationCodes.SalesOrders.Update],
 
     // Purchase Orders
     ['POST:/api/purchaseorders/list', ApiValidationCodes.PurchaseOrders.ViewAll],
     ['GET:/api/purchaseorders/{id}', ApiValidationCodes.PurchaseOrders.ViewById],
     ['POST:/api/purchaseorders', ApiValidationCodes.PurchaseOrders.Add],
+    ['PUT:/api/purchaseorders/{id}', ApiValidationCodes.PurchaseOrders.Update],
 
     // Reports
     ['GET:/api/reports/sales', ApiValidationCodes.Reports.Sales],
@@ -96,6 +106,41 @@ export class ApiCodeService {
     ['GET:/api/reports/custom', ApiValidationCodes.Reports.Custom],
     ['POST:/api/reports/custom', ApiValidationCodes.Reports.Custom],
     ['POST:/api/reports/custom/{id}/execute', ApiValidationCodes.Reports.CustomExecute],
+
+    // KPI
+    ['GET:/api/kpi/executive', ApiValidationCodes.Kpi.Executive],
+    ['GET:/api/kpi/sales', ApiValidationCodes.Kpi.Sales],
+    ['GET:/api/kpi/inventory', ApiValidationCodes.Kpi.Inventory],
+    ['GET:/api/kpi/customers', ApiValidationCodes.Kpi.Customers],
+
+    // Finance
+    ['GET:/api/finance/accounts/tree', ApiValidationCodes.Finance.AccountsTree],
+    ['GET:/api/finance/accounts', ApiValidationCodes.Finance.AccountsList],
+    ['GET:/api/finance/accounts/{id}', ApiValidationCodes.Finance.AccountById],
+    ['POST:/api/finance/accounts', ApiValidationCodes.Finance.AccountsCreate],
+    ['PUT:/api/finance/accounts/{id}', ApiValidationCodes.Finance.AccountsUpdate],
+    ['DELETE:/api/finance/accounts/{id}', ApiValidationCodes.Finance.AccountsDelete],
+    ['POST:/api/finance/accounts/import-standard', ApiValidationCodes.Finance.ImportChart],
+    ['GET:/api/finance/journals', ApiValidationCodes.Finance.Journals],
+    ['GET:/api/finance/statements/pl', ApiValidationCodes.Finance.StatementsPl],
+    ['GET:/api/finance/statements/balance-sheet', ApiValidationCodes.Finance.StatementsBalanceSheet],
+    ['GET:/api/finance/statements/cash-flow', ApiValidationCodes.Finance.StatementsCashFlow],
+
+    // Currency
+    ['GET:/api/currency', ApiValidationCodes.Currency.List],
+    ['GET:/api/currency/{id}', ApiValidationCodes.Currency.GetById],
+    ['POST:/api/currency', ApiValidationCodes.Currency.Create],
+    ['PUT:/api/currency/{id}', ApiValidationCodes.Currency.Update],
+    ['DELETE:/api/currency/{id}', ApiValidationCodes.Currency.Delete],
+
+    // Exchange rates
+    ['GET:/api/exchange-rates', ApiValidationCodes.ExchangeRates.List],
+    ['POST:/api/exchange-rates', ApiValidationCodes.ExchangeRates.Create],
+
+    // Hands-free warehouse
+    ['GET:/api/warehouse/handsfree/tasks', ApiValidationCodes.HandsFree.Tasks],
+    ['POST:/api/warehouse/handsfree/complete', ApiValidationCodes.HandsFree.Complete],
+    ['GET:/api/warehouse/handsfree/validate-barcode', ApiValidationCodes.HandsFree.ValidateBarcode],
 
     // Warehouses
     ['POST:/api/warehouses/list', ApiValidationCodes.Warehouses.ViewAll],
@@ -190,7 +235,28 @@ export class ApiCodeService {
     ['POST:/api/pos/sessions/open', ApiValidationCodes.Pos.StartSession],
     ['POST:/api/pos/sessions/close', ApiValidationCodes.Pos.EndSession],
     ['GET:/api/pos/sessions/active', ApiValidationCodes.Pos.Session],
-    ['POST:/api/pos/sales', ApiValidationCodes.Pos.Session]
+    ['POST:/api/pos/sales', ApiValidationCodes.Pos.Session],
+
+    // Intelligence
+    ['GET:/api/intelligence/product/{productId}', ApiValidationCodes.Intelligence.Product],
+    ['GET:/api/intelligence/dashboard', ApiValidationCodes.Intelligence.Dashboard],
+
+    // Platform
+    ['POST:/api/platform/api-keys/list', ApiValidationCodes.Platform.ApiKeysList],
+    ['POST:/api/platform/api-keys', ApiValidationCodes.Platform.ApiKeysCreate],
+    ['PATCH:/api/platform/api-keys/{id}/revoke', ApiValidationCodes.Platform.ApiKeysRevoke],
+    ['POST:/api/platform/api-keys/usage', ApiValidationCodes.Platform.ApiKeysUsage],
+    ['POST:/api/platform/webhooks/list', ApiValidationCodes.Platform.WebhooksList],
+    ['POST:/api/platform/webhooks', ApiValidationCodes.Platform.WebhooksCreate],
+    ['PUT:/api/platform/webhooks/{id}', ApiValidationCodes.Platform.WebhooksUpdate],
+    ['DELETE:/api/platform/webhooks/{id}', ApiValidationCodes.Platform.WebhooksDelete],
+    ['POST:/api/platform/webhooks/{id}/logs', ApiValidationCodes.Platform.WebhooksLogs],
+    ['POST:/api/platform/integrations/list', ApiValidationCodes.Platform.IntegrationsList],
+    ['PATCH:/api/platform/integrations/{type}/toggle', ApiValidationCodes.Platform.IntegrationsToggle],
+    ['POST:/api/platform/scheduled-reports/list', ApiValidationCodes.Platform.ScheduledReportsList],
+    ['POST:/api/platform/scheduled-reports', ApiValidationCodes.Platform.ScheduledReportsCreate],
+    ['PUT:/api/platform/scheduled-reports/{id}', ApiValidationCodes.Platform.ScheduledReportsUpdate],
+    ['DELETE:/api/platform/scheduled-reports/{id}', ApiValidationCodes.Platform.ScheduledReportsDelete]
   ]);
 
   /**

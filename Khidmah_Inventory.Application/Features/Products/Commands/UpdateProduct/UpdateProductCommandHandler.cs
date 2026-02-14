@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Khidmah_Inventory.Application.Common.Constants;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Products.Models;
@@ -10,13 +11,16 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IOperationsBroadcast? _broadcast;
 
     public UpdateProductCommandHandler(
         IApplicationDbContext context,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IOperationsBroadcast? broadcast = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _broadcast = broadcast;
     }
 
     public async Task<Result<ProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
@@ -110,6 +114,17 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             _currentUser.UserId);
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (_broadcast != null)
+        {
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.ProductUpdated,
+                companyId.Value,
+                product.Id,
+                "Product",
+                new { Name = product.Name, SalePrice = product.SalePrice, CostPrice = product.CostPrice },
+                cancellationToken);
+        }
 
         var dto = await MapToDtoAsync(product.Id, companyId.Value, cancellationToken);
         return Result<ProductDto>.Success(dto);

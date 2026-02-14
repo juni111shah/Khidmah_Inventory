@@ -1,0 +1,61 @@
+<div class="search-overlay" *ngIf="visible" (click)="close()">
+  <div class="search-overlay-box" (click)="$event.stopPropagation()">
+    <div class="p-3 border-bottom">
+      <div class="input-group input-group-lg">
+        <span class="input-group-text search-overlay-input-icon">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input
+          #searchInput
+          type="text"
+          class="form-control search-overlay-input"
+          placeholder="Search products, orders, customers... (Ctrl+K)"
+          [(ngModel)]="searchTerm"
+          (input)="onInput()"
+          autocomplete="off"
+        />
+        <button type="button" class="btn search-overlay-close-btn" (click)="close()" aria-label="Close search">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    <div class="search-overlay-results overflow-auto">
+      <div *ngIf="loading" class="px-4 py-4 text-center text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span> Searching...
+      </div>
+      <ng-container *ngIf="!loading">
+        <div *ngIf="searchTerm.length >= 2 && !hasAnyResults()" class="px-4 py-4 text-muted text-center">No results.</div>
+        <ng-container *ngIf="searchTerm.length >= 2 && result && hasAnyResults()">
+          <ng-container *ngFor="let key of sectionKeys">
+            <div *ngIf="result![key]?.length" class="px-3 py-2 search-section-label border-bottom small fw-medium text-muted">
+              <i class="bi me-1" [ngClass]="getSectionIcon(key)"></i> {{ getSectionLabel(key) }}
+            </div>
+            <a
+              *ngFor="let item of result![key]"
+              href="javascript:void(0)"
+              class="search-overlay-item d-block px-4 py-2 text-decoration-none border-bottom"
+              (click)="navigate(item); $event.preventDefault()"
+            >
+              <div class="d-flex align-items-center">
+                <i class="bi me-2 flex-shrink-0" [ngClass]="getSectionIcon(key)" style="width: 1.25rem;"></i>
+                <div class="min-w-0">
+                  <div class="fw-medium">{{ item.nameOrNumber }}</div>
+                  <small class="text-muted" *ngIf="item.extraInfo">{{ item.extraInfo }}</small>
+                </div>
+              </div>
+            </a>
+          </ng-container>
+        </ng-container>
+        <div *ngIf="searchTerm.length < 2 && recentSearches.length" class="px-3 py-2 search-section-label border-bottom small fw-medium text-muted">Recent</div>
+        <a
+          *ngFor="let r of recentSearches"
+          href="javascript:void(0)"
+          class="search-overlay-item d-block px-4 py-2 text-decoration-none border-bottom"
+          (click)="selectRecent(r); $event.preventDefault()"
+        >
+          <i class="bi bi-clock-history me-2 text-muted"></i>{{ r }}
+        </a>
+      </ng-container>
+    </div>
+  </div>
+</div>

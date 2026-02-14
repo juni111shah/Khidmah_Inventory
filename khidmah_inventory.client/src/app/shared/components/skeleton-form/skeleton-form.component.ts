@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SkeletonFieldComponent } from '../skeleton-field/skeleton-field.component';
 import { SkeletonLoaderComponent } from '../skeleton-loader/skeleton-loader.component';
@@ -9,72 +9,51 @@ import { SkeletonLoaderComponent } from '../skeleton-loader/skeleton-loader.comp
   imports: [CommonModule, SkeletonFieldComponent, SkeletonLoaderComponent],
   template: `
     <div class="skeleton-form">
-      <app-skeleton-field
-        *ngFor="let field of fields"
-        [showLabel]="showLabels"
-        [labelWidth]="field.labelWidth || defaultLabelWidth"
-        [fieldWidth]="field.fieldWidth || '100%'"
-        [fieldHeight]="field.fieldHeight || defaultFieldHeight"
-        [animation]="animation"
-        [style.margin-bottom]="fieldSpacing">
-      </app-skeleton-field>
-      <div *ngIf="showActions" class="skeleton-form-actions">
-        <app-skeleton-loader
-          [width]="'120px'"
-          [height]="'40px'"
-          [shape]="'rounded'"
-          [animation]="animation">
-        </app-skeleton-loader>
-        <app-skeleton-loader
-          [width]="'100px'"
-          [height]="'40px'"
-          [shape]="'rounded'"
-          [animation]="animation">
-        </app-skeleton-loader>
+      <div class="row g-3">
+        <div *ngFor="let field of builtFields" class="col-12" [class.col-md-6]="field.half" [class.col-md-4]="field.third">
+          <app-skeleton-field
+            [showLabel]="showLabels"
+            [labelWidth]="field.labelWidth"
+            [fieldWidth]="'100%'"
+            [fieldHeight]="fieldHeight"
+            [animation]="animation">
+          </app-skeleton-field>
+        </div>
+      </div>
+      <div *ngIf="showActions" class="skeleton-form-actions mt-4">
+        <app-skeleton-loader [width]="'120px'" [height]="'40px'" shape="rounded" [animation]="animation"></app-skeleton-loader>
+        <app-skeleton-loader [width]="'100px'" [height]="'40px'" shape="rounded" [animation]="animation"></app-skeleton-loader>
       </div>
     </div>
   `,
   styles: [`
-    .skeleton-form {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .skeleton-form-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
+    .skeleton-form { display: flex; flex-direction: column; }
+    .skeleton-form-actions { display: flex; gap: 12px; flex-wrap: wrap; }
   `]
 })
-export class SkeletonFormComponent implements OnInit {
-  @Input() fields: Array<{
-    labelWidth?: string;
-    fieldWidth?: string;
-    fieldHeight?: string;
-  }> = [
-    { labelWidth: '100px', fieldWidth: '100%', fieldHeight: '40px' },
-    { labelWidth: '120px', fieldWidth: '100%', fieldHeight: '40px' },
-    { labelWidth: '90px', fieldWidth: '100%', fieldHeight: '40px' },
-    { labelWidth: '110px', fieldWidth: '100%', fieldHeight: '40px' }
-  ];
-  @Input() fieldCount: number = 4;
-  @Input() showLabels: boolean = true;
-  @Input() showActions: boolean = true;
-  @Input() defaultLabelWidth: string = '100px';
-  @Input() defaultFieldHeight: string = '40px';
-  @Input() fieldSpacing: string = '20px';
-  @Input() animation: 'pulse' | 'wave' | 'shimmer' = 'shimmer';
+export class SkeletonFormComponent implements OnInit, OnChanges {
+  @Input() fieldCount: number = 6;
+  @Input() showLabels = true;
+  @Input() showActions = true;
+  @Input() fieldHeight: string = '40px';
+  @Input() animation: 'pulse' | 'shimmer' = 'shimmer';
 
-  ngOnInit() {
-    if (this.fieldCount > 0 && this.fields.length === 0) {
-      this.fields = Array.from({ length: this.fieldCount }, () => ({
-        labelWidth: `${Math.floor(Math.random() * 40) + 80}px`,
-        fieldWidth: '100%',
-        fieldHeight: this.defaultFieldHeight
-      }));
-    }
+  builtFields: Array<{ labelWidth: string; half?: boolean; third?: boolean }> = [];
+
+  ngOnInit(): void {
+    this.build();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['fieldCount']) this.build();
+  }
+
+  private build(): void {
+    const widths = ['90px', '110px', '100px', '120px', '80px', '95px'];
+    this.builtFields = Array.from({ length: this.fieldCount }, (_, i) => ({
+      labelWidth: widths[i % widths.length],
+      half: i % 3 !== 0,
+      third: i % 4 === 0
+    }));
   }
 }
-

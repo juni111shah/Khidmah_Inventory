@@ -1,0 +1,46 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <button class="btn btn-sm btn-primary" (click)="openAdd()">
+        <app-icon name="plus" class="me-1"></app-icon> Add currency
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" (click)="load()">Refresh</button>
+    </div>
+
+    <app-unified-card header="Currencies" customClass="border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Symbol</th>
+              <th>Base</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of currencies">
+              <td>{{ c.code }}</td>
+              <td>{{ c.name }}</td>
+              <td>{{ c.symbol }}</td>
+              <td>{{ c.isBase ? 'Yes' : 'No' }}</td>
+              <td>
+                <button type="button" class="btn btn-sm btn-link p-0" (click)="openEdit(c.id)" title="Edit">Edit</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="currencies.length === 0 && !loading" class="text-muted small mb-0">No currencies. Add one and mark it as base for reporting.</p>
+    </app-unified-card>
+  </app-content-loader>
+</div>
+
+<app-drawer [isOpen]="drawerOpen" (isOpenChange)="drawerOpen = $event" title="{{ editingId ? 'Edit currency' : 'Add currency' }}" width="420px">
+  <app-currency-form
+    [currencyId]="editingId"
+    (saved)="onSaved()"
+    (cancel)="onDrawerClose()"
+  ></app-currency-form>
+</app-drawer>

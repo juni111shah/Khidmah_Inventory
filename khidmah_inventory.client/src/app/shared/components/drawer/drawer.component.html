@@ -8,8 +8,8 @@
   >
     <div class="drawer-header" *ngIf="title || closable">
       <h3 class="drawer-title" *ngIf="title">{{ title }}</h3>
-      <button class="drawer-close" *ngIf="closable" (click)="closeDrawer()" aria-label="Close">
-        <app-icon name="close" size="sm"></app-icon>
+      <button type="button" class="drawer-close" *ngIf="closable" (click)="closeDrawer()" aria-label="Close">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>
     </div>
     <div class="drawer-body">

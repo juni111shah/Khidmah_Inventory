@@ -1,0 +1,27 @@
+<app-drawer [isOpen]="isOpen" (isOpenChange)="isOpenChange.emit($event)" title="AI Assistant" position="right" [width]="'420px'" [closable]="true">
+  <div class="ai-assistant-panel d-flex flex-column h-100">
+    <div class="ai-panel-messages flex-grow-1 overflow-auto p-3">
+      <div *ngFor="let m of messages" class="ai-panel-message mb-3" [class.ai-panel-message-user]="m.role === 'user'" [class.ai-panel-message-assistant]="m.role === 'assistant'">
+        <div class="ai-panel-bubble">
+          <div class="ai-panel-bubble-label">{{ m.role === 'user' ? 'You' : 'Assistant' }}</div>
+          <div class="ai-panel-bubble-content">{{ m.content }}</div>
+          <div *ngIf="m.metrics?.length" class="ai-panel-bubble-metrics mt-2 d-flex flex-wrap gap-2">
+            <span *ngFor="let met of m.metrics" class="badge bg-secondary">{{ met.label }}: {{ met.value }}{{ met.change ? ' ' + met.change : '' }}</span>
+          </div>
+          <div *ngIf="m.links?.length" class="ai-panel-bubble-links mt-2">
+            <button *ngFor="let link of m.links" type="button" class="btn btn-sm btn-outline-primary rounded-pill me-1 mb-1" (click)="navigate(link.url)">{{ link.label }}</button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="loading" class="text-center py-3">
+        <app-loading-spinner></app-loading-spinner>
+      </div>
+    </div>
+    <div class="ai-panel-footer p-3 border-top bg-white">
+      <div class="input-group ai-panel-input-group">
+        <input type="text" class="form-control ai-panel-input" [(ngModel)]="question" placeholder="Ask: sales, reorder, supplier, profit..." (keydown.enter)="send()" />
+        <button type="button" class="btn btn-primary ai-panel-send" (click)="send()" [disabled]="loading">Send</button>
+      </div>
+    </div>
+  </div>
+</app-drawer>

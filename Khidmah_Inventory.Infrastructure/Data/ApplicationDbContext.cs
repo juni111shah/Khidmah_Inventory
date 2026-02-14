@@ -10,14 +10,17 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     private readonly AuditableEntitySaveChangesInterceptor _auditableEntitySaveChangesInterceptor;
     private readonly MultiTenantInterceptor _multiTenantInterceptor;
+    private readonly DomainChangeBroadcastInterceptor _domainChangeBroadcastInterceptor;
 
     public ApplicationDbContext(
         DbContextOptions<ApplicationDbContext> options,
         AuditableEntitySaveChangesInterceptor auditableEntitySaveChangesInterceptor,
-        MultiTenantInterceptor multiTenantInterceptor) : base(options)
+        MultiTenantInterceptor multiTenantInterceptor,
+        DomainChangeBroadcastInterceptor domainChangeBroadcastInterceptor) : base(options)
     {
         _auditableEntitySaveChangesInterceptor = auditableEntitySaveChangesInterceptor;
         _multiTenantInterceptor = multiTenantInterceptor;
+        _domainChangeBroadcastInterceptor = domainChangeBroadcastInterceptor;
     }
 
     // Auth & Users
@@ -44,6 +47,14 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<WarehouseZone> WarehouseZones => Set<WarehouseZone>();
     public DbSet<Bin> Bins => Set<Bin>();
 
+    // Autonomous: digital warehouse map (spatial)
+    public DbSet<WarehouseMap> WarehouseMaps => Set<WarehouseMap>();
+    public DbSet<MapZone> MapZones => Set<MapZone>();
+    public DbSet<MapAisle> MapAisles => Set<MapAisle>();
+    public DbSet<MapRack> MapRacks => Set<MapRack>();
+    public DbSet<MapBin> MapBins => Set<MapBin>();
+    public DbSet<WorkTask> WorkTasks => Set<WorkTask>();
+
     // Inventory
     public DbSet<StockTransaction> StockTransactions => Set<StockTransaction>();
     public DbSet<StockLevel> StockLevels => Set<StockLevel>();
@@ -67,6 +78,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     // Collaboration
     public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<AutomationRule> AutomationRules => Set<AutomationRule>();
+    public DbSet<AutomationRuleHistory> AutomationRuleHistories => Set<AutomationRuleHistory>();
 
     // Workflows
     public DbSet<Workflow> Workflows => Set<Workflow>();
@@ -76,9 +90,25 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     // Reports
     public DbSet<CustomReport> CustomReports => Set<CustomReport>();
 
+    // Finance / Accounting
+    public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+    public DbSet<JournalLine> JournalLines => Set<JournalLine>();
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
+
+    // Platform (API keys, webhooks, integrations, scheduled reports)
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<ApiKeyUsageLog> ApiKeyUsageLogs => Set<ApiKeyUsageLog>();
+    public DbSet<Webhook> Webhooks => Set<Webhook>();
+    public DbSet<WebhookDeliveryLog> WebhookDeliveryLogs => Set<WebhookDeliveryLog>();
+    public DbSet<CompanyIntegration> CompanyIntegrations => Set<CompanyIntegration>();
+    public DbSet<ScheduledReport> ScheduledReports => Set<ScheduledReport>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor, _multiTenantInterceptor);
+        optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor, _multiTenantInterceptor, _domainChangeBroadcastInterceptor);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

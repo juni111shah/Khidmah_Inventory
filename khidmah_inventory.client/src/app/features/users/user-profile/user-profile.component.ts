@@ -15,11 +15,16 @@ import { HeaderService } from '../../../core/services/header.service';
 import { UnifiedButtonComponent } from '../../../shared/components/unified-button/unified-button.component';
 import { ImageUploadComponent } from '../../../shared/components/image-upload/image-upload.component';
 import { ExportService } from '../../../core/services/export.service';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonDetailHeaderComponent } from '../../../shared/components/skeleton-detail-header/skeleton-detail-header.component';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
+import { SkeletonFormComponent } from '../../../shared/components/skeleton-form/skeleton-form.component';
+import { UnifiedCardComponent } from '../../../shared/components/unified-card/unified-card.component';
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent, ToastComponent, LoadingSpinnerComponent, HasPermissionDirective, UnifiedButtonComponent, ImageUploadComponent],
+  imports: [CommonModule, FormsModule, IconComponent, ToastComponent, LoadingSpinnerComponent, HasPermissionDirective, UnifiedButtonComponent, ImageUploadComponent, ContentLoaderComponent, SkeletonDetailHeaderComponent, SkeletonLoaderComponent, SkeletonFormComponent, UnifiedCardComponent],
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss']
 })

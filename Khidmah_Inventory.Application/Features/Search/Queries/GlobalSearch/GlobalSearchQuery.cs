@@ -1,13 +1,12 @@
 using MediatR;
 using Khidmah_Inventory.Application.Common.Models;
-using Khidmah_Inventory.Application.Common.Interfaces;
+using Khidmah_Inventory.Application.Features.Search.Models;
 
 namespace Khidmah_Inventory.Application.Features.Search.Queries.GlobalSearch;
 
-public class GlobalSearchQuery : IRequest<Result<SearchResult>>
+public class GlobalSearchQuery : IRequest<Result<GlobalSearchResultDto>>
 {
     public string SearchTerm { get; set; } = string.Empty;
-    public List<string> EntityTypes { get; set; } = new();
-    public int Limit { get; set; } = 50;
+    public int LimitPerGroup { get; set; } = 10;
 }
 

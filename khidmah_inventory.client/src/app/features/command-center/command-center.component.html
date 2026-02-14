@@ -1,0 +1,97 @@
+<div class="container-fluid py-4 command-center">
+  <app-toast *ngIf="showToast" [message]="toastMessage" [type]="toastType" (close)="showToast = false"></app-toast>
+
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <section class="command-center-section">
+        <app-skeleton-stat-cards [cardCount]="8" class="mb-4"></app-skeleton-stat-cards>
+      </section>
+      <section class="command-center-section">
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4"><app-unified-card header="" customClass="h-100"><app-skeleton-list [itemCount]="5" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+          <div class="col-md-6 col-lg-4"><app-unified-card header="" customClass="h-100"><app-skeleton-list [itemCount]="5" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+          <div class="col-md-6 col-lg-4"><app-unified-card header="" customClass="h-100"><app-skeleton-list [itemCount]="5" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+        </div>
+      </section>
+    </ng-container>
+    <ng-container *ngIf="data">
+    <!-- KPI cards: reusable stat cards (equal height) -->
+    <section class="command-center-section">
+      <div class="row g-3 equal-height-cards">
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Sales today" [value]="formatCurrency(data.salesToday)" icon="bi-currency-dollar" theme="primary"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Sales (7d)" [value]="formatCurrency(data.salesWeek)" icon="bi-graph-up" theme="primary"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Sales (month)" [value]="formatCurrency(data.salesMonth)" icon="bi-calendar-month" theme="primary"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Purchase volume" [value]="formatCurrency(data.purchaseVolume)" icon="bi-cart" theme="info"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Profit est." [value]="formatCurrency(data.profitEstimate)" icon="bi-graph-up-arrow" theme="success"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Low stock alerts" [value]="data.lowStockAlerts" icon="bi-exclamation-triangle" theme="danger"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Expiring soon" [value]="data.expiringItemsCount" icon="bi-clock-history" theme="warning"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+          <app-kpi-stat-card title="Pending approvals" [value]="data.pendingApprovalsCount" icon="bi-check2-square" theme="primary"></app-kpi-stat-card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content cards: one row, equal height -->
+    <section class="command-center-section">
+      <div class="row g-4 equal-height-cards">
+        <div class="col">
+          <app-unified-card header="Top products" customClass="content-card h-100">
+            <ul class="list-group list-group-flush list-group-no-border" *ngIf="data.topProducts?.length">
+              <li *ngFor="let p of data.topProducts; let i = index" class="list-group-item d-flex justify-content-between align-items-center">
+                <span>{{ i + 1 }}. {{ p.productName }}</span>
+                <span>{{ formatCurrency(p.value) }} <i class="bi bi-arrow-{{ p.trend === 'up' ? 'up' : p.trend === 'down' ? 'down' : 'minus' }} text-{{ p.trend === 'up' ? 'success' : p.trend === 'down' ? 'danger' : 'secondary' }}"></i></span>
+              </li>
+            </ul>
+            <div *ngIf="!data.topProducts?.length" class="empty-state">
+              <i class="bi bi-graph-up empty-state-icon d-block"></i>
+              <p>No product sales data yet</p>
+            </div>
+            <a routerLink="/reports" class="card-footer-link">View reports</a>
+          </app-unified-card>
+        </div>
+        <div class="col">
+          <app-unified-card header="Recent activity" customClass="content-card h-100">
+            <ul class="list-group list-group-flush list-group-no-border" *ngIf="data.recentActivities?.length">
+              <li *ngFor="let a of data.recentActivities" class="list-group-item">
+                <a *ngIf="a.link" [routerLink]="a.link" class="text-decoration-none text-dark">{{ a.description }}</a>
+                <span *ngIf="!a.link">{{ a.description }}</span>
+                <small class="text-muted d-block">{{ a.timeAgo }}</small>
+              </li>
+            </ul>
+            <div *ngIf="!data.recentActivities?.length" class="empty-state">
+              <i class="bi bi-activity empty-state-icon d-block"></i>
+            <p>No recent activity</p>
+          </div>
+          </app-unified-card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick actions -->
+    <section class="command-center-section">
+      <app-unified-card header="Quick actions" customClass="content-card">
+        <div class="d-flex flex-wrap gap-2">
+          <a routerLink="/reorder" class="btn btn-outline-warning btn-sm">Reorder</a>
+          <a routerLink="/workflows/inbox" class="btn btn-outline-primary btn-sm">Approvals</a>
+          <a routerLink="/intelligence/profit" class="btn btn-outline-success btn-sm">Profit intelligence</a>
+          <a routerLink="/intelligence/risks" class="btn btn-outline-danger btn-sm">Risk panel</a>
+        </div>
+      </app-unified-card>
+    </section>
+    </ng-container>
+  </app-content-loader>
+</div>

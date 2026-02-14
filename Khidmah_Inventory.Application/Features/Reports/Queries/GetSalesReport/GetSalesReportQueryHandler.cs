@@ -27,8 +27,8 @@ public class GetSalesReportQueryHandler : IRequestHandler<GetSalesReportQuery, R
         if (request.FromDate == default || request.ToDate == default)
             return Result<SalesReportDto>.Failure("Invalid date parameters");
 
-        if (request.FromDate >= request.ToDate)
-            return Result<SalesReportDto>.Failure("From date must be before To date");
+        if (request.FromDate > request.ToDate)
+            return Result<SalesReportDto>.Failure("From date cannot be after To date");
 
         if (request.ToDate > DateTime.UtcNow.AddDays(1))
             return Result<SalesReportDto>.Failure("To date cannot be in the future");
@@ -88,6 +88,42 @@ public class GetSalesReportQueryHandler : IRequestHandler<GetSalesReportQuery, R
         report.ProfitMargin = report.TotalSales > 0 
             ? (report.TotalProfit / report.TotalSales) * 100 
             : 0;
+
+        // Previous period comparison (same length, immediately before FromDate)
+        var periodDays = (request.ToDate - request.FromDate).Days + 1;
+        var prevEnd = request.FromDate.AddDays(-1);
+        var prevStart = prevEnd.AddDays(-periodDays + 1);
+        var prevOrders = await _context.SalesOrders
+            .Include(so => so.Items).ThenInclude(i => i.Product)
+            .Where(so => so.CompanyId == companyId.Value && !so.IsDeleted
+                && so.OrderDate >= prevStart && so.OrderDate <= prevEnd)
+            .ToListAsync(cancellationToken);
+        if (request.CustomerId.HasValue)
+            prevOrders = prevOrders.Where(o => o.CustomerId == request.CustomerId.Value).ToList();
+        decimal prevSales = prevOrders.Sum(o => o.TotalAmount);
+        decimal prevCost = 0;
+        foreach (var order in prevOrders)
+        {
+            foreach (var item in order.Items)
+            {
+                if (item.Product == null) continue;
+                var sl = await _context.StockLevels.FirstOrDefaultAsync(sl => sl.ProductId == item.ProductId && sl.CompanyId == companyId.Value, cancellationToken);
+                prevCost += item.Quantity * (sl?.AverageCost ?? item.Product.PurchasePrice);
+            }
+        }
+        decimal prevProfit = prevSales - prevCost;
+        report.PreviousPeriodFromDate = prevStart;
+        report.PreviousPeriodToDate = prevEnd;
+        report.PreviousPeriodTotalSales = prevSales;
+        report.PreviousPeriodTotalCost = prevCost;
+        report.PreviousPeriodTotalProfit = prevProfit;
+        if (prevSales > 0)
+        {
+            report.VarianceSalesPercent = Math.Round((report.TotalSales - prevSales) / prevSales * 100, 2);
+            report.TrendDirection = report.VarianceSalesPercent > 1 ? "Up" : report.VarianceSalesPercent < -1 ? "Down" : "Stable";
+        }
+        if (prevProfit != 0)
+            report.VarianceProfitPercent = Math.Round((report.TotalProfit - prevProfit) / Math.Abs(prevProfit) * 100, 2);
 
         // Get all product IDs from orders to fetch stock levels in one query
         var productIds = orders.SelectMany(o => o.Items.Select(i => i.ProductId)).Distinct().ToList();

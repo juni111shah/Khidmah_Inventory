@@ -2,6 +2,7 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideLottieOptions } from 'ngx-lottie';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -24,6 +25,11 @@ import { DropdownComponent } from './shared/components/dropdown/dropdown.compone
 import { TabsComponent, TabComponent } from './shared/components/tabs/tabs.component';
 import { PaginationComponent } from './shared/components/pagination/pagination.component';
 import { UserMenuComponent } from './shared/components/user-menu/user-menu.component';
+import { GlobalSearchComponent } from './shared/components/global-search/global-search.component';
+import { NotificationCenterComponent } from './shared/components/notification-center/notification-center.component';
+import { SearchOverlayComponent } from './shared/components/search-overlay/search-overlay.component';
+import { AiAssistantTriggerComponent } from './shared/components/ai-assistant-trigger/ai-assistant-trigger.component';
+import { OnboardingAssistantComponent } from './shared/components/onboarding-assistant/onboarding-assistant.component';
 
 @NgModule({
   declarations: [
@@ -53,9 +59,17 @@ import { UserMenuComponent } from './shared/components/user-menu/user-menu.compo
     TabsComponent,
     TabComponent,
     PaginationComponent,
-    UserMenuComponent
+    UserMenuComponent,
+    GlobalSearchComponent,
+    NotificationCenterComponent,
+    SearchOverlayComponent,
+    AiAssistantTriggerComponent,
+    OnboardingAssistantComponent
   ],
   providers: [
+    ...provideLottieOptions({
+      player: () => import('lottie-web'),
+    }),
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,

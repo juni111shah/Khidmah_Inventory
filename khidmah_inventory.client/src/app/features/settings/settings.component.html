@@ -8,7 +8,7 @@
   </app-toast>
 
   <!-- Action Bar -->
-  <div class="actions-container d-flex justify-content-end gap-3 mb-4 animate__animated animate__fadeIn">
+  <div class="actions-container d-flex justify-content-end gap-3 mb-4 animate__animated animate__fadeIn" data-onboarding="settings-actions">
     <app-unified-button
       variant="secondary"
       [outlined]="true"
@@ -32,7 +32,7 @@
 
   <div class="settings-content-wrapper p-0">
     <!-- Standard Application Tabs Header -->
-    <div class="tabs-header px-4 pt-3 animate__animated animate__fadeIn">
+    <div class="tabs-header px-4 pt-3 animate__animated animate__fadeIn" data-onboarding="settings-tabs">
       <button class="tab-button" [class.active]="activeTab === 'colors'" (click)="setActiveTab('colors')">
         <i class="bi bi-palette-fill"></i>
         <span>Theme Colors</span>
@@ -73,10 +73,14 @@
         <i class="bi bi-stars"></i>
         <span>Effects</span>
       </button>
+      <button class="tab-button" [class.active]="activeTab === 'numbering'" (click)="setActiveTab('numbering')">
+        <i class="bi bi-hash"></i>
+        <span>Numbering</span>
+      </button>
     </div>
 
     <!-- Main Content Area -->
-    <main class="settings-content-area animate__animated animate__fadeIn px-4">
+    <main class="settings-content-area animate__animated animate__fadeIn px-4" data-onboarding="settings-content">
 
 
   <!-- Tab Content -->
@@ -86,7 +90,7 @@
     <div *ngIf="activeTab === 'colors'" class="tab-pane fade show active">
       <div class="row g-4">
         <div class="col-lg-8">
-          <app-unified-card header="Color Palette" customClass="border-0 shadow-sm mb-4">
+          <app-unified-card header="Color Palette" customClass="border-0 shadow-sm mb-4" data-onboarding="settings-color-palette">
             <div class="row g-3">
               <!-- Primary Colors -->
               <div class="col-12">
@@ -1058,6 +1062,39 @@
           </app-unified-card>
         </div>
       </div>
+    </div>
+
+    <!-- NUMBERING SEQUENCES TAB -->
+    <div *ngIf="activeTab === 'numbering'" class="tab-pane fade show active">
+      <app-unified-card header="Numbering sequences" customClass="border-0 shadow-sm mb-4" data-onboarding="settings-numbering-sequences">
+        <p class="text-muted small mb-4">Configure prefixes and format for PO, SO, and Invoice numbers.</p>
+        <div *ngIf="numberingLoading" class="text-center py-4">Loading...</div>
+        <div *ngIf="!numberingLoading && numberingSettings" class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Purchase order prefix</label>
+            <input type="text" class="form-control" [(ngModel)]="numberingSettings.purchaseOrderPrefix" placeholder="PO" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Sales order prefix</label>
+            <input type="text" class="form-control" [(ngModel)]="numberingSettings.salesOrderPrefix" placeholder="SO" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Invoice prefix</label>
+            <input type="text" class="form-control" [(ngModel)]="numberingSettings.invoicePrefix" placeholder="INV" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Delivery note prefix</label>
+            <input type="text" class="form-control" [(ngModel)]="numberingSettings.deliveryNotePrefix" placeholder="DN" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">GRN prefix</label>
+            <input type="text" class="form-control" [(ngModel)]="numberingSettings.grnPrefix" placeholder="GRN" />
+          </div>
+          <div class="col-12 pt-2">
+            <app-unified-button variant="primary" size="sm" (clicked)="saveNumberingSettings()" [disabled]="saving">Save numbering settings</app-unified-button>
+          </div>
+        </div>
+      </app-unified-card>
     </div>
       </div>
     </main>

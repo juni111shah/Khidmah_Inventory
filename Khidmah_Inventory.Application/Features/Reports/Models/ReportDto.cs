@@ -10,6 +10,15 @@ public class SalesReportDto
     public decimal ProfitMargin { get; set; }
     public int TotalOrders { get; set; }
     public List<SalesReportItemDto> Items { get; set; } = new();
+    // Period comparison (previous period of same length)
+    public DateTime? PreviousPeriodFromDate { get; set; }
+    public DateTime? PreviousPeriodToDate { get; set; }
+    public decimal? PreviousPeriodTotalSales { get; set; }
+    public decimal? PreviousPeriodTotalCost { get; set; }
+    public decimal? PreviousPeriodTotalProfit { get; set; }
+    public decimal? VarianceSalesPercent { get; set; }
+    public decimal? VarianceProfitPercent { get; set; }
+    public string? TrendDirection { get; set; } // Up, Down, Stable
 }
 
 public class SalesReportItemDto

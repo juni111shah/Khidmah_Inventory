@@ -14,6 +14,10 @@ import { UnifiedButtonComponent } from '../../../shared/components/unified-butto
 import { HeaderService } from '../../../core/services/header.service';
 import { UnifiedCardComponent } from '../../../shared/components/unified-card/unified-card.component';
 import { UnifiedCheckboxComponent } from '../../../shared/components/unified-checkbox/unified-checkbox.component';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonDetailHeaderComponent } from '../../../shared/components/skeleton-detail-header/skeleton-detail-header.component';
+import { SkeletonFormComponent } from '../../../shared/components/skeleton-form/skeleton-form.component';
+import { SkeletonSidePanelComponent } from '../../../shared/components/skeleton-side-panel/skeleton-side-panel.component';
 
 @Component({
   selector: 'app-warehouse-form',
@@ -28,7 +32,11 @@ import { UnifiedCheckboxComponent } from '../../../shared/components/unified-che
     FormFieldComponent,
     UnifiedButtonComponent,
     UnifiedCardComponent,
-    UnifiedCheckboxComponent
+    UnifiedCheckboxComponent,
+    ContentLoaderComponent,
+    SkeletonDetailHeaderComponent,
+    SkeletonFormComponent,
+    SkeletonSidePanelComponent
   ],
   templateUrl: './warehouse-form.component.html'
 })

@@ -77,6 +77,7 @@ public static class ApiValidationCodes
         public const string ViewById = "COMPANIES_VIEW_BY_ID";
         public const string Add = "COMPANIES_ADD";
         public const string Update = "COMPANIES_UPDATE";
+        public const string UpdateStatus = "COMPANIES_UPDATE_STATUS";
         public const string UploadLogo = "COMPANIES_UPLOAD_LOGO";
     }
 
@@ -110,6 +111,29 @@ public static class ApiValidationCodes
         public const string CustomExecute = "REPORTS_CUSTOM_EXECUTE";
     }
 
+    public static class KpiModuleCode
+    {
+        public const string Executive = "KPI_EXECUTIVE";
+        public const string Sales = "KPI_SALES";
+        public const string Inventory = "KPI_INVENTORY";
+        public const string Customers = "KPI_CUSTOMERS";
+    }
+
+    public static class FinanceModuleCode
+    {
+        public const string AccountsList = "FINANCE_ACCOUNTS_LIST";
+        public const string AccountsTree = "FINANCE_ACCOUNTS_TREE";
+        public const string AccountById = "FINANCE_ACCOUNTS_READ";
+        public const string AccountsCreate = "FINANCE_ACCOUNTS_CREATE";
+        public const string AccountsUpdate = "FINANCE_ACCOUNTS_UPDATE";
+        public const string AccountsDelete = "FINANCE_ACCOUNTS_DELETE";
+        public const string ImportChart = "FINANCE_IMPORT_CHART";
+        public const string Journals = "FINANCE_JOURNALS";
+        public const string StatementsPl = "FINANCE_STATEMENTS_PL";
+        public const string StatementsBalanceSheet = "FINANCE_STATEMENTS_BALANCE";
+        public const string StatementsCashFlow = "FINANCE_STATEMENTS_CASHFLOW";
+    }
+
     public static class WarehousesModuleCode
     {
         public const string ViewAll = "WAREHOUSES_VIEW_ALL";
@@ -118,6 +142,32 @@ public static class ApiValidationCodes
         public const string Update = "WAREHOUSES_UPDATE";
         public const string Delete = "WAREHOUSES_DELETE";
         public const string UpdateStatus = "WAREHOUSES_UPDATE_STATUS";
+    }
+
+    public static class HandsFreeModuleCode
+    {
+        public const string Tasks = "HANDSFREE_TASKS";
+        public const string Complete = "HANDSFREE_COMPLETE";
+        public const string ValidateBarcode = "HANDSFREE_VALIDATE_BARCODE";
+        public const string Sessions = "HANDSFREE_SESSIONS";
+    }
+
+    public static class CopilotModuleCode
+    {
+        public const string Execute = "COPILOT_EXECUTE";
+    }
+
+    public static class WarehouseMapModuleCode
+    {
+        public const string ViewAll = "WAREHOUSE_MAP_VIEW_ALL";
+        public const string ViewById = "WAREHOUSE_MAP_VIEW_BY_ID";
+        public const string Add = "WAREHOUSE_MAP_ADD";
+        public const string Update = "WAREHOUSE_MAP_UPDATE";
+        public const string Delete = "WAREHOUSE_MAP_DELETE";
+        public const string Zones = "WAREHOUSE_MAP_ZONES";
+        public const string Aisles = "WAREHOUSE_MAP_AISLES";
+        public const string Racks = "WAREHOUSE_MAP_RACKS";
+        public const string Bins = "WAREHOUSE_MAP_BINS";
     }
 
     public static class InventoryModuleCode
@@ -236,5 +286,39 @@ public static class ApiValidationCodes
         public const string Session = "POS_SESSION";
         public const string StartSession = "POS_START_SESSION";
         public const string EndSession = "POS_END_SESSION";
+    }
+
+    public static class PlatformModuleCode
+    {
+        public const string ApiKeysList = "PLATFORM_API_KEYS_LIST";
+        public const string ApiKeysCreate = "PLATFORM_API_KEYS_CREATE";
+        public const string ApiKeysRevoke = "PLATFORM_API_KEYS_REVOKE";
+        public const string ApiKeysUsage = "PLATFORM_API_KEYS_USAGE";
+        public const string WebhooksList = "PLATFORM_WEBHOOKS_LIST";
+        public const string WebhooksCreate = "PLATFORM_WEBHOOKS_CREATE";
+        public const string WebhooksUpdate = "PLATFORM_WEBHOOKS_UPDATE";
+        public const string WebhooksDelete = "PLATFORM_WEBHOOKS_DELETE";
+        public const string WebhooksLogs = "PLATFORM_WEBHOOKS_LOGS";
+        public const string IntegrationsList = "PLATFORM_INTEGRATIONS_LIST";
+        public const string IntegrationsToggle = "PLATFORM_INTEGRATIONS_TOGGLE";
+        public const string ScheduledReportsList = "PLATFORM_SCHEDULED_REPORTS_LIST";
+        public const string ScheduledReportsCreate = "PLATFORM_SCHEDULED_REPORTS_CREATE";
+        public const string ScheduledReportsUpdate = "PLATFORM_SCHEDULED_REPORTS_UPDATE";
+        public const string ScheduledReportsDelete = "PLATFORM_SCHEDULED_REPORTS_DELETE";
+    }
+
+    public static class CurrencyModuleCode
+    {
+        public const string List = "CURRENCY_LIST";
+        public const string GetById = "CURRENCY_GET_BY_ID";
+        public const string Create = "CURRENCY_CREATE";
+        public const string Update = "CURRENCY_UPDATE";
+        public const string Delete = "CURRENCY_DELETE";
+    }
+
+    public static class ExchangeRatesModuleCode
+    {
+        public const string List = "EXCHANGE_RATES_LIST";
+        public const string Create = "EXCHANGE_RATES_CREATE";
     }
 }

@@ -1,13 +1,15 @@
 <header class="app-header" [class.sidebar-collapsed]="sidebarCollapsed">
   <div class="header-left">
-    <button 
-      class="sidebar-toggle" 
+    <button
+      class="sidebar-toggle"
       *ngIf="showMenuToggle"
       (click)="onMenuToggle()"
+      data-help-title="Sidebar toggle"
+      data-help="Collapse or expand the sidebar navigation."
       [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
       <i class="bi" [class]="sidebarCollapsed ? 'bi-text-indent-left' : 'bi-text-indent-right'"></i>
     </button>
-    
+
     <div class="header-content">
       <h1 class="header-title">{{ displayTitle }}</h1>
       <p class="header-description" *ngIf="displayDescription">{{ displayDescription }}</p>
@@ -15,9 +17,20 @@
   </div>
 
   <div class="header-right">
-    <ng-content select="[actions]"></ng-content>
-    
-    <div class="user-menu" *ngIf="showUserMenu">
+    <div class="header-actions">
+      <button
+        type="button"
+        class="theme-mode-toggle"
+        (click)="onThemeModeToggle()"
+        data-help-title="Theme mode"
+        data-help="Switch between light and dark visual modes."
+        [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+        [title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+        <i class="bi" [class.bi-sun]="isDarkMode" [class.bi-moon]="!isDarkMode"></i>
+      </button>
+      <ng-content select="[actions]"></ng-content>
+    </div>
+    <div class="header-user-menu" *ngIf="showUserMenu">
       <ng-content select="[user-menu]"></ng-content>
     </div>
   </div>

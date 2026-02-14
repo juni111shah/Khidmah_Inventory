@@ -1,11 +1,10 @@
 import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-drawer',
   standalone: true,
-  imports: [CommonModule, IconComponent],
+  imports: [CommonModule],
   templateUrl: './drawer.component.html'
 })
 export class DrawerComponent {

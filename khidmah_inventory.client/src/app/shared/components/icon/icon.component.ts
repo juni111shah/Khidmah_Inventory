@@ -47,7 +47,8 @@ export class IconComponent {
       } else {
         classes.push(`bi-${this.name}`);
       }
-      if (this.spin) classes.push('bi-spin'); // Custom CSS might be needed for BI spin
+      if (this.spin) classes.push('icon-spin');
+      if (this.pulse) classes.push('icon-pulse');
     }
     
     classes.push(`icon-${this.size}`);

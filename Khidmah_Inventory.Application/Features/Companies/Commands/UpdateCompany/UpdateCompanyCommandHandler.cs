@@ -1,0 +1,89 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Khidmah_Inventory.Application.Common.Interfaces;
+using Khidmah_Inventory.Application.Common.Models;
+using Khidmah_Inventory.Application.Features.Companies.Models;
+
+namespace Khidmah_Inventory.Application.Features.Companies.Commands.UpdateCompany;
+
+public class UpdateCompanyCommandHandler : IRequestHandler<UpdateCompanyCommand, Result<CompanyDto>>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
+
+    public UpdateCompanyCommandHandler(
+        IApplicationDbContext context,
+        ICurrentUserService currentUser)
+    {
+        _context = context;
+        _currentUser = currentUser;
+    }
+
+    public async Task<Result<CompanyDto>> Handle(UpdateCompanyCommand request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return Result<CompanyDto>.Failure("Company name is required.");
+        }
+
+        var company = await _context.Companies
+            .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+
+        if (company == null)
+        {
+            return Result<CompanyDto>.Failure("Company not found.");
+        }
+
+        company.Update(
+            request.Name.Trim(),
+            request.LegalName?.Trim(),
+            request.TaxId?.Trim(),
+            request.RegistrationNumber?.Trim(),
+            request.Email?.Trim(),
+            request.PhoneNumber?.Trim(),
+            request.Address?.Trim(),
+            request.City?.Trim(),
+            request.State?.Trim(),
+            request.Country?.Trim(),
+            request.PostalCode?.Trim(),
+            request.Currency?.Trim(),
+            request.TimeZone?.Trim(),
+            _currentUser.UserId);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var updated = await _context.Companies
+            .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+
+        if (updated == null)
+        {
+            return Result<CompanyDto>.Failure("Company could not be retrieved after update.");
+        }
+
+        var dto = new CompanyDto
+        {
+            Id = updated.Id,
+            Name = updated.Name,
+            LegalName = updated.LegalName,
+            TaxId = updated.TaxId,
+            RegistrationNumber = updated.RegistrationNumber,
+            Email = updated.Email,
+            PhoneNumber = updated.PhoneNumber,
+            Address = updated.Address,
+            City = updated.City,
+            State = updated.State,
+            Country = updated.Country,
+            PostalCode = updated.PostalCode,
+            LogoUrl = updated.LogoUrl,
+            Currency = updated.Currency,
+            TimeZone = updated.TimeZone,
+            IsActive = updated.IsActive,
+            SubscriptionExpiresAt = updated.SubscriptionExpiresAt,
+            SubscriptionPlan = updated.SubscriptionPlan,
+            CreatedAt = updated.CreatedAt,
+            UpdatedAt = updated.UpdatedAt
+        };
+
+        return Result<CompanyDto>.Success(dto);
+    }
+}

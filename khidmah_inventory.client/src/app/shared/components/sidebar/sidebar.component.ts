@@ -43,15 +43,24 @@ export interface MenuItem {
         margin: '*'
       })),
       transition('collapsed <=> expanded', [
-        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)')
+        animate('350ms cubic-bezier(0.4, 0, 0.2, 1)')
       ]),
       transition(':enter', [
         style({ height: '0', opacity: '0', overflow: 'hidden' }),
-        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: '1' }))
+        animate('350ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: '1' }))
       ]),
       transition(':leave', [
         style({ height: '*', opacity: '1', overflow: 'hidden' }),
-        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0', opacity: '0' }))
+        animate('350ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0', opacity: '0' }))
+      ])
+    ]),
+    trigger('overlayFade', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('250ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('200ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 0 }))
       ])
     ])
   ]
@@ -116,6 +125,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   get displayMenuItems(): MenuItem[] {
     return this.usePermissionFilter ? this.filteredMenuItems : this.menuItems;
+  }
+
+  getOnboardingKey(label: string): string {
+    return `menu-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
   }
 
   private updateActiveRoute(): void {
@@ -323,7 +336,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       return 0;
     }
 
-    // Find the nav-item element for this item
     const navItems = document.querySelectorAll('.sidebar.collapsed .nav-item');
     let itemIndex = -1;
     this.displayMenuItems.forEach((menuItem, index) => {
@@ -332,13 +344,28 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     });
 
-    if (itemIndex >= 0 && navItems[itemIndex]) {
-      const navItemElement = navItems[itemIndex] as HTMLElement;
-      const rect = navItemElement.getBoundingClientRect();
-      return rect.top;
+    if (itemIndex < 0 || !navItems[itemIndex]) {
+      return 0;
     }
 
-    return 0;
+    const navItemElement = navItems[itemIndex] as HTMLElement;
+    const rect = navItemElement.getBoundingClientRect();
+    const itemHeight = 44;
+    const padding = 24;
+    const childCount = item.children?.length ?? 0;
+    const popoutHeight = Math.min(childCount * itemHeight + padding, Math.min(window.innerHeight * 0.7, 400));
+    const gap = 8;
+    let top = rect.top;
+
+    // Keep popout inside viewport: don't go below bottom
+    if (top + popoutHeight > window.innerHeight - gap) {
+      top = window.innerHeight - gap - popoutHeight;
+    }
+    // Don't go above top
+    if (top < gap) {
+      top = gap;
+    }
+    return top;
   }
 
   getSubmenuLeft(): number {

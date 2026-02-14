@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SkeletonLoaderComponent } from '../skeleton-loader/skeleton-loader.component';
 
@@ -7,129 +7,90 @@ import { SkeletonLoaderComponent } from '../skeleton-loader/skeleton-loader.comp
   standalone: true,
   imports: [CommonModule, SkeletonLoaderComponent],
   template: `
-    <div class="skeleton-table-container">
-      <table class="skeleton-table">
-        <thead *ngIf="showHeader">
-          <tr>
-            <th *ngFor="let header of headers" [style.width]="header.width">
-              <app-skeleton-loader
-                [width]="'80%'"
-                [height]="'20px'"
-                [shape]="'rounded'"
-                [animation]="animation">
-              </app-skeleton-loader>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of rows">
-            <td *ngFor="let cell of row.cells" [style.width]="cell.width">
-              <app-skeleton-loader
-                [width]="cell.contentWidth"
-                [height]="cell.height"
-                [shape]="'rounded'"
-                [animation]="animation">
-              </app-skeleton-loader>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="skeleton-table-wrapper">
+      <div class="table-responsive border shadow-sm mb-0">
+        <table class="skeleton-table">
+          <thead class="table-light" *ngIf="showHeader">
+            <tr>
+              <th *ngFor="let h of headerWidths" [style.width]="h" [style.minWidth]="h">
+                <app-skeleton-loader
+                  [width]="'70%'"
+                  [height]="'14px'"
+                  shape="rounded"
+                  [animation]="animation">
+                </app-skeleton-loader>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of builtRows">
+              <td *ngFor="let cell of row" [style.width]="cell.width">
+                <app-skeleton-loader
+                  [width]="cell.contentWidth"
+                  [height]="'16px'"
+                  shape="rounded"
+                  [animation]="animation">
+                </app-skeleton-loader>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   `,
   styles: [`
-    .skeleton-table-container {
-      width: 100%;
-      overflow-x: auto;
-    }
-
-    .skeleton-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .skeleton-table thead {
-      background-color: var(--color-background-light, #f5f5f5);
-    }
-
-    .skeleton-table th {
-      padding: 12px 15px;
+    .skeleton-table-wrapper { width: 100%; }
+    .skeleton-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .skeleton-table thead th {
+      padding: 12px 16px;
       text-align: left;
-      border-bottom: 2px solid var(--color-border, #e0e0e0);
+      border-bottom: 2px solid var(--skeleton-border, #e2e8f0);
+      vertical-align: middle;
     }
-
     .skeleton-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid var(--color-border, #e0e0e0);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--skeleton-border, #e2e8f0);
+      vertical-align: middle;
     }
-
-    .skeleton-table tbody tr:last-child td {
-      border-bottom: none;
-    }
+    .skeleton-table tbody tr:last-child td { border-bottom: none; }
   `]
 })
-export class SkeletonTableComponent implements OnInit {
-  @Input() showHeader: boolean = true;
-  @Input() headers: Array<{ width?: string }> = [
-    { width: '25%' },
-    { width: '25%' },
-    { width: '25%' },
-    { width: '25%' }
-  ];
-  @Input() rows: Array<{ cells: Array<{ width?: string; contentWidth: string; height: string }> }> = [
-    {
-      cells: [
-        { width: '25%', contentWidth: '90%', height: '16px' },
-        { width: '25%', contentWidth: '80%', height: '16px' },
-        { width: '25%', contentWidth: '70%', height: '16px' },
-        { width: '25%', contentWidth: '60%', height: '16px' }
-      ]
-    },
-    {
-      cells: [
-        { width: '25%', contentWidth: '85%', height: '16px' },
-        { width: '25%', contentWidth: '75%', height: '16px' },
-        { width: '25%', contentWidth: '65%', height: '16px' },
-        { width: '25%', contentWidth: '55%', height: '16px' }
-      ]
-    },
-    {
-      cells: [
-        { width: '25%', contentWidth: '95%', height: '16px' },
-        { width: '25%', contentWidth: '85%', height: '16px' },
-        { width: '25%', contentWidth: '75%', height: '16px' },
-        { width: '25%', contentWidth: '65%', height: '16px' }
-      ]
-    },
-    {
-      cells: [
-        { width: '25%', contentWidth: '88%', height: '16px' },
-        { width: '25%', contentWidth: '78%', height: '16px' },
-        { width: '25%', contentWidth: '68%', height: '16px' },
-        { width: '25%', contentWidth: '58%', height: '16px' }
-      ]
-    },
-    {
-      cells: [
-        { width: '25%', contentWidth: '92%', height: '16px' },
-        { width: '25%', contentWidth: '82%', height: '16px' },
-        { width: '25%', contentWidth: '72%', height: '16px' },
-        { width: '25%', contentWidth: '62%', height: '16px' }
-      ]
-    }
-  ];
-  @Input() rowCount: number = 5;
-  @Input() animation: 'pulse' | 'wave' | 'shimmer' = 'shimmer';
+export class SkeletonTableComponent implements OnInit, OnChanges {
+  @Input() showHeader = true;
+  /** Number of columns (used when building from rows/columns) */
+  @Input() columns: number = 4;
+  /** Number of data rows */
+  @Input() rows: number = 10;
+  /** Optional: explicit header widths (e.g. from data-table columns) */
+  @Input() headerWidths: string[] = [];
+  @Input() animation: 'pulse' | 'shimmer' = 'shimmer';
 
-  ngOnInit() {
-    if (this.rowCount > 0 && this.rows.length === 0) {
-      // Generate rows based on rowCount
-      this.rows = Array.from({ length: this.rowCount }, () => ({
-        cells: this.headers.map(() => ({
-          contentWidth: `${Math.floor(Math.random() * 30) + 60}%`,
-          height: '16px'
-        }))
-      }));
+  builtRows: Array<Array<{ width: string; contentWidth: string }>> = [];
+
+  ngOnInit(): void {
+    this.build();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['rows'] || changes['columns'] || changes['headerWidths']) {
+      this.build();
     }
   }
-}
 
+  private build(): void {
+    const colCount = this.headerWidths?.length > 0 ? this.headerWidths.length : this.columns;
+    if (this.headerWidths?.length === 0) {
+      const pct = 100 / colCount;
+      this.headerWidths = Array.from({ length: colCount }, () => `${pct}%`);
+    }
+    const widths = this.headerWidths.length >= colCount
+      ? this.headerWidths.slice(0, colCount)
+      : Array.from({ length: colCount }, () => `${100 / colCount}%`);
+    this.builtRows = Array.from({ length: this.rows }, (_, rowIdx) =>
+      widths.map((w, i) => ({
+        width: w,
+        contentWidth: `${60 + (rowIdx + i) % 35}%`
+      }))
+    );
+  }
+}

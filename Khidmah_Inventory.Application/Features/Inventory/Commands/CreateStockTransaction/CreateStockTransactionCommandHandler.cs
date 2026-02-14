@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Khidmah_Inventory.Application.Common.Constants;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Inventory.Models;
+using Khidmah_Inventory.Application.Features.Notifications.Commands.CreateNotification;
 using Khidmah_Inventory.Domain.Entities;
 
 namespace Khidmah_Inventory.Application.Features.Inventory.Commands.CreateStockTransaction;
@@ -11,13 +13,22 @@ public class CreateStockTransactionCommandHandler : IRequestHandler<CreateStockT
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IMediator _mediator;
+    private readonly IOperationsBroadcast? _broadcast;
+    private readonly IAutomationExecutor? _automationExecutor;
 
     public CreateStockTransactionCommandHandler(
         IApplicationDbContext context,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IMediator mediator,
+        IOperationsBroadcast? broadcast = null,
+        IAutomationExecutor? automationExecutor = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _mediator = mediator;
+        _broadcast = broadcast;
+        _automationExecutor = automationExecutor;
     }
 
     public async Task<Result<StockTransactionDto>> Handle(CreateStockTransactionCommand request, CancellationToken cancellationToken)
@@ -108,6 +119,42 @@ public class CreateStockTransactionCommandHandler : IRequestHandler<CreateStockT
         stockLevel.AdjustQuantity(quantityChange, request.UnitCost);
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (product.MinStockLevel.HasValue && newBalance <= product.MinStockLevel.Value)
+        {
+            await _mediator.Send(new CreateNotificationCommand
+            {
+                CompanyId = companyId.Value,
+                UserId = null,
+                Title = "Stock below threshold",
+                Message = $"Product {product.Name} ({product.SKU}) is below minimum stock level. Current: {newBalance}, Min: {product.MinStockLevel.Value}.",
+                Type = "Warning",
+                EntityType = "Product",
+                EntityId = product.Id
+            }, cancellationToken);
+
+            if (_automationExecutor != null)
+            {
+                await _automationExecutor.ExecuteStockBelowThresholdAsync(
+                    companyId.Value,
+                    product.Id,
+                    request.WarehouseId,
+                    newBalance,
+                    product.MinStockLevel.Value,
+                    cancellationToken);
+            }
+        }
+
+        if (_broadcast != null)
+        {
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.StockChanged,
+                companyId.Value,
+                request.ProductId,
+                "Product",
+                new { WarehouseId = request.WarehouseId, Quantity = request.Quantity, TransactionType = request.TransactionType, BalanceAfter = newBalance },
+                cancellationToken);
+        }
 
         var dto = await MapToDtoAsync(transaction.Id, companyId.Value, cancellationToken);
         return Result<StockTransactionDto>.Success(dto);

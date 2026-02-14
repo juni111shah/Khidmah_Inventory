@@ -5,6 +5,7 @@ import { ApiResponse, PagedResult } from '../models/api-response.model';
 import {
   SalesOrder,
   CreateSalesOrderRequest,
+  UpdateSalesOrderRequest,
   GetSalesOrdersListQuery
 } from '../models/sales-order.model';
 import { ApiConfigService } from './api-config.service';
@@ -30,7 +31,7 @@ export class SalesOrderApiService {
     return this.http.get<ApiResponse<SalesOrder>>(`${this.apiUrl}/${id}`);
   }
 
-  updateSalesOrder(id: string, request: any): Observable<ApiResponse<SalesOrder>> {
+  updateSalesOrder(id: string, request: UpdateSalesOrderRequest): Observable<ApiResponse<SalesOrder>> {
     return this.http.put<ApiResponse<SalesOrder>>(`${this.apiUrl}/${id}`, request);
   }
 

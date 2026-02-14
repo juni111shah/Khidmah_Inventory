@@ -28,6 +28,36 @@ import { CustomersListComponent } from './features/customers/customers-list/cust
 import { CustomerFormComponent } from './features/customers/customer-form/customer-form.component';
 import { SalesOrdersListComponent } from './features/sales-orders/sales-orders-list/sales-orders-list.component';
 import { SalesOrderFormComponent } from './features/sales-orders/sales-order-form/sales-order-form.component';
+import { CompanyListComponent } from './features/companies/company-list/company-list.component';
+import { CompanyFormComponent } from './features/companies/company-form/company-form.component';
+import { CompanyUsersComponent } from './features/companies/company-users/company-users.component';
+import { WorkflowListComponent } from './features/workflows/workflow-list/workflow-list.component';
+import { WorkflowDesignerComponent } from './features/workflows/workflow-designer/workflow-designer.component';
+import { ApprovalInboxComponent } from './features/workflows/approval-inbox/approval-inbox.component';
+import { CommandCenterComponent } from './features/command-center/command-center.component';
+import { AutomationListComponent } from './features/automation/automation-list/automation-list.component';
+import { AutomationBuilderComponent } from './features/automation/automation-builder/automation-builder.component';
+import { AutomationHistoryComponent } from './features/automation/automation-history/automation-history.component';
+import { ProfitIntelligenceComponent } from './features/intelligence/profit-intelligence/profit-intelligence.component';
+import { BranchPerformanceComponent } from './features/intelligence/branch-performance/branch-performance.component';
+import { StaffPerformanceComponent } from './features/intelligence/staff-performance/staff-performance.component';
+import { PredictiveRiskComponent } from './features/intelligence/predictive-risk/predictive-risk.component';
+import { DecisionSupportPageComponent } from './features/intelligence/decision-support/decision-support-page.component';
+import { DailyBriefingComponent } from './features/briefing/daily-briefing.component';
+import { IntegrationCenterComponent } from './features/platform/integration-center/integration-center.component';
+import { NotificationsListComponent } from './features/notifications/notifications-list/notifications-list.component';
+import { ExecutiveCenterComponent } from './features/kpi/executive-center/executive-center.component';
+import { SalesPerformanceComponent } from './features/kpi/sales-performance/sales-performance.component';
+import { InventoryHealthComponent } from './features/kpi/inventory-health/inventory-health.component';
+import { CustomerIntelligenceComponent } from './features/kpi/customer-intelligence/customer-intelligence.component';
+import { ChartOfAccountsComponent } from './features/finance/chart-of-accounts/chart-of-accounts.component';
+import { JournalEntriesComponent } from './features/finance/journal-entries/journal-entries.component';
+import { ProfitLossComponent } from './features/finance/profit-loss/profit-loss.component';
+import { BalanceSheetComponent } from './features/finance/balance-sheet/balance-sheet.component';
+import { CashFlowComponent } from './features/finance/cash-flow/cash-flow.component';
+import { CurrenciesListComponent } from './features/currency/currencies-list/currencies-list.component';
+import { ExchangeRatesListComponent } from './features/exchange-rates/exchange-rates-list/exchange-rates-list.component';
+import { HandsFreePickingComponent } from './features/hands-free/hands-free-picking/hands-free-picking.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { PermissionGuard } from './core/guards/permission.guard';
 
@@ -47,6 +77,18 @@ const routes: Routes = [
       header: {
         title: 'Settings',
         description: 'Configure all aspects of your application'
+      }
+    }
+  },
+  {
+    path: 'notifications',
+    component: NotificationsListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Settings:Notification:Read',
+      header: {
+        title: 'Notifications',
+        description: 'View and manage your notifications'
       }
     }
   },
@@ -230,6 +272,17 @@ const routes: Routes = [
     }
   },
   {
+    path: 'products/barcode-scanner',
+    component: BarcodeScannerComponent,
+    canActivate: [AuthGuard],
+    data: {
+      header: {
+        title: 'Barcode Scanner',
+        description: 'Scan and manage product barcodes'
+      }
+    }
+  },
+  {
     path: 'products/:id',
     component: ProductFormComponent,
     canActivate: [AuthGuard, PermissionGuard],
@@ -250,17 +303,6 @@ const routes: Routes = [
       header: {
         title: 'Edit Product',
         description: 'Update product information and details'
-      }
-    }
-  },
-  {
-    path: 'products/barcode-scanner',
-    component: BarcodeScannerComponent,
-    canActivate: [AuthGuard],
-    data: {
-      header: {
-        title: 'Barcode Scanner',
-        description: 'Scan and manage product barcodes'
       }
     }
   },
@@ -361,6 +403,79 @@ const routes: Routes = [
     }
   },
   {
+    path: 'inventory/hands-free',
+    component: HandsFreePickingComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: ['Inventory:StockLevel:List', 'Inventory:StockTransaction:Create'],
+      permissionMode: 'all',
+      header: {
+        title: 'Hands-free picking',
+        description: 'Voice and camera warehouse mode'
+      }
+    }
+  },
+  {
+    path: 'inventory/hands-free/supervisor',
+    loadComponent: () => import('./features/hands-free/hands-free-supervisor/hands-free-supervisor.component').then(m => m.HandsFreeSupervisorComponent),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Inventory:StockLevel:List',
+      header: {
+        title: 'Hands-free supervisor',
+        description: 'Monitor picking sessions'
+      }
+    }
+  },
+  {
+    path: 'reorder',
+    loadChildren: () => import('./features/reorder/reorder.module').then(m => m.ReorderModule),
+    canActivate: [AuthGuard],
+    data: { header: { title: 'Reorder', description: 'Reorder management' } }
+  },
+  {
+    path: 'companies',
+    component: CompanyListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Companies:Update', header: { title: 'Companies', description: 'Manage companies' } }
+  },
+  {
+    path: 'companies/new',
+    component: CompanyFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Companies:Update', header: { title: 'New company', description: 'Add company' } }
+  },
+  {
+    path: 'companies/:id',
+    component: CompanyFormComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Companies:Update', header: { title: 'Company', description: 'Edit company' } }
+  },
+  {
+    path: 'companies/:id/users',
+    component: CompanyUsersComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Companies:Update', header: { title: 'Company users', description: 'Assign users' } }
+  },
+  {
+    path: 'workflows',
+    component: WorkflowListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Workflows:Create', header: { title: 'Workflows', description: 'Manage workflows' } }
+  },
+  {
+    path: 'workflows/designer',
+    component: WorkflowDesignerComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Workflows:Create', header: { title: 'Workflow designer', description: 'Create workflow' } }
+  },
+  {
+    path: 'workflows/inbox',
+    component: ApprovalInboxComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Workflows:Approve', header: { title: 'Approval inbox', description: 'Pending approvals' } }
+  },
+  {
     path: 'reports',
     component: ReportsComponent,
     canActivate: [AuthGuard, PermissionGuard],
@@ -371,6 +486,105 @@ const routes: Routes = [
         title: 'Reports',
         description: 'View and analyze business reports and analytics'
       }
+    }
+  },
+  {
+    path: 'kpi/executive',
+    component: ExecutiveCenterComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Kpi:Read',
+      header: { title: 'Executive center', description: 'Key metrics and top products at a glance' }
+    }
+  },
+  {
+    path: 'kpi/sales',
+    component: SalesPerformanceComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Kpi:Read',
+      header: { title: 'Sales performance', description: 'Revenue, margin, and order metrics' }
+    }
+  },
+  {
+    path: 'kpi/inventory',
+    component: InventoryHealthComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Kpi:Read',
+      header: { title: 'Inventory health', description: 'Stock value, turnover, aging, and dead stock' }
+    }
+  },
+  {
+    path: 'kpi/customers',
+    component: CustomerIntelligenceComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Kpi:Read',
+      header: { title: 'Customer intelligence', description: 'Customer count, repeat rate, and lifetime value' }
+    }
+  },
+  {
+    path: 'finance/accounts',
+    component: ChartOfAccountsComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Finance:Accounts:List',
+      header: { title: 'Chart of accounts', description: 'Manage accounts and import standard template' }
+    }
+  },
+  {
+    path: 'finance/journals',
+    component: JournalEntriesComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Finance:Journals:Read',
+      header: { title: 'Journal entries', description: 'View journal entries' }
+    }
+  },
+  {
+    path: 'finance/pl',
+    component: ProfitLossComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Finance:Statements:Read',
+      header: { title: 'Profit & Loss', description: 'Income statement' }
+    }
+  },
+  {
+    path: 'finance/balance-sheet',
+    component: BalanceSheetComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Finance:Statements:Read',
+      header: { title: 'Balance sheet', description: 'Assets, liabilities, equity' }
+    }
+  },
+  {
+    path: 'finance/cash-flow',
+    component: CashFlowComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Finance:Statements:Read',
+      header: { title: 'Cash flow', description: 'Operating, investing, financing' }
+    }
+  },
+  {
+    path: 'currency',
+    component: CurrenciesListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Currency:List',
+      header: { title: 'Currencies', description: 'Manage company currencies and base currency' }
+    }
+  },
+  {
+    path: 'exchange-rates',
+    component: ExchangeRatesListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'ExchangeRates:List',
+      header: { title: 'Exchange rates', description: 'Manage FX rates for multi-currency reporting' }
     }
   },
   {
@@ -589,6 +803,16 @@ const routes: Routes = [
     }
   },
 
+  // Daily briefing (post-login landing)
+  {
+    path: 'briefing',
+    component: DailyBriefingComponent,
+    canActivate: [AuthGuard],
+    data: {
+      header: { title: 'Daily Briefing', description: 'Your business at a glance' }
+    }
+  },
+
   // Dashboard route
   {
     path: 'dashboard',
@@ -600,6 +824,105 @@ const routes: Routes = [
         title: 'Dashboard',
         description: 'Overview of your business metrics and key information'
       }
+    }
+  },
+  {
+    path: 'command-center',
+    component: CommandCenterComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Dashboard:Read',
+      header: { title: 'Command Center', description: 'Executive mission control' }
+    }
+  },
+  {
+    path: 'automation',
+    component: AutomationListComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Dashboard:Read', header: { title: 'Automation', description: 'Rule engine' } }
+  },
+  {
+    path: 'automation/builder',
+    component: AutomationBuilderComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Dashboard:Read', header: { title: 'New rule', description: 'Automation builder' } }
+  },
+  {
+    path: 'automation/history',
+    component: AutomationHistoryComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Dashboard:Read', header: { title: 'Execution history', description: 'Automation runs' } }
+  },
+  {
+    path: 'intelligence/profit',
+    component: ProfitIntelligenceComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Reports:Inventory:Read', header: { title: 'Profit intelligence', description: 'Margin and dead stock' } }
+  },
+  {
+    path: 'intelligence/branch',
+    component: BranchPerformanceComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Reports:Sales:Read', header: { title: 'Branch performance', description: 'Compare branches' } }
+  },
+  {
+    path: 'intelligence/staff',
+    component: StaffPerformanceComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Reports:Sales:Read', header: { title: 'Staff performance', description: 'Sales and speed' } }
+  },
+  {
+    path: 'intelligence/risks',
+    component: PredictiveRiskComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Dashboard:Read', header: { title: 'Predictive risk', description: 'AI warnings' } }
+  },
+  {
+    path: 'intelligence/decisions',
+    component: DecisionSupportPageComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Dashboard:Read', header: { title: 'Decision support', description: 'Actionable intelligence & optimization' } }
+  },
+  {
+    path: 'platform',
+    component: IntegrationCenterComponent,
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: ['Platform:ApiKeys:List', 'Platform:Webhooks:List', 'Platform:Integrations:List', 'Platform:ScheduledReports:List', 'Platform:ApiKeys:Usage'],
+      permissionMode: 'any',
+      header: { title: 'Integration Center', description: 'API keys, webhooks, integrations & scheduled reports' }
+    }
+  },
+
+  // Autonomous warehouse
+  {
+    path: 'autonomous',
+    loadComponent: () => import('./features/autonomous-warehouse/autonomous-dashboard/autonomous-dashboard.component').then(m => m.AutonomousDashboardComponent),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Warehouses:List',
+      header: { title: 'Autonomous Warehouse', description: 'Task planning, routes, live ops' }
+    }
+  },
+  {
+    path: 'autonomous/routes',
+    loadComponent: () => import('./features/autonomous-warehouse/routes/routes.component').then(m => m.RoutesComponent),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Warehouses:Read', header: { title: 'Route optimization', description: 'Optimal task sequence' } }
+  },
+  {
+    path: 'autonomous/live-ops',
+    loadComponent: () => import('./features/autonomous-warehouse/live-ops/live-ops.component').then(m => m.LiveOpsComponent),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: { permission: 'Warehouses:List', header: { title: 'Live Ops', description: 'Real-time operations board' } }
+  },
+  {
+    path: 'copilot',
+    loadComponent: () => import('./features/copilot/chat-assistant/chat-assistant.component').then(m => m.ChatAssistantComponent),
+    canActivate: [AuthGuard, PermissionGuard],
+    data: {
+      permission: 'Dashboard:Read',
+      header: { title: 'AI Copilot Assistant', description: 'Conversational chat + voice operations' }
     }
   },
 

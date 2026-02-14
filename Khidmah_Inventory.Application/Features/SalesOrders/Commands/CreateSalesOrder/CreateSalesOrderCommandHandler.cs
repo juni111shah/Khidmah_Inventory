@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Khidmah_Inventory.Application.Common.Constants;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
+using Khidmah_Inventory.Application.Features.Notifications.Commands.CreateNotification;
 using Khidmah_Inventory.Application.Features.SalesOrders.Models;
 using Khidmah_Inventory.Domain.Entities;
 
@@ -11,11 +13,25 @@ public class CreateSalesOrderCommandHandler : IRequestHandler<CreateSalesOrderCo
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IMediator _mediator;
+    private readonly IOperationsBroadcast? _broadcast;
+    private readonly IWebhookDispatchService? _webhookDispatch;
+    private readonly IAutomationExecutor? _automationExecutor;
 
-    public CreateSalesOrderCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
+    public CreateSalesOrderCommandHandler(
+        IApplicationDbContext context,
+        ICurrentUserService currentUser,
+        IMediator mediator,
+        IOperationsBroadcast? broadcast = null,
+        IWebhookDispatchService? webhookDispatch = null,
+        IAutomationExecutor? automationExecutor = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _mediator = mediator;
+        _broadcast = broadcast;
+        _webhookDispatch = webhookDispatch;
+        _automationExecutor = automationExecutor;
     }
 
     public async Task<Result<SalesOrderDto>> Handle(CreateSalesOrderCommand request, CancellationToken cancellationToken)
@@ -33,6 +49,10 @@ public class CreateSalesOrderCommandHandler : IRequestHandler<CreateSalesOrderCo
         var orderNumber = await GenerateOrderNumberAsync(companyId.Value, cancellationToken);
         var salesOrder = new SalesOrder(companyId.Value, orderNumber, request.CustomerId, request.OrderDate, _currentUser.UserId);
         salesOrder.Update(request.CustomerId, request.OrderDate, request.ExpectedDeliveryDate, request.Notes, request.TermsAndConditions, _currentUser.UserId);
+        if (!string.IsNullOrWhiteSpace(request.Status))
+        {
+            salesOrder.UpdateStatus(request.Status.Trim(), _currentUser.UserId);
+        }
 
         foreach (var itemDto in request.Items)
         {
@@ -50,6 +70,64 @@ public class CreateSalesOrderCommandHandler : IRequestHandler<CreateSalesOrderCo
         salesOrder.CalculateTotals();
         _context.SalesOrders.Add(salesOrder);
         await _context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _mediator.Send(new CreateNotificationCommand
+            {
+                CompanyId = companyId.Value,
+                UserId = null,
+                Title = "Sales order created",
+                Message = $"Sales order {salesOrder.OrderNumber} has been created.",
+                Type = "Success",
+                EntityType = "SalesOrder",
+                EntityId = salesOrder.Id
+            }, cancellationToken);
+        }
+        catch
+        {
+            // Notification failure must not break successful order creation.
+        }
+
+        if (_broadcast != null)
+        {
+            try
+            {
+                await _broadcast.BroadcastAsync(
+                    OperationsEventNames.OrderCreated,
+                    companyId.Value,
+                    salesOrder.Id,
+                    "SalesOrder",
+                    new { OrderNumber = salesOrder.OrderNumber, TotalAmount = salesOrder.TotalAmount },
+                    cancellationToken);
+            }
+            catch
+            {
+                // Broadcast failure is non-blocking for the API response.
+            }
+        }
+
+        if (_automationExecutor != null)
+        {
+            try
+            {
+                await _automationExecutor.ExecuteSaleCreatedAsync(companyId.Value, salesOrder.Id, cancellationToken);
+            }
+            catch
+            {
+                // Automation must never fail the transaction.
+            }
+        }
+
+        var webhookPayload = new { orderId = salesOrder.Id, orderNumber = salesOrder.OrderNumber, totalAmount = salesOrder.TotalAmount, customerId = salesOrder.CustomerId, createdAt = salesOrder.CreatedAt };
+        try
+        {
+            await (_webhookDispatch?.DispatchAsync(companyId.Value, "OrderCreated", webhookPayload, cancellationToken) ?? Task.CompletedTask);
+        }
+        catch
+        {
+            // Webhook dispatch should not fail the order command.
+        }
 
         var dto = await MapToDtoAsync(salesOrder.Id, companyId.Value, cancellationToken);
         return Result<SalesOrderDto>.Success(dto);

@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { WarehouseApiService } from '../../../core/services/warehouse-api.service';
 import { Warehouse, GetWarehousesListQuery } from '../../../core/models/warehouse.model';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
@@ -10,7 +12,7 @@ import { ToastComponent } from '../../../shared/components/toast/toast.component
 import { PermissionService } from '../../../core/services/permission.service';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
-import { FilterRequest, SearchMode } from '../../../core/models/user.model';
+import { FilterRequest, FilterDto, SearchMode } from '../../../core/models/user.model';
 import { FormFieldComponent, FormFieldOption } from '../../../shared/components/form-field/form-field.component';
 import { UnifiedButtonComponent } from '../../../shared/components/unified-button/unified-button.component';
 import { ListingContainerComponent } from '../../../shared/components/listing-container/listing-container.component';
@@ -18,32 +20,37 @@ import { FilterFieldComponent } from '../../../shared/components/filter-field/fi
 import { FilterPanelComponent, FilterPanelConfig, FilterPanelField } from '../../../shared/components/filter-panel/filter-panel.component';
 import { ExportComponent } from '../../../shared/components/export/export.component';
 import { HeaderService } from '../../../core/services/header.service';
+import { TableStateService } from '../../../core/services/table-state.service';
+import { SavedViewsService } from '../../../core/services/saved-views.service';
+import { FilterBuilderComponent } from '../../../shared/components/filter-builder/filter-builder.component';
+import { FilterBuilderColumn } from '../../../core/models/table-state.model';
+import { SavedViewsDropdownComponent } from '../../../shared/components/saved-views-dropdown/saved-views-dropdown.component';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonListingHeaderComponent } from '../../../shared/components/skeleton-listing-header/skeleton-listing-header.component';
+import { SkeletonTableComponent } from '../../../shared/components/skeleton-table/skeleton-table.component';
+import { TableState, SortColumn } from '../../../core/models/table-state.model';
 
 @Component({
   selector: 'app-warehouses-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    ReactiveFormsModule,
-    DataTableComponent, 
-    ToastComponent, 
-    HasPermissionDirective, 
-    IconComponent,
-    FormFieldComponent,
-    UnifiedButtonComponent,
-    ListingContainerComponent,
-    FilterFieldComponent,
-    FilterPanelComponent,
-    ExportComponent
+    CommonModule, FormsModule, ReactiveFormsModule,
+    DataTableComponent, ToastComponent, HasPermissionDirective, IconComponent, FormFieldComponent,
+    UnifiedButtonComponent, ListingContainerComponent, FilterFieldComponent, FilterPanelComponent, ExportComponent,
+    FilterBuilderComponent, SavedViewsDropdownComponent,
+    ContentLoaderComponent, SkeletonListingHeaderComponent, SkeletonTableComponent
   ],
   templateUrl: './warehouses-list.component.html'
 })
-export class WarehousesListComponent implements OnInit {
+export class WarehousesListComponent implements OnInit, OnDestroy {
+  readonly tableId = 'warehouses';
   warehouses: Warehouse[] = [];
   loading = false;
   searchTerm = '';
   isActiveFilter: any = '';
+  private searchSubject = new Subject<string>();
+  private subs = new Subscription();
+  showFilterBuilder = false;
 
   columns: DataTableColumn<Warehouse>[] = [
     // ... existing columns ...
@@ -167,18 +174,9 @@ export class WarehousesListComponent implements OnInit {
 
   pagedResult: any = null;
   filterRequest: FilterRequest = {
-    pagination: {
-      pageNo: 1,
-      pageSize: 10,
-      sortBy: 'name',
-      sortOrder: 'ascending'
-    },
-    search: {
-      term: '',
-      searchFields: ['name', 'code', 'description', 'city', 'state', 'country'],
-      mode: SearchMode.Contains,
-      isCaseSensitive: false
-    }
+    pagination: { pageNo: 1, pageSize: 10, sortBy: 'name', sortOrder: 'ascending' },
+    search: { term: '', searchFields: ['name', 'code', 'description', 'city', 'state', 'country'], mode: SearchMode.Contains, isCaseSensitive: false },
+    filters: []
   };
 
   config: DataTableConfig = {
@@ -216,20 +214,71 @@ export class WarehousesListComponent implements OnInit {
 
   filterPanelValues: { [key: string]: any } = {};
 
+  filterBuilderColumns: FilterBuilderColumn[] = [
+    { key: 'name', label: 'Name', type: 'text' },
+    { key: 'code', label: 'Code', type: 'text' },
+    { key: 'city', label: 'City', type: 'text' },
+    { key: 'country', label: 'Country', type: 'text' },
+    { key: 'zoneCount', label: 'Zones', type: 'number' },
+    { key: 'isDefault', label: 'Default', type: 'boolean', options: [{ label: 'Yes', value: true }, { label: 'No', value: false }] },
+    { key: 'isActive', label: 'Status', type: 'boolean', options: [{ label: 'Active', value: true }, { label: 'Inactive', value: false }] },
+    { key: 'createdAt', label: 'Created', type: 'date' }
+  ];
+
+  get currentTableState(): { filterRequest: FilterRequest; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] } {
+    const sortColumns = this.filterRequest.pagination?.sortBy ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }] : [];
+    return { filterRequest: this.filterRequest, sortColumns, visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key) };
+  }
+
   constructor(
     private warehouseApiService: WarehouseApiService,
     public router: Router,
     public permissionService: PermissionService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private tableState: TableStateService,
+    private savedViews: SavedViewsService
   ) {}
 
   ngOnInit(): void {
-    this.headerService.setHeaderInfo({
-      title: 'Warehouses',
-      description: 'Manage physical storage locations'
-    });
+    this.headerService.setHeaderInfo({ title: 'Warehouses', description: 'Manage physical storage locations' });
     this.initializeFilterPanel();
+    this.restoreTableState();
     this.loadWarehouses();
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(term => {
+      this.searchTerm = term;
+      if (this.filterRequest.search) this.filterRequest.search.term = term;
+      if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+      this.persistTableState();
+      this.loadWarehouses();
+    });
+  }
+
+  ngOnDestroy(): void { this.subs.unsubscribe(); }
+
+  private restoreTableState(): void {
+    const state = this.tableState.getState(this.tableId);
+    if (!state) return;
+    if (state.filterRequest?.pagination) this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination };
+    if (state.filterRequest?.search?.term != null) {
+      if (!this.filterRequest.search) this.filterRequest.search = { term: '', searchFields: ['name', 'code', 'description', 'city', 'state', 'country'], mode: SearchMode.Contains, isCaseSensitive: false };
+      this.filterRequest.search.term = state.filterRequest.search.term;
+      this.searchTerm = state.filterRequest.search.term;
+      if (state.filterRequest.search.searchFields?.length) this.filterRequest.search.searchFields = state.filterRequest.search.searchFields;
+    }
+    if (state.filterRequest?.filters?.length) this.filterRequest.filters = [...state.filterRequest.filters];
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) this.columns.forEach(col => { col.visible = state.visibleColumnKeys!.includes(col.key); });
+  }
+
+  private persistTableState(): void {
+    this.tableState.patchState(this.tableId, {
+      filterRequest: this.filterRequest,
+      sortColumns: this.filterRequest.pagination?.sortBy ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }] : [],
+      visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key)
+    });
   }
 
   private initializeFilterPanel(): void {
@@ -319,14 +368,12 @@ export class WarehousesListComponent implements OnInit {
     };
   }
 
-  onSearch(term: string): void {
-    this.searchTerm = term;
-    if (this.filterRequest.search) {
-      this.filterRequest.search.term = term;
-    }
-    if (this.filterRequest.pagination) {
-      this.filterRequest.pagination.pageNo = 1;
-    }
+  onSearchTermChange(term: string): void { this.searchSubject.next(term ?? ''); }
+  onSearchImmediate(term: string): void {
+    this.searchTerm = term ?? '';
+    if (this.filterRequest.search) this.filterRequest.search.term = term ?? '';
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
     this.loadWarehouses();
   }
 
@@ -415,6 +462,7 @@ export class WarehousesListComponent implements OnInit {
 
   onColumnToggle(column: DataTableColumn<Warehouse>): void {
     column.visible = column.visible === false ? true : false;
+    this.persistTableState();
   }
 
   addWarehouse(): void {
@@ -446,24 +494,50 @@ export class WarehousesListComponent implements OnInit {
   }
 
   onFilterChange(filterRequest?: FilterRequest): void {
-    if (filterRequest) {
-      this.filterRequest = filterRequest;
-    }
+    if (filterRequest) this.filterRequest = filterRequest;
+    this.persistTableState();
     this.loadWarehouses();
   }
-
   onPageChange(pageNo: number): void {
-    if (this.filterRequest.pagination) {
-      this.filterRequest.pagination.pageNo = pageNo;
-    }
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = pageNo;
+    this.persistTableState();
     this.loadWarehouses();
   }
-
   onSortChange(sort: any): void {
     if (this.filterRequest.pagination) {
       this.filterRequest.pagination.sortBy = sort.column;
       this.filterRequest.pagination.sortOrder = sort.direction === 'asc' ? 'ascending' : 'descending';
     }
+    this.persistTableState();
+    this.loadWarehouses();
+  }
+  onSavedViewLoad(state: Partial<{ filterRequest: FilterRequest; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] }>): void {
+    if (state.filterRequest) {
+      this.filterRequest = { ...this.filterRequest, ...state.filterRequest };
+      if (state.filterRequest.pagination) this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination };
+      if (state.filterRequest.search) { this.filterRequest.search = { ...this.filterRequest.search, ...state.filterRequest.search }; this.searchTerm = this.filterRequest.search.term ?? ''; }
+      if (state.filterRequest.filters) this.filterRequest.filters = [...state.filterRequest.filters];
+    }
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination!.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination!.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) this.columns.forEach(col => { col.visible = state.visibleColumnKeys!.includes(col.key); });
+    const patch: Partial<TableState> = { filterRequest: state.filterRequest, visibleColumnKeys: state.visibleColumnKeys };
+    if (state.sortColumns?.length) patch.sortColumns = state.sortColumns.map(s => ({ column: s.column, direction: (s.direction === 'desc' ? 'desc' : 'asc') as SortColumn['direction'] }));
+    this.tableState.patchState(this.tableId, patch);
+    this.loadWarehouses();
+  }
+  onFilterBuilderApply(filters: FilterDto[]): void {
+    this.filterRequest.filters = filters;
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
+    this.loadWarehouses();
+    this.showFilterBuilder = false;
+  }
+  onFilterBuilderClear(): void {
+    this.filterRequest.filters = [];
+    this.persistTableState();
     this.loadWarehouses();
   }
 

@@ -17,6 +17,10 @@ import { UnifiedCardComponent } from '../../../shared/components/unified-card/un
 import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
 import { UnifiedCheckboxComponent } from '../../../shared/components/unified-checkbox/unified-checkbox.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonDetailHeaderComponent } from '../../../shared/components/skeleton-detail-header/skeleton-detail-header.component';
+import { SkeletonFormComponent } from '../../../shared/components/skeleton-form/skeleton-form.component';
+import { SkeletonListComponent } from '../../../shared/components/skeleton-list/skeleton-list.component';
 
 @Component({
   selector: 'app-role-form',
@@ -32,7 +36,11 @@ import { BadgeComponent } from '../../../shared/components/badge/badge.component
     UnifiedCardComponent,
     FormFieldComponent,
     UnifiedCheckboxComponent,
-    BadgeComponent
+    BadgeComponent,
+    ContentLoaderComponent,
+    SkeletonDetailHeaderComponent,
+    SkeletonFormComponent,
+    SkeletonListComponent
   ],
   templateUrl: './role-form.component.html'
 })

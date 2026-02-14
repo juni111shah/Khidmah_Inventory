@@ -1,0 +1,57 @@
+<div class="hands-free-container">
+  <!-- Step: Select warehouse -->
+  <section *ngIf="step === 'select'" class="step-select">
+    <h1 class="title">Hands-free picking</h1>
+    <p class="subtitle">Select warehouse and say "Start picking" or tap below</p>
+    <div class="form-group">
+      <label class="label">Warehouse</label>
+      <select class="select" [(ngModel)]="selectedWarehouseId" (ngModelChange)="errorMessage = ''">
+        <option value="">-- Select --</option>
+        <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }}</option>
+      </select>
+    </div>
+    <button type="button" class="btn-start" (click)="startSession()" [disabled]="loading || !selectedWarehouseId">
+      {{ loading ? 'Loading...' : 'Start picking' }}
+    </button>
+    <button type="button" class="btn-back" (click)="back()">Back</button>
+  </section>
+
+  <!-- Step: Picking -->
+  <section *ngIf="step === 'picking'" class="step-picking">
+    <div class="status-bar">
+      <span class="status-text">{{ statusText }}</span>
+      <span class="mic-indicator" [class.listening]="listening">
+        <span class="mic-dot"></span> {{ listening ? 'Listening' : 'Mic off' }}
+      </span>
+    </div>
+
+    <div class="current-task" *ngIf="currentTask">
+      <div class="task-location">{{ currentTask.location }}</div>
+      <div class="task-product">{{ currentTask.productName }}</div>
+      <div class="task-qty">Quantity: {{ pickedQuantity ?? currentTask.quantity }}</div>
+    </div>
+
+    <p class="error-msg" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <div class="camera-area" *ngIf="showCamera">
+      <app-camera-barcode-scanner
+        (barcodeScanned)="onBarcodeScanned($event)"
+        (error)="onCameraError($event)"
+      ></app-camera-barcode-scanner>
+      <button type="button" class="btn-close-camera" (click)="closeCamera()">Close camera</button>
+    </div>
+
+    <div class="actions" *ngIf="!showCamera">
+      <button type="button" class="btn-action" (click)="showCamera = true; speech.sayScanBarcode()">Scan</button>
+      <button type="button" class="btn-action" (click)="nextTask()">Next</button>
+      <button type="button" class="btn-action" (click)="exitSession()">Done</button>
+    </div>
+  </section>
+
+  <!-- Step: Done -->
+  <section *ngIf="step === 'done'" class="step-done">
+    <h1 class="title">All done</h1>
+    <p class="subtitle">All tasks completed</p>
+    <button type="button" class="btn-start" (click)="exitSession()">Start new session</button>
+  </section>
+</div>

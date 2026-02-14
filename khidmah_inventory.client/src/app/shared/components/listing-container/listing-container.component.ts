@@ -69,9 +69,10 @@ import { FilterRequest } from '../../../core/models/user.model';
     }
 .listing-card {
   border-radius: 20px !important;
-  background-color: #ffffff;
+  background-color: var(--surface-color);
   padding: 1.5rem !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: var(--elevation-1, 0 4px 20px rgba(0, 0, 0, 0.05)) !important;
+  border: 1px solid var(--border-color);
 }
 
 .listing-header {
@@ -79,10 +80,10 @@ import { FilterRequest } from '../../../core/models/user.model';
 }
 
 .filter-panel-wrapper {
-  background-color: #f8f9fa;
+  background-color: var(--background-color);
   border-radius: 12px;
   padding: 1.5rem;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
   animation: fadeIn 0.3s ease-out;
 }
 

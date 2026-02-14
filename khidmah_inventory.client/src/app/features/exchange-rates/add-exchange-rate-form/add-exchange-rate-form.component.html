@@ -1,0 +1,31 @@
+<app-content-loader [loading]="loadingCurrencies">
+  <form (ngSubmit)="submit()" class="d-flex flex-column gap-3">
+    <div class="form-group">
+      <label class="form-label">From currency</label>
+      <select class="form-select" [(ngModel)]="fromCurrencyId" name="fromCurrencyId" required>
+        <option value="">-- Select --</option>
+        <option *ngFor="let c of currencies" [value]="c.id">{{ c.code }} ({{ c.name }})</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">To currency</label>
+      <select class="form-select" [(ngModel)]="toCurrencyId" name="toCurrencyId" required>
+        <option value="">-- Select --</option>
+        <option *ngFor="let c of currencies" [value]="c.id">{{ c.code }} ({{ c.name }})</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rate (1 from = X to)</label>
+      <input type="number" step="any" min="0" class="form-control" [(ngModel)]="rate" name="rate" placeholder="e.g. 1.05" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-control" [(ngModel)]="date" name="date" required />
+    </div>
+    <p class="text-danger small mb-0" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
+      <button type="button" class="btn btn-outline-secondary" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </form>
+</app-content-loader>

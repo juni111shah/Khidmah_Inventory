@@ -1,0 +1,44 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <label class="small text-muted mb-0">
+        <input type="checkbox" [(ngModel)]="includeInactive" (ngModelChange)="load()" /> Include inactive
+      </label>
+      <button class="btn btn-sm btn-outline-primary" (click)="load()">Refresh</button>
+      <button class="btn btn-sm btn-primary" (click)="importStandard()">Import standard chart</button>
+    </div>
+
+    <app-unified-card header="Accounts (tree)" customClass="border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngTemplateOutlet="accountRows; context: { $implicit: accounts, level: 0 }"></ng-container>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="accounts.length === 0 && !loading" class="text-muted small mb-0">No accounts. Click "Import standard chart" to add default accounts.</p>
+    </app-unified-card>
+  </app-content-loader>
+</div>
+
+<ng-template #accountRows let-items let-level="level">
+  <ng-container *ngFor="let a of items">
+    <tr>
+      <td [style.padding-left.rem]="(level || 0) + 1">{{ a.code }}</td>
+      <td>{{ a.name }}</td>
+      <td>{{ a.typeName }}</td>
+      <td>{{ a.isActive ? 'Yes' : 'No' }}</td>
+    </tr>
+    <ng-container *ngIf="a.children && a.children.length">
+      <ng-container *ngTemplateOutlet="accountRows; context: { $implicit: a.children, level: level + 1 }"></ng-container>
+    </ng-container>
+  </ng-container>
+</ng-template>

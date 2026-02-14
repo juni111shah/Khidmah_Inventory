@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { RoleApiService } from '../../../core/services/role-api.service';
 import { Role } from '../../../core/models/role.model';
 import { ApiResponse } from '../../../core/models/api-response.model';
@@ -17,45 +19,41 @@ import { HeaderService } from '../../../core/services/header.service';
 import { FilterFieldComponent } from '../../../shared/components/filter-field/filter-field.component';
 import { FilterPanelComponent, FilterPanelConfig, FilterPanelField } from '../../../shared/components/filter-panel/filter-panel.component';
 import { ExportComponent } from '../../../shared/components/export/export.component';
+import { TableStateService } from '../../../core/services/table-state.service';
+import { SavedViewsService } from '../../../core/services/saved-views.service';
+import { FilterBuilderComponent } from '../../../shared/components/filter-builder/filter-builder.component';
+import { FilterBuilderColumn } from '../../../core/models/table-state.model';
+import { SavedViewsDropdownComponent } from '../../../shared/components/saved-views-dropdown/saved-views-dropdown.component';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonListingHeaderComponent } from '../../../shared/components/skeleton-listing-header/skeleton-listing-header.component';
+import { SkeletonTableComponent } from '../../../shared/components/skeleton-table/skeleton-table.component';
+import { FilterRequest, FilterDto, SearchMode } from '../../../core/models/user.model';
+import { TableState, SortColumn } from '../../../core/models/table-state.model';
 
 @Component({
   selector: 'app-roles-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule,
-    ReactiveFormsModule,
-    DataTableComponent, 
-    ToastComponent, 
-    HasPermissionDirective, 
-    IconComponent,
-    ListingContainerComponent,
-    UnifiedButtonComponent,
-    FilterFieldComponent,
-    FilterPanelComponent,
-    ExportComponent
+    CommonModule, FormsModule, ReactiveFormsModule, DataTableComponent, ToastComponent, HasPermissionDirective, IconComponent,
+    ListingContainerComponent, UnifiedButtonComponent, FilterFieldComponent, FilterPanelComponent, ExportComponent,
+    FilterBuilderComponent, SavedViewsDropdownComponent,
+    ContentLoaderComponent, SkeletonListingHeaderComponent, SkeletonTableComponent
   ],
   templateUrl: './roles-list.component.html'
 })
-export class RolesListComponent implements OnInit {
+export class RolesListComponent implements OnInit, OnDestroy {
+  readonly tableId = 'roles';
   roles: Role[] = [];
   allRoles: Role[] = [];
   loading = false;
   searchTerm = '';
+  private searchSubject = new Subject<string>();
+  private subs = new Subscription();
+  showFilterBuilder = false;
   pagedResult: any = null;
-  filterRequest: any = {
-    pagination: {
-      pageNo: 1,
-      pageSize: 10,
-      sortBy: 'name',
-      sortOrder: 'ascending'
-    },
-    search: {
-      term: '',
-      searchFields: ['name', 'description'],
-      mode: 'Contains',
-      isCaseSensitive: false
-    },
+  filterRequest: FilterRequest = {
+    pagination: { pageNo: 1, pageSize: 10, sortBy: 'name', sortOrder: 'ascending' },
+    search: { term: '', searchFields: ['name', 'description'], mode: SearchMode.Contains, isCaseSensitive: false },
     filters: []
   };
 
@@ -179,20 +177,68 @@ export class RolesListComponent implements OnInit {
   filterPanelValues: { [key: string]: any } = {};
   isSystemRoleFilter: any = '';
 
+  filterBuilderColumns: FilterBuilderColumn[] = [
+    { key: 'name', label: 'Role Name', type: 'text' },
+    { key: 'description', label: 'Description', type: 'text' },
+    { key: 'isSystemRole', label: 'Type', type: 'boolean', options: [{ label: 'System', value: true }, { label: 'Custom', value: false }] },
+    { key: 'userCount', label: 'Users', type: 'number' },
+    { key: 'permissionCount', label: 'Permissions', type: 'number' },
+    { key: 'createdAt', label: 'Created', type: 'date' }
+  ];
+
+  get currentTableState(): { filterRequest: FilterRequest; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] } {
+    const sortColumns = this.filterRequest.pagination?.sortBy ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }] : [];
+    return { filterRequest: this.filterRequest, sortColumns, visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key) };
+  }
+
   constructor(
     private roleApiService: RoleApiService,
     public router: Router,
     public permissionService: PermissionService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private tableState: TableStateService,
+    private savedViews: SavedViewsService
   ) {}
 
   ngOnInit(): void {
-    this.headerService.setHeaderInfo({
-      title: 'Roles',
-      description: 'Manage system roles and permissions'
-    });
+    this.headerService.setHeaderInfo({ title: 'Roles', description: 'Manage system roles and permissions' });
     this.initializeFilterPanel();
+    this.restoreTableState();
     this.loadRoles();
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(term => {
+      this.searchTerm = term;
+      if (this.filterRequest.search) this.filterRequest.search.term = term;
+      if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+      this.persistTableState();
+      this.applyFiltersAndPagination();
+    });
+  }
+
+  ngOnDestroy(): void { this.subs.unsubscribe(); }
+
+  private restoreTableState(): void {
+    const state = this.tableState.getState(this.tableId);
+    if (!state) return;
+    if (state.filterRequest?.pagination) this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination };
+    if (state.filterRequest?.search?.term != null) {
+      if (!this.filterRequest.search) this.filterRequest.search = { term: '', searchFields: ['name', 'description'], mode: SearchMode.Contains, isCaseSensitive: false };
+      this.filterRequest.search.term = state.filterRequest.search.term;
+      this.searchTerm = state.filterRequest.search.term;
+    }
+    if (state.filterRequest?.filters?.length) this.filterRequest.filters = [...state.filterRequest.filters];
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) this.columns.forEach(col => { col.visible = state.visibleColumnKeys!.includes(col.key); });
+  }
+
+  private persistTableState(): void {
+    this.tableState.patchState(this.tableId, {
+      filterRequest: this.filterRequest,
+      sortColumns: this.filterRequest.pagination?.sortBy ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }] : [],
+      visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key)
+    });
   }
 
   private initializeFilterPanel(): void {
@@ -241,12 +287,12 @@ export class RolesListComponent implements OnInit {
     };
   }
 
-  onSearch(term: string): void {
-    this.searchTerm = term;
-    if (this.filterRequest.search) {
-      this.filterRequest.search.term = term;
-    }
-    this.filterRequest.pagination.pageNo = 1;
+  onSearchTermChange(term: string): void { this.searchSubject.next(term ?? ''); }
+  onSearchImmediate(term: string): void {
+    this.searchTerm = term ?? '';
+    if (this.filterRequest.search) this.filterRequest.search.term = term ?? '';
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
     this.applyFiltersAndPagination();
   }
 
@@ -267,7 +313,7 @@ export class RolesListComponent implements OnInit {
       this.filterRequest.search.term = '';
     }
     this.filterRequest.filters = [];
-    this.filterRequest.pagination.pageNo = 1;
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
     this.applyFiltersAndPagination();
   }
 
@@ -285,6 +331,7 @@ export class RolesListComponent implements OnInit {
 
   onColumnToggle(column: DataTableColumn<Role>): void {
     column.visible = column.visible === false ? true : false;
+    this.persistTableState();
   }
 
   addRole(): void {
@@ -359,26 +406,52 @@ export class RolesListComponent implements OnInit {
     this.loading = false;
   }
 
-  onFilterChange(filterRequest?: any): void {
-    if (filterRequest) {
-      this.filterRequest = filterRequest;
-    }
-    this.filterRequest.pagination.pageNo = 1;
+  onFilterChange(filterRequest?: FilterRequest): void {
+    if (filterRequest) this.filterRequest = filterRequest;
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
     this.applyFiltersAndPagination();
   }
-
   onPageChange(pageNo: number): void {
-    if (this.filterRequest.pagination) {
-      this.filterRequest.pagination.pageNo = pageNo;
-    }
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = pageNo;
+    this.persistTableState();
     this.applyFiltersAndPagination();
   }
-
   onSortChange(sort: any): void {
     if (this.filterRequest.pagination) {
       this.filterRequest.pagination.sortBy = sort.column;
       this.filterRequest.pagination.sortOrder = sort.direction === 'asc' ? 'ascending' : 'descending';
     }
+    this.persistTableState();
+    this.applyFiltersAndPagination();
+  }
+  onSavedViewLoad(state: Partial<{ filterRequest: FilterRequest; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] }>): void {
+    if (state.filterRequest) {
+      this.filterRequest = { ...this.filterRequest, ...state.filterRequest };
+      if (state.filterRequest.pagination) this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination };
+      if (state.filterRequest.search) { this.filterRequest.search = { ...this.filterRequest.search, ...state.filterRequest.search }; this.searchTerm = this.filterRequest.search.term ?? ''; }
+      if (state.filterRequest.filters) this.filterRequest.filters = [...state.filterRequest.filters];
+    }
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination!.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination!.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) this.columns.forEach(col => { col.visible = state.visibleColumnKeys!.includes(col.key); });
+    const patch: Partial<TableState> = { filterRequest: state.filterRequest, visibleColumnKeys: state.visibleColumnKeys };
+    if (state.sortColumns?.length) patch.sortColumns = state.sortColumns.map(s => ({ column: s.column, direction: (s.direction === 'desc' ? 'desc' : 'asc') as SortColumn['direction'] }));
+    this.tableState.patchState(this.tableId, patch);
+    this.applyFiltersAndPagination();
+  }
+  onFilterBuilderApply(filters: FilterDto[]): void {
+    this.filterRequest.filters = filters;
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
+    this.applyFiltersAndPagination();
+    this.showFilterBuilder = false;
+  }
+  onFilterBuilderClear(): void {
+    this.filterRequest.filters = [];
+    this.persistTableState();
     this.applyFiltersAndPagination();
   }
 

@@ -13,6 +13,9 @@ import { FormFieldComponent } from '../../../shared/components/form-field/form-f
 import { UnifiedButtonComponent } from '../../../shared/components/unified-button/unified-button.component';
 import { UnifiedCardComponent } from '../../../shared/components/unified-card/unified-card.component';
 import { HeaderService } from '../../../core/services/header.service';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonDetailHeaderComponent } from '../../../shared/components/skeleton-detail-header/skeleton-detail-header.component';
+import { SkeletonFormComponent } from '../../../shared/components/skeleton-form/skeleton-form.component';
 
 @Component({
   selector: 'app-category-form',
@@ -26,7 +29,10 @@ import { HeaderService } from '../../../core/services/header.service';
     HasPermissionDirective,
     FormFieldComponent,
     UnifiedButtonComponent,
-    UnifiedCardComponent
+    UnifiedCardComponent,
+    ContentLoaderComponent,
+    SkeletonDetailHeaderComponent,
+    SkeletonFormComponent
   ],
   templateUrl: './category-form.component.html'
 })

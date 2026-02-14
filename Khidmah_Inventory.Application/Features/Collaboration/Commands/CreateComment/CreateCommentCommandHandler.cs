@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Khidmah_Inventory.Application.Common.Constants;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Collaboration.Models;
@@ -11,11 +12,13 @@ public class CreateCommentCommandHandler : IRequestHandler<CreateCommentCommand,
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IOperationsBroadcast? _broadcast;
 
-    public CreateCommentCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
+    public CreateCommentCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser, IOperationsBroadcast? broadcast = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _broadcast = broadcast;
     }
 
     public async Task<Result<CommentDto>> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
@@ -38,6 +41,17 @@ public class CreateCommentCommandHandler : IRequestHandler<CreateCommentCommand,
 
         _context.Comments.Add(comment);
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (_broadcast != null)
+        {
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.CommentAdded,
+                companyId.Value,
+                comment.Id,
+                request.EntityType,
+                new { EntityId = request.EntityId, UserName = comment.UserName, ContentPreview = comment.Content?.Length > 50 ? comment.Content.Substring(0, 50) + "..." : comment.Content },
+                cancellationToken);
+        }
 
         var dto = new CommentDto
         {

@@ -1,0 +1,86 @@
+<div class="assistant-shell">
+  <!-- Messages Area -->
+  <div #messagesBox class="messages">
+    <!-- Welcome/Empty State if no messages -->
+    <div *ngIf="messages.length === 0" class="empty-state-message text-center p-4">
+      <div class="mb-3">
+        <i class="bi bi-robot fs-1 text-primary opacity-50"></i>
+      </div>
+      <h5 class="fw-bold mb-2">How can I help you?</h5>
+      <p class="text-muted small">Ask about sales, inventory, reports, or navigate the app.</p>
+    </div>
+
+    <div *ngFor="let m of messages" class="msg" [class.user]="m.role === 'user'" [class.assistant]="m.role === 'assistant'">
+      <div class="bubble">
+        <div [innerHTML]="m.text"></div>
+        <button *ngIf="m.downloadAction" type="button" class="btn btn-sm btn-outline-primary mt-2" (click)="openDownload(m.downloadAction)">
+          <i class="bi bi-download me-1"></i> {{ getDownloadLabel(m.downloadAction) }}
+        </button>
+      </div>
+      <div class="meta">{{ m.ts | date: 'shortTime' }}</div>
+    </div>
+    
+    <div class="msg assistant" *ngIf="loading">
+      <div class="bubble typing-indicator">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contextual Quick Options (Chips) -->
+  <div class="options-container" *ngIf="contextualOptions.length > 0 && !loading">
+    <div class="d-flex gap-2 flex-wrap justify-content-center">
+      <button *ngFor="let opt of contextualOptions" 
+              type="button" 
+              class="btn btn-sm btn-outline-secondary rounded-pill"
+              (click)="sendPreset(opt.command)">
+        {{ opt.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Active Task Controls -->
+  <div class="quick-actions justify-content-center" *ngIf="showTaskControls">
+    <button type="button" class="btn btn-sm btn-success" (click)="confirmDone()"><i class="bi bi-check-lg me-1"></i> Done</button>
+    <button type="button" class="btn btn-sm btn-secondary" (click)="next()">Next <i class="bi bi-arrow-right me-1"></i></button>
+    <button type="button" class="btn btn-sm btn-warning" (click)="repeat()"><i class="bi bi-arrow-repeat me-1"></i> Repeat</button>
+    <button type="button" class="btn btn-sm btn-danger" (click)="cancelTask()"><i class="bi bi-x-lg me-1"></i> Cancel</button>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-group">
+      <button type="button" class="btn btn-light border" [class.text-danger]="listening" (click)="toggleMic()" title="Voice Input">
+        <i class="bi" [class.bi-mic-fill]="listening" [class.bi-mic]="!listening"></i>
+      </button>
+      <input
+        type="text"
+        class="form-control border-start-0 border-end-0"
+        [(ngModel)]="input"
+        [placeholder]="listening ? 'Listening...' : 'Ask: sales, reorder, supplier...'"
+        (keydown.enter)="send()"
+        [disabled]="loading"
+      />
+      <button type="button" class="btn btn-primary" (click)="send()" [disabled]="loading || !input.trim()">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+    
+    <!-- Footer Toolbar -->
+    <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none" (click)="clearChat()" title="Clear conversation">
+          <i class="bi bi-trash3 me-1"></i> Clear
+        </button>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none" (click)="downloadLast()" title="Download last generated file">
+          <i class="bi bi-file-earmark-arrow-down me-1"></i> Last File
+        </button>
+        <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none" (click)="sendHelp()" title="Get help">
+          <i class="bi bi-question-circle me-1"></i> Help
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

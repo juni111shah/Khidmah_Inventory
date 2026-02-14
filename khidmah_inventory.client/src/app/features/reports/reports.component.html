@@ -29,12 +29,22 @@
     </button>
   </div>
 
-  <div *ngIf="loading" class="d-flex justify-content-center py-5">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <!-- Sales Report -->
-  <div *ngIf="!loading && activeTab === 'sales' && salesReport" class="report-content">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <div class="card p-4 border-0 shadow-sm mb-4">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4"><app-skeleton-loader [height]="'38px'"></app-skeleton-loader></div>
+          <div class="col-md-4"><app-skeleton-loader [height]="'38px'"></app-skeleton-loader></div>
+          <div class="col-md-4"><app-skeleton-loader [width]="'140px'" [height]="'38px'"></app-skeleton-loader></div>
+        </div>
+      </div>
+      <app-skeleton-stat-cards [cardCount]="5" class="mb-4"></app-skeleton-stat-cards>
+      <div class="card border-0 shadow-sm">
+        <app-skeleton-table [rows]="10" [columns]="6" [showHeader]="true"></app-skeleton-table>
+      </div>
+    </ng-container>
+    <!-- Sales Report -->
+    <div *ngIf="!loading && activeTab === 'sales' && salesReport" class="report-content">
     <div class="card p-4 border-0 shadow-sm mb-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-4">
@@ -231,6 +241,7 @@
       ></app-data-table>
     </div>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

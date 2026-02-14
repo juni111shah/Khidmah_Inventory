@@ -5,6 +5,7 @@ import { ApiResponse, PagedResult } from '../models/api-response.model';
 import {
   PurchaseOrder,
   CreatePurchaseOrderRequest,
+  UpdatePurchaseOrderRequest,
   GetPurchaseOrdersListQuery
 } from '../models/purchase-order.model';
 import { ApiConfigService } from './api-config.service';
@@ -30,7 +31,7 @@ export class PurchaseOrderApiService {
     return this.http.post<ApiResponse<PagedResult<PurchaseOrder>>>(`${this.apiUrl}/list`, query || {});
   }
 
-  updatePurchaseOrder(id: string, request: any): Observable<ApiResponse<PurchaseOrder>> {
+  updatePurchaseOrder(id: string, request: UpdatePurchaseOrderRequest): Observable<ApiResponse<PurchaseOrder>> {
     return this.http.put<ApiResponse<PurchaseOrder>>(`${this.apiUrl}/${id}`, request);
   }
 

@@ -1,0 +1,47 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <app-unified-card header="Balance Sheet" customClass="border-0 shadow-sm">
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-3">
+          <label class="form-label small">As Of Date</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="asOfDate" />
+        </div>
+        <div class="col-md-9 d-flex gap-2">
+          <button class="btn btn-sm btn-primary" (click)="load()">Apply</button>
+          <button class="btn btn-sm btn-outline-secondary" (click)="exportCsv()" [disabled]="!report">Export CSV</button>
+        </div>
+      </div>
+
+      <div *ngIf="report" class="row g-3">
+        <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Assets</small><div class="fs-5 fw-semibold">{{ report.totalAssets | number:'1.2-2' }}</div></div></div>
+        <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Liabilities</small><div class="fs-5 fw-semibold">{{ report.totalLiabilities | number:'1.2-2' }}</div></div></div>
+        <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Equity</small><div class="fs-5 fw-semibold">{{ report.totalEquity | number:'1.2-2' }}</div></div></div>
+      </div>
+
+      <div *ngIf="report" class="mt-3 d-flex gap-2">
+        <button class="btn btn-sm btn-outline-primary" (click)="toggleDrill('assets')">{{ expandedSection === 'assets' ? 'Hide' : 'Drill down' }} Assets</button>
+        <button class="btn btn-sm btn-outline-primary" (click)="toggleDrill('liabilities')">{{ expandedSection === 'liabilities' ? 'Hide' : 'Drill down' }} Liabilities</button>
+        <button class="btn btn-sm btn-outline-primary" (click)="toggleDrill('equity')">{{ expandedSection === 'equity' ? 'Hide' : 'Drill down' }} Equity</button>
+      </div>
+
+      <div *ngIf="report && expandedSection" class="table-responsive mt-3">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Name</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let line of (expandedSection === 'assets' ? report.assetLines : expandedSection === 'liabilities' ? report.liabilityLines : report.equityLines)">
+              <td>{{ line.code }}</td>
+              <td>{{ line.name }}</td>
+              <td class="text-end">{{ line.amount | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-unified-card>
+  </app-content-loader>
+</div>

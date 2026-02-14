@@ -1,0 +1,28 @@
+<div class="kpi-stat-card h-100"
+     [class.kpi-stat-card-primary]="theme === 'primary'"
+     [class.kpi-stat-card-success]="theme === 'success'"
+     [class.kpi-stat-card-warning]="theme === 'warning'"
+     [class.kpi-stat-card-danger]="theme === 'danger'"
+     [class.kpi-stat-card-info]="theme === 'info'"
+     [class.kpi-stat-card-hoverable]="hoverable">
+  <div class="kpi-stat-card-inner">
+    <div class="kpi-stat-card-header">
+      <div class="kpi-stat-card-icon-circle">
+        <i class="bi" [ngClass]="icon"></i>
+      </div>
+      <span class="kpi-stat-card-title">{{ title }}</span>
+      <span *ngIf="trendPercent" class="kpi-stat-card-trend" [class.trend-up]="trendPercent.startsWith('+')" [class.trend-down]="trendPercent.startsWith('-')">{{ trendPercent }}</span>
+    </div>
+    <div class="kpi-stat-card-value">{{ value }}</div>
+    <div class="kpi-stat-card-chart" *ngIf="showSparkline">
+      <app-sparkline-chart
+        [data]="effectiveTrendData"
+        [color]="chartColor"
+        [height]="50"
+        [width]="280"
+        [showBars]="false"
+        [showArea]="true">
+      </app-sparkline-chart>
+    </div>
+  </div>
+</div>

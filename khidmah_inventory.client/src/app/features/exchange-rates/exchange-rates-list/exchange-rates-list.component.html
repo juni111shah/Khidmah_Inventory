@@ -1,0 +1,40 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <button class="btn btn-sm btn-primary" (click)="openAdd()">Add rate</button>
+      <label class="small text-muted mb-0 me-2">From</label>
+      <input type="date" class="form-control form-control-sm" style="width: auto" [(ngModel)]="fromDate" (ngModelChange)="load()" />
+      <label class="small text-muted mb-0 me-2">To</label>
+      <input type="date" class="form-control form-control-sm" style="width: auto" [(ngModel)]="toDate" (ngModelChange)="load()" />
+      <button class="btn btn-sm btn-outline-secondary" (click)="load()">Refresh</button>
+    </div>
+
+    <app-unified-card header="Rates" customClass="border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>From</th>
+              <th>To</th>
+              <th>Rate</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of rates">
+              <td>{{ r.fromCurrencyCode }}</td>
+              <td>{{ r.toCurrencyCode }}</td>
+              <td>{{ r.rate }}</td>
+              <td>{{ r.date | date:'shortDate' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="rates.length === 0 && !loading" class="text-muted small mb-0">No exchange rates. Add rates (e.g. 1 USD = X EUR) for the date they apply.</p>
+    </app-unified-card>
+  </app-content-loader>
+</div>
+
+<app-drawer [isOpen]="drawerOpen" (isOpenChange)="drawerOpen = $event" title="Add exchange rate" width="420px">
+  <app-add-exchange-rate-form (saved)="onSaved()" (cancel)="onDrawerClose()"></app-add-exchange-rate-form>
+</app-drawer>

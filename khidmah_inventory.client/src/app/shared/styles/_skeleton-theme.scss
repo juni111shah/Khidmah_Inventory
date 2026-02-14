@@ -1,0 +1,73 @@
+/**
+ * Skeleton loading system – global theme
+ * Soft shimmer, CSS-only. Used by all skeleton components.
+ */
+:root {
+  --skeleton-base: #eef1f5;
+  --skeleton-highlight: #f5f7fa;
+  --skeleton-shimmer: rgba(255, 255, 255, 0.6);
+  --skeleton-border: #e2e8f0;
+  --skeleton-radius: 8px;
+  --skeleton-radius-sm: 6px;
+  --skeleton-transition-duration: 0.25s;
+}
+
+html[data-theme="dark"] {
+  --skeleton-base: #334155;
+  --skeleton-highlight: #475569;
+  --skeleton-shimmer: rgba(255, 255, 255, 0.08);
+  --skeleton-border: #475569;
+}
+
+/* Soft, modern shimmer – single keyframe set for all skeletons */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 40%,
+    var(--skeleton-base) 80%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* Content loader fade – avoid layout jump */
+.content-loader-skeleton,
+.content-loader-content {
+  min-height: 120px;
+}
+
+.content-loader-content {
+  animation: content-fade-in 0.3s ease-out;
+}
+
+@keyframes content-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

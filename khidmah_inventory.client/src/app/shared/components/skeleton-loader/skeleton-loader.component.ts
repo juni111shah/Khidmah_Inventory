@@ -9,7 +9,6 @@ import { CommonModule } from '@angular/common';
     <div 
       class="skeleton-loader"
       [class.skeleton-pulse]="animation === 'pulse'"
-      [class.skeleton-wave]="animation === 'wave'"
       [class.skeleton-shimmer]="animation === 'shimmer'"
       [style.width]="width"
       [style.height]="height"
@@ -21,22 +20,24 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [`
     .skeleton-loader {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: skeleton-loading 1.5s ease-in-out infinite;
       display: inline-block;
+      background: var(--skeleton-base, #eef1f5);
+      border-radius: var(--skeleton-radius, 8px);
     }
 
-    .skeleton-pulse {
+    .skeleton-loader.skeleton-shimmer {
+      background: linear-gradient(
+        90deg,
+        var(--skeleton-base, #eef1f5) 0%,
+        var(--skeleton-highlight, #f5f7fa) 40%,
+        var(--skeleton-base, #eef1f5) 80%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-shimmer 1.8s ease-in-out infinite;
+    }
+
+    .skeleton-loader.skeleton-pulse {
       animation: skeleton-pulse 1.5s ease-in-out infinite;
-    }
-
-    .skeleton-wave {
-      animation: skeleton-wave 1.5s ease-in-out infinite;
-    }
-
-    .skeleton-shimmer {
-      animation: skeleton-shimmer 2s ease-in-out infinite;
     }
 
     .skeleton-circle {
@@ -44,47 +45,21 @@ import { CommonModule } from '@angular/common';
     }
 
     .skeleton-rounded {
-      border-radius: 8px;
+      border-radius: var(--skeleton-radius, 8px);
     }
 
     .skeleton-rectangle {
       border-radius: 0;
     }
 
-    @keyframes skeleton-loading {
-      0% {
-        background-position: 200% 0;
-      }
-      100% {
-        background-position: -200% 0;
-      }
+    @keyframes skeleton-shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
     }
 
     @keyframes skeleton-pulse {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.5;
-      }
-    }
-
-    @keyframes skeleton-wave {
-      0% {
-        transform: translateX(-100%);
-      }
-      100% {
-        transform: translateX(100%);
-      }
-    }
-
-    @keyframes skeleton-shimmer {
-      0% {
-        background-position: -1000px 0;
-      }
-      100% {
-        background-position: 1000px 0;
-      }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
     }
   `]
 })

@@ -1,9 +1,11 @@
 using Khidmah_Inventory.Application.Common.Models;
+using Khidmah_Inventory.Application.Features.Search.Models;
 
 namespace Khidmah_Inventory.Application.Common.Interfaces;
 
 public interface ISearchService
 {
+    Task<GlobalSearchResultDto> SearchGroupedAsync(string searchTerm, int limitPerGroup = 10);
     Task<SearchResult> SearchAsync(string searchTerm, List<string> entityTypes, int limit = 50);
     Task<List<SavedSearch>> GetSavedSearchesAsync();
     Task<SavedSearch> SaveSearchAsync(string name, string searchTerm, List<string> entityTypes, Dictionary<string, object> filters);

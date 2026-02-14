@@ -1,0 +1,39 @@
+<app-drawer [isOpen]="open" (isOpenChange)="openChange.emit($event)" [title]="title" position="right">
+  <div class="activity-feed-panel">
+    <div *ngIf="loading" class="text-center py-4">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+    <ng-container *ngIf="!loading">
+      <div class="mb-4">
+        <h6 class="text-muted small text-uppercase mb-2">Activity</h6>
+        <div class="activity-list">
+          <div *ngFor="let log of activityLogs" class="activity-item border-start border-2 border-light ps-3 mb-3">
+            <div class="small text-muted">{{ log.timeAgo }}</div>
+            <div><strong>{{ log.action }}</strong> – {{ log.description }}</div>
+            <div *ngIf="log.userName" class="small">{{ log.userName }}</div>
+          </div>
+          <div *ngIf="activityLogs.length === 0" class="text-muted small">No activity yet.</div>
+        </div>
+      </div>
+
+      <div>
+        <h6 class="text-muted small text-uppercase mb-2">Comments</h6>
+        <div *ngIf="canComment" class="mb-3">
+          <textarea class="form-control form-control-sm mb-2" [(ngModel)]="newComment" rows="2" placeholder="Add a comment... (use @ to mention)"></textarea>
+          <app-unified-button variant="primary" size="sm" (clicked)="addComment()" [disabled]="savingComment || !newComment.trim()">
+            {{ savingComment ? 'Sending…' : 'Send' }}
+          </app-unified-button>
+        </div>
+        <div class="comments-list">
+          <div *ngFor="let c of comments" class="comment-item border-start border-2 border-primary ps-3 mb-3">
+            <div class="small text-muted">{{ c.timeAgo }}</div>
+            <div>{{ c.content }}</div>
+            <div *ngIf="c.userName" class="small">{{ c.userName }}</div>
+          </div>
+          <div *ngIf="comments.length === 0" class="text-muted small">No comments yet.</div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</app-drawer>

@@ -1,21 +1,31 @@
-<app-listing-container
-  [searchPlaceholder]="config.searchPlaceholder || 'Search suppliers...'"
-  [searchTerm]="searchTerm"
-  [totalColumnsCount]="columns.length"
-  [visibleColumnsCount]="visibleColumnsCount"
-  [columns]="columns"
-  [showColumnDropdown]="showColumnToggle"
-  [showFilters]="true"
-  [showFilterPanel]="showFilterPanel"
-  [filterCount]="filterRequest.filters?.length || 0"
-  [hasActiveFilters]="(filterRequest.filters?.length || 0) > 0 || isActiveFilter !== null || !!searchTerm"
-  (search)="onSearch($event)"
-  (filterClicked)="onFilterToggle()"
-  (toggleColumns)="onColumnsToggle()"
-  (closeColumns)="showColumnToggle = false"
-  (columnToggle)="onColumnToggle($event)">
-  
-  <div listing-actions class="d-flex gap-2">
+<app-content-loader [loading]="loading">
+  <ng-container skeleton>
+    <div class="listing-container py-4">
+      <div class="listing-card card border-0 shadow-sm p-4">
+        <app-skeleton-listing-header [buttonCount]="2"></app-skeleton-listing-header>
+        <app-skeleton-table [rows]="10" [columns]="5" [showHeader]="true"></app-skeleton-table>
+      </div>
+    </div>
+  </ng-container>
+  <app-listing-container
+    [searchPlaceholder]="config.searchPlaceholder || 'Search suppliers...'"
+    [searchTerm]="searchTerm"
+    [totalColumnsCount]="columns.length"
+    [visibleColumnsCount]="visibleColumnsCount"
+    [columns]="columns"
+    [showColumnDropdown]="showColumnToggle"
+    [showFilters]="true"
+    [showFilterPanel]="showFilterPanel"
+    [filterCount]="filterRequest.filters?.length || 0"
+    [hasActiveFilters]="(filterRequest.filters?.length || 0) > 0 || isActiveFilter !== null || !!searchTerm"
+    (searchTermChange)="searchTerm = $event; onSearchTermChange($event)"
+    (search)="onSearchImmediate($event)"
+    (filterClicked)="onFilterToggle()"
+    (toggleColumns)="onColumnsToggle()"
+    (closeColumns)="showColumnToggle = false"
+    (columnToggle)="onColumnToggle($event)">
+    <div listing-actions class="d-flex gap-2 align-items-center">
+    <app-saved-views-dropdown [tableId]="tableId" [currentState]="currentTableState" (loadView)="onSavedViewLoad($event)"></app-saved-views-dropdown>
     <app-unified-button variant="primary" (clicked)="addSupplier()" *appHasPermission="'Suppliers:Create'">
       <app-icon name="person-plus" size="sm" customClass="me-2"></app-icon>
       Add Supplier
@@ -34,13 +44,12 @@
   </div>
 
   <div filter-panel>
-    <app-filter-panel
-      [config]="filterPanelConfig"
-      [filterValues]="filterPanelValues"
-      (filterApplied)="onFilterApplied($event)"
-      (filterReset)="onFilterReset()"
-      (filterClose)="onFilterClose()">
-    </app-filter-panel>
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item"><a class="nav-link" [class.active]="!showFilterBuilder" (click)="showFilterBuilder = false" role="button">Quick filters</a></li>
+      <li class="nav-item"><a class="nav-link" [class.active]="showFilterBuilder" (click)="showFilterBuilder = true" role="button">Filter builder</a></li>
+    </ul>
+    <app-filter-panel *ngIf="!showFilterBuilder" [config]="filterPanelConfig" [filterValues]="filterPanelValues" (filterApplied)="onFilterApplied($event)" (filterReset)="onFilterReset()" (filterClose)="onFilterClose()"></app-filter-panel>
+    <app-filter-builder *ngIf="showFilterBuilder" [columns]="filterBuilderColumns" [initialFilters]="filterRequest.filters || []" (apply)="onFilterBuilderApply($event)" (clear)="onFilterBuilderClear()"></app-filter-builder>
   </div>
 
   <app-data-table
@@ -55,7 +64,8 @@
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)">
   </app-data-table>
-</app-listing-container>
+  </app-listing-container>
+</app-content-loader>
 
 <app-toast
   *ngIf="showToast"

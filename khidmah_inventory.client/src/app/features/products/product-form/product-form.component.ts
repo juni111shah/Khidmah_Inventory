@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +19,19 @@ import { UnifiedCardComponent } from '../../../shared/components/unified-card/un
 import { UnifiedCheckboxComponent } from '../../../shared/components/unified-checkbox/unified-checkbox.component';
 import { TabsComponent, TabComponent } from '../../../shared/components/tabs/tabs.component';
 import { AiApiService } from '../../../core/services/ai-api.service';
+import { PricingApiService } from '../../../core/services/pricing-api.service';
 import { ChartComponent } from '../../../shared/components/chart/chart.component';
+import { CHART_PRIMARY } from '../../../shared/constants/chart-colors';
+import { ActivityFeedPanelComponent } from '../../../shared/components/activity-feed-panel/activity-feed-panel.component';
+import { ForecastConfidenceComponent } from '../../intelligence/decision-support/forecast-confidence.component';
+import { WhatIfSimulatorComponent } from '../../intelligence/decision-support/what-if-simulator.component';
+import { ProductIntelligencePanelComponent } from '../../../shared/components/product-intelligence-panel/product-intelligence-panel.component';
+import { PriceOptimization } from '../../../core/models/pricing.model';
+import { SignalRService } from '../../../core/services/signalr.service';
+import { Subscription } from 'rxjs';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonDetailHeaderComponent } from '../../../shared/components/skeleton-detail-header/skeleton-detail-header.component';
+import { SkeletonFormComponent } from '../../../shared/components/skeleton-form/skeleton-form.component';
 
 @Component({
   selector: 'app-product-form',
@@ -37,12 +49,20 @@ import { ChartComponent } from '../../../shared/components/chart/chart.component
     UnifiedCheckboxComponent,
     TabsComponent,
     TabComponent,
-    ChartComponent
+    ChartComponent,
+    ActivityFeedPanelComponent,
+    ForecastConfidenceComponent,
+    WhatIfSimulatorComponent,
+    ProductIntelligencePanelComponent,
+    ContentLoaderComponent,
+    SkeletonDetailHeaderComponent,
+    SkeletonFormComponent
   ],
   templateUrl: './product-form.component.html'
 })
-export class ProductFormComponent implements OnInit {
+export class ProductFormComponent implements OnInit, OnDestroy {
   product: Product | null = null;
+  private signalRSubs = new Subscription();
   categories: Category[] = [];
   loading = false;
   saving = false;
@@ -51,6 +71,9 @@ export class ProductFormComponent implements OnInit {
   activeTab = 0;
   forecastData: any = null;
   forecastChartData: any = null;
+  priceSuggestion: PriceOptimization | null = null;
+  loadingPrice = false;
+  activityPanelOpen = false;
 
 
   formData = {
@@ -87,6 +110,11 @@ export class ProductFormComponent implements OnInit {
     { id: '4', name: 'Meter', code: 'M' }
   ];
 
+  /** Cached for template to avoid new array every change detection */
+  categoryOptions: { value: any; label: string }[] = [];
+  brandOptions: { value: any; label: string }[] = [];
+  unitOfMeasureOptions: { value: any; label: string }[] = [];
+
   weightUnitOptions = [
     { value: 'kg', label: 'Kilogram (kg)' },
     { value: 'g', label: 'Gram (g)' },
@@ -113,10 +141,13 @@ export class ProductFormComponent implements OnInit {
     public permissionService: PermissionService,
     private headerService: HeaderService,
     private exportService: ExportService,
-    private aiApiService: AiApiService
+    private aiApiService: AiApiService,
+    private pricingApiService: PricingApiService,
+    private signalR: SignalRService
   ) {}
 
   ngOnInit(): void {
+    this.updateSelectOptions();
     const productId = this.route.snapshot.paramMap.get('id');
     const url = this.router.url;
 
@@ -133,7 +164,37 @@ export class ProductFormComponent implements OnInit {
 
     if (productId) {
       this.loadProduct(productId);
+      this.setupRealTimeProductUpdates(productId);
     }
+  }
+
+  private setupRealTimeProductUpdates(productId: string): void {
+    this.signalRSubs.add(
+      this.signalR.getProductUpdated().subscribe(p => {
+        if (p.entityId === productId) {
+          this.loadProduct(productId);
+          this.showToastMessage('info', 'Product updated in real-time');
+        }
+      })
+    );
+    this.signalRSubs.add(
+      this.signalR.getStockChanged().subscribe(p => {
+        if (p.entityId === productId || (p.payload && (p.payload as any).productId === productId)) {
+          this.loadProduct(productId);
+        }
+      })
+    );
+    this.signalRSubs.add(
+      this.signalR.getCommentAdded().subscribe(p => {
+        if (p.entityType === 'Product' && p.entityId === productId) {
+          this.loadProduct(productId);
+        }
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.signalRSubs.unsubscribe();
   }
 
   loadProduct(id: string): void {
@@ -173,7 +234,9 @@ export class ProductFormComponent implements OnInit {
 
         if (this.isViewMode) {
           this.loadForecast();
+          this.loadPriceSuggestion();
         }
+        if (this.isEditMode && this.product?.id) this.loadPriceSuggestion();
       },
       error: () => {
         this.showToastMessage('error', 'Error loading product');
@@ -192,6 +255,26 @@ export class ProductFormComponent implements OnInit {
     });
   }
 
+  loadPriceSuggestion(): void {
+    const id = this.product?.id || this.route.snapshot.paramMap.get('id');
+    if (!id) return;
+    this.loadingPrice = true;
+    this.pricingApiService.getSuggestions([id]).subscribe({
+      next: (res) => {
+        this.loadingPrice = false;
+        if (res.success && res.data?.length) this.priceSuggestion = res.data[0];
+        else this.priceSuggestion = null;
+      },
+      error: () => { this.loadingPrice = false; this.priceSuggestion = null; }
+    });
+  }
+
+  applySuggestedPrice(): void {
+    if (!this.priceSuggestion?.recommendedPrice || !this.product?.id) return;
+    this.formData.salePrice = this.priceSuggestion.recommendedPrice;
+    this.showToastMessage('success', 'Sale price updated. Click Save to persist.');
+  }
+
   prepareForecastChart() {
     if (!this.forecastData) return;
 
@@ -201,8 +284,8 @@ export class ProductFormComponent implements OnInit {
         {
           label: 'Predicted Demand',
           data: this.forecastData.forecastQuantities,
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          borderColor: CHART_PRIMARY,
+          backgroundColor: CHART_PRIMARY,
           fill: true,
           tension: 0.4
         }
@@ -215,9 +298,25 @@ export class ProductFormComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.categories = response.data.items;
+          this.updateSelectOptions();
         }
       }
     });
+  }
+
+  private updateSelectOptions(): void {
+    this.categoryOptions = [
+      { value: '', label: 'None' },
+      ...this.categories.map(c => ({ value: c.id, label: c.name }))
+    ];
+    this.brandOptions = [
+      { value: '', label: 'None' },
+      ...this.brands.map(b => ({ value: b.id, label: b.name }))
+    ];
+    this.unitOfMeasureOptions = [
+      { value: '', label: 'Select Unit' },
+      ...this.unitOfMeasures.map(u => ({ value: u.id, label: `${u.name} (${u.code})` }))
+    ];
   }
 
   save(): void {
@@ -359,24 +458,4 @@ export class ProductFormComponent implements OnInit {
     }
   }
 
-  getCategoryOptions(): { value: any; label: string }[] {
-    return [
-      { value: '', label: 'None' },
-      ...this.categories.map(c => ({ value: c.id, label: c.name }))
-    ];
-  }
-
-  getBrandOptions(): { value: any; label: string }[] {
-    return [
-      { value: '', label: 'None' },
-      ...this.brands.map(b => ({ value: b.id, label: b.name }))
-    ];
-  }
-
-  getUnitOfMeasureOptions(): { value: any; label: string }[] {
-    return [
-      { value: '', label: 'Select Unit' },
-      ...this.unitOfMeasures.map(u => ({ value: u.id, label: `${u.name} (${u.code})` }))
-    ];
-  }
 }

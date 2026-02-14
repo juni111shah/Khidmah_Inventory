@@ -6,6 +6,7 @@ import {
   ApexOptions,
   NgApexchartsModule
 } from 'ng-apexcharts';
+import { CHART_COLORS, getChartColors } from '../../constants/chart-colors';
 
 export interface ChartData {
   labels: string[];
@@ -94,6 +95,8 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   @Input() height: number = 300;
 
   private resizeObserver?: ResizeObserver;
+  private resizeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private readonly RESIZE_DEBOUNCE_MS = 150;
 
   chartSeries: any = [];
   chartOptions: Partial<ApexOptions> = {};
@@ -127,9 +130,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    // Initialize default objects (cached to prevent change detection loops)
     this.initializeDefaults();
-    // Initialize with default configs
     this.updateCachedConfigs();
     this.updateChart();
   }
@@ -142,11 +143,10 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   }
 
   private setupResizeObserver(): void {
-    // Set up ResizeObserver to detect container size changes
+    // Set up ResizeObserver to detect container size changes (debounced to avoid resize loops)
     if (typeof ResizeObserver !== 'undefined' && this.chartContainer) {
       this.resizeObserver = new ResizeObserver(() => {
-        // Trigger chart resize when container size changes
-        this.resizeChart();
+        this.scheduleResize();
       });
 
       this.resizeObserver.observe(this.chartContainer.nativeElement);
@@ -156,40 +156,48 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
     window.addEventListener('resize', this.handleWindowResize);
   }
 
+  private scheduleResize(): void {
+    if (this.resizeTimeoutId != null) clearTimeout(this.resizeTimeoutId);
+    this.resizeTimeoutId = setTimeout(() => {
+      this.resizeTimeoutId = null;
+      this.resizeChartImmediate();
+    }, this.RESIZE_DEBOUNCE_MS);
+  }
+
   ngOnDestroy(): void {
-    // Clean up ResizeObserver
+    if (this.resizeTimeoutId != null) clearTimeout(this.resizeTimeoutId);
+    this.resizeTimeoutId = null;
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
-    // Remove window resize listener
     window.removeEventListener('resize', this.handleWindowResize);
   }
 
+  /** Debounced entry point – use from ResizeObserver and window resize. */
   private resizeChart(): void {
+    this.scheduleResize();
+  }
+
+  private resizeChartImmediate(): void {
     if (this.chart && this.chartContainer) {
-      // Use ApexCharts resize method which is more reliable
-      setTimeout(() => {
-        try {
-          if (this.chart.chart) {
-            // Get the actual container width
-            const containerWidth = this.chartContainer.nativeElement.offsetWidth;
-            if (containerWidth > 0) {
-              // Use ApexCharts resize method - this is the proper way to resize
-              const apexChart = (this.chart as any).chart;
-              if (apexChart && typeof apexChart.resize === 'function') {
-                apexChart.resize();
-              }
+      try {
+        if (this.chart.chart) {
+          const containerWidth = this.chartContainer.nativeElement.offsetWidth;
+          if (containerWidth > 0) {
+            const apexChart = (this.chart as any).chart;
+            if (apexChart && typeof apexChart.resize === 'function') {
+              apexChart.resize();
             }
           }
-        } catch (error) {
-          console.warn('Error resizing chart:', error);
         }
-      }, 50);
+      } catch {
+        // ignore resize errors
+      }
     }
   }
 
   private handleWindowResize = (): void => {
-    this.resizeChart();
+    this.scheduleResize();
   };
 
   private initializeDefaults(): void {
@@ -241,16 +249,8 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   }
 
   private updateChart(): void {
-    console.log('Chart updateChart called:', {
-      hasData: !!this.data,
-      datasetsCount: this.data?.datasets?.length || 0,
-      labelsCount: this.data?.labels?.length || 0,
-      type: this.type
-    });
-
     if (!this.data || !this.data.datasets || this.data.datasets.length === 0) {
       // Initialize with empty data to prevent errors
-      console.warn('Chart has no data or empty datasets');
       this.chartSeries = [];
       this.chartOptions = this.buildApexOptions([]);
       this.updateCachedConfigs();
@@ -267,7 +267,6 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
     );
 
     if (!hasValidDatasets) {
-      console.warn('Chart datasets have no valid data arrays');
       this.chartSeries = [];
       this.chartOptions = this.buildApexOptions([]);
       this.updateCachedConfigs();
@@ -285,7 +284,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       ).filter(label => label !== '');
 
       // Convert datasets to ApexCharts series
-      if (this.type === 'pie' || this.type === 'donut') {
+      if (this.type === 'pie' || this.type === 'donut' || this.type === 'doughnut') {
         // For pie/donut charts, use first dataset as array of numbers
         const firstDataset = this.data.datasets[0];
         if (firstDataset && Array.isArray(firstDataset.data) && firstDataset.data.length > 0) {
@@ -316,26 +315,6 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
         this.hasValidData = this.chartSeries.length > 0 &&
                             this.chartSeries.some((s: any) => s.data && s.data.length > 0) &&
                             labels.length > 0;
-
-        // Debug logging
-        console.log('Chart series conversion:', {
-          inputDatasets: this.data.datasets.map(ds => ({
-            label: ds.label,
-            dataLength: ds.data?.length,
-            data: ds.data
-          })),
-          outputSeries: this.chartSeries,
-          labels: labels,
-          hasValidData: this.hasValidData
-        });
-
-        if (!this.hasValidData) {
-          console.warn('Chart has no valid data:', {
-            datasets: this.data.datasets,
-            chartSeries: this.chartSeries,
-            labels: labels
-          });
-        }
       }
 
       // Build ApexCharts options
@@ -347,10 +326,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       if (this.cdr) {
         this.cdr.markForCheck();
       }
-      // Trigger resize after chart update to ensure it fits container
-      setTimeout(() => {
-        this.resizeChart();
-      }, 100);
+      // Resize is handled by ResizeObserver when container is laid out; avoid calling resize here to prevent loops
     } catch (error) {
       console.error('Error updating chart:', error);
       // Initialize with empty data on error
@@ -384,16 +360,18 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
   }
 
   private buildApexOptions(labels: string[]): Partial<ApexOptions> {
+    const isLineOrArea = this.type === 'line' || this.type === 'area';
     const baseOptions: Partial<ApexOptions> = {
       chart: {
         type: this.mapChartType(this.type),
         height: this.height,
         width: '100%',
+        fontFamily: "'Bricolage Grotesque', sans-serif",
         toolbar: { show: false },
         zoom: { enabled: false },
         redrawOnParentResize: true,
         redrawOnWindowResize: true,
-        animations: { enabled: true, easing: 'easeinout', speed: 800 },
+        animations: { enabled: true, easing: 'easeinout', speed: 700 },
         parentHeightOffset: 0,
         sparkline: { enabled: false },
         background: 'transparent',
@@ -404,13 +382,17 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
         axisBorder: { show: false },
         axisTicks: { show: false },
         labels: {
-          style: { fontSize: '12px', colors: '#64748b' }
+          style: { fontSize: '12px', colors: '#64748b', fontWeight: 500 },
+          rotate: -45,
+          rotateAlways: false,
+          hideOverlappingLabels: true,
+          trim: true
         },
         ...this.options?.xaxis
       },
       yaxis: {
         labels: {
-          style: { fontSize: '12px', colors: '#64748b' },
+          style: { fontSize: '12px', colors: '#64748b', fontWeight: 500 },
           formatter: (value: number) => {
             if (this.options?.yaxis?.labels?.formatter) {
               return this.options.yaxis.labels.formatter(value);
@@ -421,15 +403,22 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
         ...this.options?.yaxis
       },
       grid: {
-        borderColor: '#f1f5f9',
-        strokeDashArray: 4,
-        padding: { left: 10, right: 10 },
+        borderColor: '#e2e8f0',
+        strokeDashArray: 3,
+        padding: { left: 12, right: 12, top: 8, bottom: 4 },
+        xaxis: { lines: { show: false } },
+        yaxis: { lines: { show: true } },
         ...this.options?.grid
       },
       legend: {
         show: true,
         position: 'top',
-        fontSize: '14px',
+        horizontalAlign: 'right',
+        fontSize: '12px',
+        fontWeight: 600,
+        labels: { colors: '#334155' },
+        markers: { radius: 6, width: 8, height: 8, strokeWidth: 0 },
+        itemMargin: { horizontal: 10, vertical: 4 },
         ...this.options?.legend
       },
       tooltip: {
@@ -437,6 +426,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
         theme: 'light',
         shared: true,
         intersect: false,
+        style: { fontSize: '12px' },
         ...this.options?.tooltip
       },
       dataLabels: {
@@ -445,26 +435,21 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       },
       stroke: {
         curve: 'smooth',
-        width: 3,
+        width: isLineOrArea ? 3 : 2,
+        lineCap: 'round',
         ...this.options?.stroke
       },
       fill: {
         type: 'gradient',
         gradient: {
           shadeIntensity: 1,
-          opacityFrom: 0.7,
-          opacityTo: 0.3,
-          stops: [0, 90, 100]
+          opacityFrom: isLineOrArea ? 0.55 : 0.75,
+          opacityTo: isLineOrArea ? 0.08 : 0.35,
+          stops: [0, 50, 100]
         },
         ...this.options?.fill
       },
-      plotOptions: {
-        bar: {
-          borderRadius: 4,
-          columnWidth: '60%'
-        },
-        ...this.options?.plotOptions
-      },
+      plotOptions: this.mergeBarPlotOptions(labels),
       responsive: this.options?.responsive || [{
         breakpoint: 768,
         options: {
@@ -473,27 +458,69 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       }]
     };
 
-    // Handle chart type specific options
-    if (this.type === 'pie' || this.type === 'donut') {
-      baseOptions.labels = labels;
-      if (!baseOptions.plotOptions) baseOptions.plotOptions = {};
-      baseOptions.plotOptions.pie = {
-        donut: { size: this.type === 'donut' ? '70%' : '0%' },
-        ...this.options?.plotOptions?.pie
+    if (isLineOrArea) {
+      baseOptions.markers = {
+        size: 4,
+        strokeWidth: 2,
+        strokeColors: '#fff',
+        hover: { size: 6 }
       };
     }
 
-    // Set colors from datasets
+    // Handle chart type specific options
+    const isDonut = this.type === 'donut' || this.type === 'doughnut';
+    if (this.type === 'pie' || this.type === 'donut' || this.type === 'doughnut') {
+      baseOptions.labels = labels;
+      if (!baseOptions.plotOptions) baseOptions.plotOptions = {};
+      baseOptions.plotOptions.pie = {
+        donut: { size: isDonut ? '70%' : '0%', labels: { show: false } },
+        expandOnClick: true,
+        ...this.options?.plotOptions?.pie
+      };
+      baseOptions.stroke = { show: true, width: 2, colors: ['#fff'] };
+    }
+
+    // Set colors from datasets or app palette
+    const isPieDonut = this.type === 'pie' || this.type === 'donut' || this.type === 'doughnut';
+    const isBarDistributed = this.type === 'bar' && labels.length > 1 && (this.data?.datasets?.length === 1);
     if (this.data?.datasets) {
-      const colors = this.data.datasets.map(ds => {
-        if (ds.borderColor && typeof ds.borderColor === 'string') return this.rgbaToHex(ds.borderColor);
-        if (ds.backgroundColor && typeof ds.backgroundColor === 'string') return this.rgbaToHex(ds.backgroundColor);
-        return '#6366f1'; // Default
-      });
-      baseOptions.colors = colors;
+      const first = this.data.datasets[0];
+      if (isPieDonut && first && Array.isArray(first.backgroundColor) && first.backgroundColor.length > 0) {
+        baseOptions.colors = (first.backgroundColor as string[]).map(c => this.rgbaToHex(c));
+      } else if (isBarDistributed && first && Array.isArray(first.backgroundColor) && first.backgroundColor.length > 0) {
+        baseOptions.colors = (first.backgroundColor as string[]).map(c => this.rgbaToHex(c));
+      } else if (!isBarDistributed) {
+        const colors = this.data.datasets.map((ds, i) => {
+          if (ds.borderColor && typeof ds.borderColor === 'string') return this.rgbaToHex(ds.borderColor);
+          if (ds.backgroundColor && typeof ds.backgroundColor === 'string') return this.rgbaToHex(ds.backgroundColor);
+          return CHART_COLORS[i % CHART_COLORS.length];
+        });
+        baseOptions.colors = colors;
+      }
+    }
+    if (!baseOptions.colors || (Array.isArray(baseOptions.colors) && baseOptions.colors.length === 0)) {
+      baseOptions.colors = getChartColors(Math.max(labels.length, 1));
     }
 
     return baseOptions;
+  }
+
+  private mergeBarPlotOptions(labels: string[]): any {
+    const defaultBar = {
+      borderRadius: 8,
+      borderRadiusApplication: 'around' as const,
+      columnWidth: '58%',
+      distributed: this.type === 'bar' && labels.length > 1
+    };
+    const fromOptions = this.options?.plotOptions?.bar;
+    if (!fromOptions) return { bar: defaultBar, ...this.options?.plotOptions };
+    const merged = { ...defaultBar, ...fromOptions };
+    const cw = merged.columnWidth;
+    const num = typeof cw === 'string' ? parseFloat(cw) : 0;
+    if (typeof cw === 'string' && !isNaN(num) && num < 45) {
+      merged.columnWidth = '50%';
+    }
+    return { bar: merged, ...this.options?.plotOptions };
   }
 
   private mapChartType(type: string): ChartType {
@@ -502,6 +529,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       'bar': 'bar',
       'pie': 'pie',
       'donut': 'donut',
+      'doughnut': 'donut',
       'area': 'area',
       'radar': 'radar'
     };
@@ -525,7 +553,7 @@ export class ChartComponent implements OnInit, OnChanges, AfterViewInit, OnDestr
       }).join('');
     }
 
-    return '#36A2EB'; // Default color
+    return CHART_COLORS[0];
   }
 
 }

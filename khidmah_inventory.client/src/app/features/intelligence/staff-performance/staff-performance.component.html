@@ -1,0 +1,42 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="8" [columns]="9" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <app-unified-card *ngIf="data" header="Metrics" customClass="border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Staff</th>
+            <th>Sales total</th>
+            <th>Transactions</th>
+            <th>Avg order</th>
+            <th>Discount rate</th>
+            <th>Avg discount %</th>
+            <th>Speed (s)</th>
+            <th>Approval delay</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of data.staff">
+            <td>#{{ s.rank }}</td>
+            <td><strong>{{ s.userName }}</strong></td>
+            <td>{{ formatCurrency(s.salesTotal) }}</td>
+            <td>{{ s.transactionCount }}</td>
+            <td>{{ formatCurrency(s.averageTransactionValue) }}</td>
+            <td>{{ (s.discountRate * 100) | number:'1.0-0' }}%</td>
+            <td>{{ s.averageDiscountPercent | number:'1.1-1' }}%</td>
+            <td>{{ s.averageTransactionSpeedSeconds ?? '-' }}</td>
+            <td>{{ s.approvalDelayHours != null ? s.approvalDelayHours + 'h' : '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="small text-muted mt-2">Period: {{ data.periodFrom }} to {{ data.periodTo }}</div>
+  </app-unified-card>
+  </app-content-loader>
+</div>

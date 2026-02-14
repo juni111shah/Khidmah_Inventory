@@ -87,8 +87,8 @@
           <td [attr.colspan]="visibleColumns.length + (effectiveConfig.showCheckbox ? 1 : 0) + (effectiveConfig.showActions ? 1 : 0)" class="p-0">
             <app-skeleton-table
               [showHeader]="false"
-              [headers]="getSkeletonHeaders()"
-              [rowCount]="getDefaultPageSize()"
+              [headerWidths]="getSkeletonHeaderWidths()"
+              [rows]="getDefaultPageSize()"
               [animation]="'shimmer'">
             </app-skeleton-table>
           </td>
@@ -105,6 +105,7 @@
         <tr *ngFor="let row of data; trackBy: trackByFn"
           (click)="onRowClick(row)"
           [class.table-primary]="isRowSelected(row)"
+          [ngClass]="getRowClass(row)"
           class="cursor-pointer">
 
           <td *ngIf="effectiveConfig.showCheckbox" (click)="$event.stopPropagation()">
@@ -130,6 +131,11 @@
               <span *ngSwitchCase="'boolean'" class="d-flex align-items-center gap-1" [style.justify-content]="column.align === 'center' ? 'center' : column.align === 'right' ? 'flex-end' : 'flex-start'">
                 <i class="bi" [class]="getCellBooleanValue(row, column) ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'"></i>
                 <span class="small">{{ getCellValue(row, column) }}</span>
+              </span>
+              <!-- Image Type (e.g. logo) - resolve relative URLs to API base -->
+              <span *ngSwitchCase="'image'" class="d-inline-block">
+                <img *ngIf="getRawCellValue(row, column)" [src]="getImageUrl(getRawCellValue(row, column))" alt="" class="rounded" style="width: 40px; height: 40px; object-fit: contain;" />
+                <span *ngIf="!getRawCellValue(row, column)" class="bg-light rounded d-inline-block text-center" style="width: 40px; height: 40px; line-height: 40px;">—</span>
               </span>
               <!-- Default -->
               <span *ngSwitchDefault>{{ getCellValue(row, column) }}</span>
@@ -170,6 +176,7 @@
     <div class="dropdown-menu action-dropdown-menu show"
          [style.top.px]="dropdownPosition.top"
          [style.bottom.px]="dropdownPosition.bottom"
+         [style.left.px]="dropdownPosition.left"
          [style.right.px]="dropdownPosition.right"
          (click)="$event.stopPropagation()">
       <button *ngFor="let action of getCurrentDropdownActions()"

@@ -27,11 +27,68 @@ export class NavigationService {
       permission: 'Dashboard:Read'
     },
     {
+      label: 'Daily Briefing',
+      icon: 'sunrise',
+      route: '/briefing',
+      permission: 'Dashboard:Read'
+    },
+    {
+      label: 'Command Center',
+      icon: 'bullseye',
+      route: '/command-center',
+      permission: 'Dashboard:Read'
+    },
+    {
       label: 'Reports',
       icon: 'file-earmark-bar-graph',
       route: '/reports',
       permission: ['Reports:Sales:Read', 'Reports:Inventory:Read', 'Reports:Purchase:Read'],
       permissionMode: 'any'
+    },
+    {
+      label: 'KPI Center',
+      icon: 'graph-up',
+      permission: 'Kpi:Read',
+      children: [
+        { label: 'Executive center', icon: 'briefcase', route: '/kpi/executive', permission: 'Kpi:Read' },
+        { label: 'Sales performance', icon: 'currency-dollar', route: '/kpi/sales', permission: 'Kpi:Read' },
+        { label: 'Inventory health', icon: 'boxes', route: '/kpi/inventory', permission: 'Kpi:Read' },
+        { label: 'Customer intelligence', icon: 'people', route: '/kpi/customers', permission: 'Kpi:Read' }
+      ]
+    },
+    {
+      label: 'Finance',
+      icon: 'journal-bookmark',
+      permission: ['Finance:Accounts:List', 'Currency:List', 'ExchangeRates:List'],
+      permissionMode: 'any',
+      children: [
+        { label: 'Chart of accounts', icon: 'list-ul', route: '/finance/accounts', permission: 'Finance:Accounts:List' },
+        { label: 'Currencies', icon: 'currency-exchange', route: '/currency', permission: 'Currency:List' },
+        { label: 'Exchange rates', icon: 'arrow-left-right', route: '/exchange-rates', permission: 'ExchangeRates:List' },
+        { label: 'Journal entries', icon: 'journal-text', route: '/finance/journals', permission: 'Finance:Journals:Read' },
+        { label: 'P&L', icon: 'graph-up', route: '/finance/pl', permission: 'Finance:Statements:Read' },
+        { label: 'Balance sheet', icon: 'balance-scale', route: '/finance/balance-sheet', permission: 'Finance:Statements:Read' },
+        { label: 'Cash flow', icon: 'cash-stack', route: '/finance/cash-flow', permission: 'Finance:Statements:Read' }
+      ]
+    },
+    {
+      label: 'Intelligence',
+      icon: 'graph-up-arrow',
+      permission: ['Reports:Sales:Read', 'Reports:Inventory:Read', 'Dashboard:Read'],
+      permissionMode: 'any',
+      children: [
+        { label: 'Profit intelligence', icon: 'currency-dollar', route: '/intelligence/profit', permission: 'Reports:Inventory:Read' },
+        { label: 'Branch performance', icon: 'building', route: '/intelligence/branch', permission: 'Reports:Sales:Read' },
+        { label: 'Staff performance', icon: 'people', route: '/intelligence/staff', permission: 'Reports:Sales:Read' },
+        { label: 'Predictive risk', icon: 'exclamation-triangle', route: '/intelligence/risks', permission: 'Dashboard:Read' },
+        { label: 'Decision support', icon: 'lightbulb', route: '/intelligence/decisions', permission: 'Dashboard:Read' }
+      ]
+    },
+    {
+      label: 'Automation',
+      icon: 'gear-wide-connected',
+      route: '/automation',
+      permission: 'Dashboard:Read'
     },
     {
       label: 'Users',
@@ -44,6 +101,26 @@ export class NavigationService {
       icon: 'shield-lock',
       route: '/roles',
       permission: 'Roles:List'
+    },
+    {
+      label: 'Companies',
+      icon: 'building',
+      route: '/companies',
+      permission: 'Companies:Update'
+    },
+    {
+      label: 'Workflows',
+      icon: 'diagram-3',
+      route: '/workflows',
+      permission: ['Workflows:Create', 'Workflows:Approve'],
+      permissionMode: 'any'
+    },
+    {
+      label: 'Integration Center',
+      icon: 'plug',
+      route: '/platform',
+      permission: ['Platform:ApiKeys:List', 'Platform:Webhooks:List', 'Platform:Integrations:List', 'Platform:ScheduledReports:List', 'Platform:ApiKeys:Usage'],
+      permissionMode: 'any'
     },
     {
       label: 'Categories',
@@ -62,6 +139,22 @@ export class NavigationService {
       icon: 'house-door',
       route: '/warehouses',
       permission: 'Warehouses:List'
+    },
+    {
+      label: 'Autonomous Warehouse',
+      icon: 'robot',
+      permission: 'Warehouses:List',
+      children: [
+        { label: 'Dashboard', icon: 'speedometer2', route: '/autonomous', permission: 'Warehouses:List' },
+        { label: 'Routes', icon: 'signpost-2', route: '/autonomous/routes', permission: 'Warehouses:Read' },
+        { label: 'Live Ops', icon: 'broadcast', route: '/autonomous/live-ops', permission: 'Warehouses:List' }
+      ]
+    },
+    {
+      label: 'AI Copilot',
+      icon: 'chat-dots',
+      route: '/copilot',
+      permission: 'Dashboard:Read'
     },
     {
       label: 'Inventory',
@@ -92,6 +185,24 @@ export class NavigationService {
           icon: 'upc-scan',
           route: '/inventory/serial-numbers',
           permission: 'Inventory:SerialNumber:List'
+        },
+        {
+          label: 'Hands-free picking',
+          icon: 'mic',
+          route: '/inventory/hands-free',
+          permission: 'Inventory:StockTransaction:Create'
+        },
+        {
+          label: 'Hands-free supervisor',
+          icon: 'person-badge',
+          route: '/inventory/hands-free/supervisor',
+          permission: 'Inventory:StockLevel:List'
+        },
+        {
+          label: 'Reorder',
+          icon: 'arrow-repeat',
+          route: '/reorder',
+          permission: 'Reordering:Suggestions:Read'
         }
       ]
     },
@@ -140,6 +251,12 @@ export class NavigationService {
           permission: 'SalesOrders:Create'
         }
       ]
+    },
+    {
+      label: 'Notifications',
+      icon: 'bell',
+      route: '/notifications',
+      permission: 'Settings:Notification:Read'
     },
     {
       label: 'Settings',

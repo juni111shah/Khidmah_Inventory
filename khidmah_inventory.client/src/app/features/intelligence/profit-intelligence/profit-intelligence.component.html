@@ -1,0 +1,89 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <div class="row g-3 mb-4">
+        <app-skeleton-stat-cards [cardCount]="3" class="w-100"></app-skeleton-stat-cards>
+      </div>
+      <div class="row g-4 equal-height-cards">
+        <div class="col-lg-6"><app-skeleton-chart [chartHeight]="280" [showSubtitle]="false"></app-skeleton-chart></div>
+        <div class="col-lg-6"><app-skeleton-chart [chartHeight]="280" [showSubtitle]="false"></app-skeleton-chart></div>
+      </div>
+      <div class="row g-4 mt-2">
+        <div class="col-12"><app-skeleton-table [rows]="10" [columns]="6" [showHeader]="true"></app-skeleton-table></div>
+        <div class="col-12"><app-skeleton-table [rows]="6" [columns]="5" [showHeader]="true"></app-skeleton-table></div>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="data">
+    <div class="row g-3 mb-4 equal-height-cards">
+      <div class="col-md-4">
+        <app-kpi-stat-card title="Avg margin" [value]="(data.summary.totalMarginPercent | number:'1.1-1') + '%'" icon="bi-percent" theme="primary"></app-kpi-stat-card>
+      </div>
+      <div class="col-md-4">
+        <app-kpi-stat-card title="Dead stock value" [value]="formatCurrency(data.summary.totalDeadStockValue)" icon="bi-box-seam" theme="warning"></app-kpi-stat-card>
+      </div>
+      <div class="col-md-4">
+        <app-kpi-stat-card title="Capital locked" [value]="formatCurrency(data.summary.totalCapitalLocked)" icon="bi-lock" theme="info"></app-kpi-stat-card>
+      </div>
+    </div>
+
+    <div class="row g-4 equal-height-cards">
+      <div class="col-lg-6">
+        <app-unified-card header="Margin by category" customClass="border-0 shadow-sm h-100">
+          <div *ngIf="marginChartData" style="height: 280px;">
+            <app-chart type="bar" [data]="marginChartData" [height]="280"></app-chart>
+          </div>
+          <div *ngIf="!marginChartData" class="text-center text-muted py-4">No category data</div>
+        </app-unified-card>
+      </div>
+      <div class="col-lg-6">
+        <app-unified-card header="Aging inventory" customClass="border-0 shadow-sm h-100">
+          <div *ngIf="agingChartData" style="height: 280px;">
+            <app-chart type="doughnut" [data]="agingChartData" [height]="280"></app-chart>
+          </div>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <div class="row g-4 mt-2 equal-height-cards">
+      <div class="col-12">
+        <app-unified-card header="Margin by product (top 10)" customClass="border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr><th>Product</th><th>Category</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Margin %</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let p of data.marginByProduct.slice(0, 10)">
+                  <td>{{ p.productName }}</td>
+                  <td>{{ p.categoryName }}</td>
+                  <td>{{ formatCurrency(p.revenue) }}</td>
+                  <td>{{ formatCurrency(p.cost) }}</td>
+                  <td>{{ formatCurrency(p.profit) }}</td>
+                  <td><span class="badge bg-success">{{ p.marginPercent | number:'1.1-1' }}%</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </app-unified-card>
+      </div>
+      <div class="col-12">
+        <app-unified-card header="Dead stock" customClass="border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead><tr><th>Product</th><th>SKU</th><th>Qty</th><th>Value</th><th>Days in stock</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let d of data.deadStock">
+                  <td>{{ d.productName }}</td>
+                  <td>{{ d.sku }}</td>
+                  <td>{{ d.quantity }}</td>
+                  <td>{{ formatCurrency(d.value) }}</td>
+                  <td>{{ d.daysInStock }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="data.deadStock.length === 0" class="text-center text-muted py-3">No dead stock</div>
+        </app-unified-card>
+      </div>
+    </div>
+    </ng-container>
+  </app-content-loader>
+</div>

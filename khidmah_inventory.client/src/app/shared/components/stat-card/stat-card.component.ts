@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CommonModule } from '@angular/common';
 import { IconComponent } from '../icon/icon.component';
 import { ChartComponent, ChartData } from '../chart/chart.component';
+import { CHART_PRIMARY } from '../../constants/chart-colors';
 
 export interface StatCardData {
   value: number;
@@ -34,6 +35,9 @@ export class StatCardComponent implements OnInit, OnChanges {
   @Input() showFullStats: boolean = true;
   @Input() unit: string = ''; // e.g., "bpm", "units", etc.
   @Input() selectedTimeFrame: TimeFrame = 'month';
+  @Input() chartHeight: number = 180;
+  /** When true, renders a horizontal bar chart (better for many categories or long labels). */
+  @Input() horizontalBars: boolean = false;
 
   @Output() timeFrameChange = new EventEmitter<TimeFrame>();
   @Output() fullStatsClick = new EventEmitter<void>();
@@ -43,7 +47,7 @@ export class StatCardComponent implements OnInit, OnChanges {
   averageValue: number = 0;
   chartData: ChartData | null = null;
 
-  // Chart options for ApexCharts
+  // Chart options for ApexCharts (bar width and horizontal flag updated in calculateStats)
   chartOptions: any = {
     chart: {
       type: 'bar',
@@ -55,13 +59,14 @@ export class StatCardComponent implements OnInit, OnChanges {
     },
     plotOptions: {
       bar: {
-        borderRadius: 20,
-        borderRadiusApplication: 'around', // Rounded on both ends
-        columnWidth: '35%',
+        borderRadius: 12,
+        borderRadiusApplication: 'around',
+        columnWidth: '65%',
+        barHeight: '70%',
         distributed: false
       }
     },
-    colors: ['#f43f5e'], // Pink/Rose as in image
+    colors: ['#0d9488'], // Teal – clear and easy on the eyes
     dataLabels: { enabled: false },
     xaxis: {
       categories: [],
@@ -81,6 +86,7 @@ export class StatCardComponent implements OnInit, OnChanges {
       show: true,
       borderColor: '#f1f5f9',
       strokeDashArray: 4,
+      padding: { top: 0, right: 8, bottom: 0, left: 0 },
       xaxis: { lines: { show: false } },
       yaxis: { lines: { show: true } }
     },
@@ -90,7 +96,7 @@ export class StatCardComponent implements OnInit, OnChanges {
         shade: 'light',
         type: 'vertical',
         shadeIntensity: 0.5,
-        gradientToColors: ['#fb7185'], // Lighter pink
+        gradientToColors: ['#14b8a6'],
         inverseColors: true,
         opacityFrom: 1,
         opacityTo: 0.7,
@@ -119,21 +125,54 @@ export class StatCardComponent implements OnInit, OnChanges {
       const sum = this.barData.reduce((acc, d) => acc + d.value, 0);
       this.averageValue = Math.round(sum / this.barData.length);
 
+      const n = this.barData.length;
+      // Wider bars for fewer categories so they're clearly visible
+      const columnWidth = n <= 4 ? '70%' : n <= 8 ? '60%' : '50%';
+      const barHeight = this.horizontalBars ? '70%' : undefined;
+
       // Create chart data for ApexCharts
       this.chartData = {
         labels: this.barData.map(d => d.label),
         datasets: [{
           label: 'Performance',
           data: this.barData.map(d => d.value),
-          backgroundColor: '#0d6efd',
-          borderColor: '#0d6efd',
+          backgroundColor: CHART_PRIMARY,
+          borderColor: CHART_PRIMARY,
           borderWidth: 0
         }]
       };
 
-      // Update chart options with labels
+      const gradientType = this.horizontalBars ? 'horizontal' : 'vertical';
+      const fillOpts = {
+        type: 'gradient' as const,
+        gradient: {
+          shade: 'light',
+          type: gradientType,
+          shadeIntensity: 0.5,
+          gradientToColors: ['#14b8a6'],
+          inverseColors: true,
+          opacityFrom: 1,
+          opacityTo: 0.7,
+          stops: [0, 100]
+        }
+      };
+
+      // Update chart options with labels, bar width, and horizontal when needed
       this.chartOptions = {
         ...this.chartOptions,
+        chart: {
+          ...this.chartOptions.chart,
+          horizontal: this.horizontalBars
+        },
+        plotOptions: {
+          ...this.chartOptions.plotOptions,
+          bar: {
+            ...this.chartOptions.plotOptions.bar,
+            columnWidth,
+            ...(barHeight ? { barHeight } : {})
+          }
+        },
+        fill: fillOpts,
         xaxis: {
           ...this.chartOptions.xaxis,
           categories: this.barData.map(d => d.label)

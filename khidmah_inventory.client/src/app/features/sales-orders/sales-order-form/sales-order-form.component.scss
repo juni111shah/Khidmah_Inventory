@@ -1,0 +1,33 @@
+.order-lines-table td,
+.order-lines-table th {
+  vertical-align: middle;
+}
+
+.sticky-totals {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface-color);
+  z-index: 2;
+}
+
+.totals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.timeline-panel {
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+}
+
+.timeline-item {
+  padding: 0.375rem 0;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .totals-grid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}

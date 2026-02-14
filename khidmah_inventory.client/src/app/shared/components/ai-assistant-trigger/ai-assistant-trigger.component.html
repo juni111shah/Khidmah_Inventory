@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="ai-trigger-btn"
+  [class.ai-trigger-btn-active]="panelOpen"
+  (click)="openPanel()"
+  aria-label="AI Assistant"
+  [attr.aria-expanded]="panelOpen">
+  <i class="bi bi-robot fs-5" aria-hidden="true"></i>
+</button>
+<app-ai-assistant-panel [(isOpen)]="panelOpen" (isOpenChange)="panelOpen = $event"></app-ai-assistant-panel>

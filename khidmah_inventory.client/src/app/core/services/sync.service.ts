@@ -68,6 +68,12 @@ export class SyncService {
         }
         break;
 
+      case 'handsFreeComplete':
+        if (action === 'complete') {
+          await this.http.post('/api/warehouse/handsfree/complete', data).toPromise();
+        }
+        break;
+
       default:
         console.warn('Unknown sync type:', type);
     }

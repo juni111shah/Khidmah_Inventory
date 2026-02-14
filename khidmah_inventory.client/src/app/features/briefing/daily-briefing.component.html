@@ -1,0 +1,169 @@
+<div class="container-fluid py-4 daily-briefing">
+  <app-toast *ngIf="showToast" [message]="toastMessage" [type]="toastType" (close)="showToast = false"></app-toast>
+
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <section class="command-center-section mb-4">
+        <app-skeleton-stat-cards [cardCount]="5" class="mb-0"></app-skeleton-stat-cards>
+      </section>
+      <div class="row g-4 equal-height-cards">
+        <div class="col-lg-6"><app-unified-card header="" customClass="content-card h-100"><app-skeleton-list [itemCount]="5" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+        <div class="col-lg-6"><app-unified-card header="" customClass="content-card h-100"><app-skeleton-list [itemCount]="5" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+        <div class="col-lg-6"><app-unified-card header="" customClass="content-card h-100"><app-skeleton-list [itemCount]="4" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+        <div class="col-lg-6"><app-unified-card header="" customClass="content-card h-100"><app-skeleton-list [itemCount]="4" [showAvatar]="false"></app-skeleton-list></app-unified-card></div>
+      </div>
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="rounded-3 border-0 shadow-sm p-3 bg-white">
+            <div class="d-flex flex-wrap gap-2">
+              <app-skeleton-loader *ngFor="let i of skeletonQuickActionCount" [width]="'120px'" [height]="'38px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="data">
+    <!-- KPI stat cards: one row, equal height -->
+    <section class="command-center-section">
+      <div class="row g-3 equal-height-cards">
+        <div class="col-6 col-lg">
+          <app-kpi-stat-card title="Yesterday sales" [value]="formatCurrency(data.yesterdaySales)" icon="bi-currency-dollar" theme="primary" [trendPercent]="data.salesTrendPercent != null ? (data.salesTrendDirection === 'up' ? '+' : data.salesTrendDirection === 'down' ? '-' : '') + data.salesTrendPercent + '%' : null"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-lg">
+          <app-kpi-stat-card title="Low stock risks" [value]="data.lowStockRisks.length" icon="bi-exclamation-triangle" theme="danger"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-lg">
+          <app-kpi-stat-card title="Expiring batches" [value]="data.expiringBatches.length" icon="bi-clock-history" theme="warning"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-lg">
+          <app-kpi-stat-card title="Pending approvals" [value]="data.pendingApprovalsCount" icon="bi-check2-square" theme="primary"></app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-lg">
+          <app-kpi-stat-card title="Est. profit" [value]="formatCurrency(data.estimatedProfit)" icon="bi-graph-up-arrow" theme="success" [trendPercent]="(data.profitTrendDirection && data.profitTrendPercent != null) ? (data.profitTrendDirection === 'up' ? '+' : data.profitTrendDirection === 'down' ? '-' : '') + data.profitTrendPercent + '%' : null"></app-kpi-stat-card>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sections: Performance, Risks, Tasks, AI Suggestions -->
+    <div class="row g-4 equal-height-cards">
+      <!-- Performance -->
+      <div class="col-lg-6">
+        <app-unified-card header="Performance" customClass="content-card h-100">
+          <div class="section-title">Top selling products</div>
+          <ul class="list-group list-group-flush" *ngIf="data.topSellingProducts?.length">
+            <li *ngFor="let p of data.topSellingProducts; let i = index" class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <a *ngIf="p.link" [routerLink]="p.link" class="text-decoration-none">{{ i + 1 }}. {{ p.productName }}</a>
+              <span *ngIf="!p.link">{{ i + 1 }}. {{ p.productName }}</span>
+              <span>{{ formatCurrency(p.value) }} <i class="bi {{ trendIcon(p.trend || 'flat') }} {{ trendClass(p.trend || 'flat') }}"></i></span>
+            </li>
+          </ul>
+          <div *ngIf="!data.topSellingProducts?.length" class="empty-state">
+            <i class="bi bi-graph-up-arrow empty-state-icon d-block"></i>
+            <p>No sales data yet</p>
+          </div>
+          <a routerLink="/reports" class="card-footer-link">View reports</a>
+        </app-unified-card>
+      </div>
+
+      <!-- Risks -->
+      <div class="col-lg-6">
+        <app-unified-card header="Risks" customClass="content-card h-100">
+          <div class="section-title">Low stock — needs attention first</div>
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let r of data.lowStockRisks.slice(0, 5)" class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <a *ngIf="r.link" [routerLink]="r.link" class="text-decoration-none">{{ r.productName }} ({{ r.warehouseName }})</a>
+              <span *ngIf="!r.link">{{ r.productName }} ({{ r.warehouseName }})</span>
+              <span class="badge bg-{{ r.priority === 'Critical' ? 'danger' : 'warning' }}">{{ r.currentStock }} / {{ r.minStockLevel }}</span>
+            </li>
+          </ul>
+          <div *ngIf="data.expiringBatches.length > 0" class="mt-3">
+            <div class="section-title">Expiring soon</div>
+            <ul class="list-group list-group-flush">
+              <li *ngFor="let e of data.expiringBatches" class="list-group-item px-0">
+                <a *ngIf="e.link" [routerLink]="e.link" class="text-decoration-none">{{ e.productName }} — {{ e.batchNumber }}</a>
+                <span *ngIf="!e.link">{{ e.productName }} — {{ e.batchNumber }}</span>
+                <small class="text-muted">({{ e.daysUntilExpiry }} days)</small>
+              </li>
+            </ul>
+          </div>
+        </app-unified-card>
+      </div>
+
+      <!-- Tasks -->
+      <div class="col-lg-6">
+        <app-unified-card header="Tasks" customClass="content-card h-100">
+          <div class="section-title">Pending approvals</div>
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let a of data.pendingApprovals" class="list-group-item px-0">
+              <a *ngIf="a.link" [routerLink]="a.link" class="text-decoration-none">{{ a.entityType }} — {{ a.currentStep }}</a>
+              <span *ngIf="!a.link">{{ a.entityType }} — {{ a.currentStep }}</span>
+            </li>
+          </ul>
+          <div *ngIf="data.pendingApprovals.length === 0" class="empty-state py-3">
+            <p class="mb-0 small">No pending approvals</p>
+          </div>
+          <a *ngIf="data.pendingApprovalsCount > 0" routerLink="/workflows/inbox" class="card-footer-link">Open inbox</a>
+        </app-unified-card>
+      </div>
+
+      <!-- AI Suggestions -->
+      <div class="col-lg-6">
+        <app-unified-card header="AI suggestions" customClass="content-card h-100">
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let s of data.aiSuggestions" class="list-group-item d-flex justify-content-between align-items-start px-0">
+              <div>
+                <span [class]="statusBadgeClass(s.priority)" class="me-2">{{ s.priority }}</span>
+                <strong>{{ s.title }}</strong>
+                <p class="mb-0 small text-muted">{{ s.description }}</p>
+                <a *ngIf="s.actionLink" [routerLink]="s.actionLink" class="btn btn-sm btn-outline-primary mt-2">{{ s.actionLabel || 'View' }}</a>
+              </div>
+            </li>
+          </ul>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <!-- Slow movers & Unusual activity (optional row) -->
+    <div class="row g-4 mt-2 equal-height-cards" *ngIf="data.slowMovingItems?.length || data.unusualActivity?.length">
+      <div class="col-md-6" *ngIf="data.slowMovingItems?.length">
+        <app-unified-card header="Slow moving" customClass="border-0 shadow-sm h-100">
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let p of data.slowMovingItems" class="list-group-item d-flex justify-content-between px-0">
+              <a *ngIf="p.link" [routerLink]="p.link" class="text-decoration-none">{{ p.productName }}</a>
+              <span *ngIf="!p.link">{{ p.productName }}</span>
+              <span class="text-muted small">{{ p.value }} {{ p.unit || 'units' }}</span>
+            </li>
+          </ul>
+        </app-unified-card>
+      </div>
+      <div class="col-md-6" *ngIf="data.unusualActivity?.length">
+        <app-unified-card header="Unusual activity" customClass="border-0 shadow-sm h-100">
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let u of data.unusualActivity" class="list-group-item px-0">
+              <a *ngIf="u.link" [routerLink]="u.link" class="text-decoration-none">{{ u.description }}</a>
+              <span *ngIf="!u.link">{{ u.description }}</span>
+              <span class="badge bg-{{ u.severity === 'high' ? 'danger' : 'warning' }} ms-2">{{ u.severity }}</span>
+            </li>
+          </ul>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <app-unified-card header="Quick actions" customClass="content-card">
+          <div class="d-flex flex-wrap gap-2">
+            <a routerLink="/dashboard" class="btn btn-primary quick-action-btn">Dashboard</a>
+            <a routerLink="/reorder" class="btn btn-outline-danger quick-action-btn">Reorder list</a>
+            <a routerLink="/workflows/inbox" class="btn btn-outline-primary quick-action-btn">Approvals</a>
+            <a routerLink="/sales-orders/new" class="btn btn-outline-success quick-action-btn">New sale</a>
+            <a routerLink="/purchase-orders/new" class="btn btn-outline-info quick-action-btn">New PO</a>
+            <a routerLink="/command-center" class="btn btn-outline-secondary quick-action-btn">Command Center</a>
+          </div>
+        </app-unified-card>
+      </div>
+    </div>
+    </ng-container>
+  </app-content-loader>
+</div>

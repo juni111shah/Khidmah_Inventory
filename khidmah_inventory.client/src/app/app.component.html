@@ -11,6 +11,7 @@
 <app-main-layout *ngIf="!isAuthRoute" [sidebarCollapsed]="sidebarCollapsed">
   <div sidebar>
     <app-sidebar
+      data-onboarding="sidebar"
       [menuItems]="menuItems"
       [collapsed]="sidebarCollapsed"
       [mobileMenuOpen]="mobileMenuOpen"
@@ -36,20 +37,39 @@
       [showMenuToggle]="true"
       [sidebarCollapsed]="sidebarCollapsed"
       (menuToggle)="onMenuToggle()">
+      <div actions>
+        <app-global-search data-onboarding="global-search"></app-global-search>
+        <app-search-overlay></app-search-overlay>
+        <app-notification-center data-onboarding="notifications"></app-notification-center>
+        <app-ai-assistant-trigger data-onboarding="ai-assistant"></app-ai-assistant-trigger>
+      </div>
       <div user-menu>
-        <app-user-menu></app-user-menu>
+        <app-user-menu data-onboarding="user-menu"></app-user-menu>
       </div>
     </app-app-header>
   </div>
 
-  <main class="app-main-content">
+  <div class="app-main-content">
     <router-outlet></router-outlet>
     
     <!-- Default home content -->
     <!-- Dashboard content will be shown via router -->
-  </main>
+  </div>
 
   <div footer>
     <app-app-footer [copyright]="copyrightText"></app-app-footer>
   </div>
+
 </app-main-layout>
+
+<app-onboarding-assistant *ngIf="!isAuthRoute"></app-onboarding-assistant>
+
+<!-- Global toast for real-time notifications (fixed position) -->
+<div *ngIf="!isAuthRoute && globalToastShow" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+  <app-toast
+    [message]="globalToastMessage"
+    [type]="globalToastType"
+    [show]="globalToastShow"
+    (close)="onGlobalToastClose()">
+  </app-toast>
+</div>

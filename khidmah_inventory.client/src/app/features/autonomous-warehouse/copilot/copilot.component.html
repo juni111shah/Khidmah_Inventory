@@ -1,0 +1,22 @@
+<div class="copilot">
+  <h1>AI Copilot</h1>
+  <p>Natural language ops. Try: "Create purchase order for 50 laptops from Ali Traders", "How much profit today?", "Which items will run out this week?"</p>
+  <div class="input-row">
+    <input type="text" [(ngModel)]="input" placeholder="Type or say your request..." (keydown.enter)="submit()" />
+    <button (click)="submit()" [disabled]="loading">Execute</button>
+  </div>
+  @if (result) {
+    <div class="result">
+      @if (result.confirmationMessage) {
+        <p>{{ result.confirmationMessage }}</p>
+        <button (click)="confirm()" [disabled]="loading">Confirm and run</button>
+      }
+      @if (result.result) {
+        <pre>{{ result.result | json }}</pre>
+      }
+      @if (result.errors?.length) {
+        <pre>{{ result.errors | json }}</pre>
+      }
+    </div>
+  }
+</div>

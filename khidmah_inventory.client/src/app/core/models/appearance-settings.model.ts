@@ -237,11 +237,11 @@ export const DEFAULT_APPEARANCE_SETTINGS: AppearanceSettings = {
   labelPosition: 'top',
 
   // Typography
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily: "'Bricolage Grotesque', sans-serif",
   fontSize: '14px',
   fontWeight: '400',
   lineHeight: '1.5',
-  headingFontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  headingFontFamily: "'Bricolage Grotesque', sans-serif",
   headingFontWeight: '700',
 
   // Animations

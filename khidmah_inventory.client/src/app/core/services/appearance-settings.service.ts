@@ -20,6 +20,8 @@ export class AppearanceSettingsService {
   private currentSettings: AppearanceSettings = DEFAULT_APPEARANCE_SETTINGS;
   private isBrowser: boolean;
   private autoSaveTimeout: any;
+  private prefersColorSchemeQuery: MediaQueryList | null = null;
+  private prefersColorSchemeListener: (() => void) | null = null;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
@@ -188,27 +190,47 @@ export class AppearanceSettingsService {
     // Merge with defaults to ensure all properties exist
     const s = { ...DEFAULT_APPEARANCE_SETTINGS, ...settings };
 
-    // ============ COLORS ============
-    root.style.setProperty('--primary-color', s.primaryColor);
-    root.style.setProperty('--secondary-color', s.secondaryColor);
-    root.style.setProperty('--accent-color', s.accentColor);
-    root.style.setProperty('--success-color', s.successColor);
-    root.style.setProperty('--warning-color', s.warningColor);
-    root.style.setProperty('--danger-color', s.dangerColor);
-    root.style.setProperty('--info-color', s.infoColor);
-    root.style.setProperty('--error-color', s.dangerColor);
-    root.style.setProperty('--background-color', s.backgroundColor);
-    root.style.setProperty('--surface-color', s.surfaceColor);
-    root.style.setProperty('--text-color', s.textColor);
-    root.style.setProperty('--text-secondary-color', s.textSecondaryColor);
-    root.style.setProperty('--border-color', s.borderColor);
-
-    // Apply to body
-    body.style.backgroundColor = s.backgroundColor;
-    body.style.color = s.textColor;
-
-    // ============ THEME MODE ============
+    // ============ THEME MODE (resolve first so we know whether to apply light colors) ============
+    const resolvedTheme = this.resolveThemeMode(s.themeMode);
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
     body.setAttribute('data-theme', s.themeMode);
+    this.setupPrefersColorSchemeListener(s.themeMode);
+
+    // ============ COLORS (only set when light theme so dark theme CSS variables take effect) ============
+    if (resolvedTheme === 'light') {
+      root.style.setProperty('--primary-color', s.primaryColor);
+      root.style.setProperty('--secondary-color', s.secondaryColor);
+      root.style.setProperty('--accent-color', s.accentColor);
+      root.style.setProperty('--success-color', s.successColor);
+      root.style.setProperty('--warning-color', s.warningColor);
+      root.style.setProperty('--danger-color', s.dangerColor);
+      root.style.setProperty('--info-color', s.infoColor);
+      root.style.setProperty('--error-color', s.dangerColor);
+      root.style.setProperty('--background-color', s.backgroundColor);
+      root.style.setProperty('--surface-color', s.surfaceColor);
+      root.style.setProperty('--text-color', s.textColor);
+      root.style.setProperty('--text-secondary-color', s.textSecondaryColor);
+      root.style.setProperty('--border-color', s.borderColor);
+      body.style.backgroundColor = s.backgroundColor;
+      body.style.color = s.textColor;
+    } else {
+      // Dark theme: remove inline overrides so stylesheet dark variables apply
+      root.style.removeProperty('--primary-color');
+      root.style.removeProperty('--secondary-color');
+      root.style.removeProperty('--accent-color');
+      root.style.removeProperty('--success-color');
+      root.style.removeProperty('--warning-color');
+      root.style.removeProperty('--danger-color');
+      root.style.removeProperty('--info-color');
+      root.style.removeProperty('--error-color');
+      root.style.removeProperty('--background-color');
+      root.style.removeProperty('--surface-color');
+      root.style.removeProperty('--text-color');
+      root.style.removeProperty('--text-secondary-color');
+      root.style.removeProperty('--border-color');
+      body.style.removeProperty('background-color');
+      body.style.removeProperty('color');
+    }
 
     // ============ BRANDING ============
     root.style.setProperty('--logo-url', s.logoUrl ? `url(${s.logoUrl})` : 'none');
@@ -401,6 +423,40 @@ export class AppearanceSettingsService {
         body.classList.add(`layout-${s.layoutConfig.type}`);
       }
     }, 100);
+  }
+
+  /**
+   * Resolve theme mode: 'auto' -> 'light' | 'dark' based on prefers-color-scheme
+   */
+  private resolveThemeMode(themeMode: 'light' | 'dark' | 'auto'): 'light' | 'dark' {
+    if (themeMode === 'dark') return 'dark';
+    if (themeMode === 'light') return 'light';
+    if (this.isBrowser && typeof window.matchMedia !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  }
+
+  private setupPrefersColorSchemeListener(themeMode: 'light' | 'dark' | 'auto'): void {
+    if (!this.isBrowser || themeMode !== 'auto') {
+      if (this.prefersColorSchemeListener && this.prefersColorSchemeQuery) {
+        this.prefersColorSchemeQuery.removeEventListener('change', this.prefersColorSchemeListener);
+        this.prefersColorSchemeQuery = null;
+        this.prefersColorSchemeListener = null;
+      }
+      return;
+    }
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = () => {
+      const resolved = this.resolveThemeMode('auto');
+      document.documentElement.setAttribute('data-theme', resolved);
+    };
+    if (this.prefersColorSchemeListener && this.prefersColorSchemeQuery) {
+      this.prefersColorSchemeQuery.removeEventListener('change', this.prefersColorSchemeListener);
+    }
+    this.prefersColorSchemeQuery = query;
+    this.prefersColorSchemeListener = listener;
+    query.addEventListener('change', listener);
   }
 
   private applyLayout(layout: any): void {

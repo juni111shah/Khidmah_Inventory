@@ -8,7 +8,7 @@ export interface DataTableColumn<T = any> {
   align?: 'left' | 'center' | 'right';
   visible?: boolean;
   render?: (row: T, column: DataTableColumn<T>) => string;
-  type?: 'text' | 'number' | 'date' | 'boolean' | 'badge' | 'custom';
+  type?: 'text' | 'number' | 'date' | 'boolean' | 'badge' | 'image' | 'custom';
   format?: (value: any) => string;
   filterType?: 'text' | 'select' | 'date' | 'number' | 'boolean';
   filterOptions?: { label: string; value: any }[];
@@ -35,6 +35,7 @@ export interface DataTableConfig {
   searchPlaceholder?: string;
   emptyMessage?: string;
   loadingMessage?: string;
+  rowClass?: (row: any) => string | null | undefined;
 }
 
 export interface DataTableFilter {

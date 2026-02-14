@@ -8,53 +8,43 @@
     ></app-time-range-filter>
   </div>
 
-  <div *ngIf="loading" class="d-flex justify-content-center py-5">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!loading && analytics" class="analytics-content">
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <div class="d-flex justify-content-end mb-4"><app-skeleton-loader [width]="'180px'" [height]="'38px'"></app-skeleton-loader></div>
+      <app-skeleton-stat-cards [cardCount]="6" class="mb-4"></app-skeleton-stat-cards>
+      <div class="row g-4 mb-4">
+        <div class="col-lg-8"><app-skeleton-chart [chartHeight]="280" [showSubtitle]="false"></app-skeleton-chart></div>
+        <div class="col-lg-4"><app-skeleton-chart [chartHeight]="280" [showSubtitle]="false"></app-skeleton-chart></div>
+      </div>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="6" [columns]="5" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <div *ngIf="!loading && analytics" class="analytics-content">
+    <!-- Summary Cards (reusable KPI stat cards) -->
+    <div class="row g-3 mb-4 equal-height-cards">
       <div class="col-md-4 col-lg-2">
-        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
-          <div class="text-muted small fw-bold mb-1">TOTAL SALES</div>
-          <h4 class="mb-0 fw-bold">{{ formatCurrency(analytics.totalSales) }}</h4>
-        </app-unified-card>
+        <app-kpi-stat-card title="Total Sales" [value]="formatCurrency(analytics.totalSales)" icon="bi-currency-dollar" theme="primary"></app-kpi-stat-card>
       </div>
       <div class="col-md-4 col-lg-2">
-        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
-          <div class="text-muted small fw-bold mb-1">TOTAL COST</div>
-          <h4 class="mb-0 fw-bold">{{ formatCurrency(analytics.totalCost) }}</h4>
-        </app-unified-card>
+        <app-kpi-stat-card title="Total Cost" [value]="formatCurrency(analytics.totalCost)" icon="bi-cart" theme="info"></app-kpi-stat-card>
       </div>
       <div class="col-md-4 col-lg-2">
-        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
-          <div class="text-muted small fw-bold mb-1">TOTAL PROFIT</div>
-          <h4 class="mb-0 fw-bold text-success">{{ formatCurrency(analytics.totalProfit) }}</h4>
-        </app-unified-card>
+        <app-kpi-stat-card title="Total Profit" [value]="formatCurrency(analytics.totalProfit)" icon="bi-graph-up-arrow" theme="success"></app-kpi-stat-card>
       </div>
       <div class="col-md-4 col-lg-2">
-        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
-          <div class="text-muted small fw-bold mb-1">PROFIT MARGIN</div>
-          <h4 class="mb-0 fw-bold">{{ formatPercent(analytics.profitMargin) }}</h4>
-        </app-unified-card>
+        <app-kpi-stat-card title="Profit Margin" [value]="formatPercent(analytics.profitMargin)" icon="bi-percent" theme="primary"></app-kpi-stat-card>
       </div>
       <div class="col-md-4 col-lg-2">
-        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
-          <div class="text-muted small fw-bold mb-1">TOTAL ORDERS</div>
-          <h4 class="mb-0 fw-bold">{{ formatNumber(analytics.totalOrders) }}</h4>
-        </app-unified-card>
+        <app-kpi-stat-card title="Total Orders" [value]="formatNumber(analytics.totalOrders)" icon="bi-receipt" theme="info"></app-kpi-stat-card>
       </div>
       <div class="col-md-4 col-lg-2">
-        <app-unified-card customClass="h-100 border-0 shadow-sm text-center">
-          <div class="text-muted small fw-bold mb-1">AVG ORDER</div>
-          <h4 class="mb-0 fw-bold">{{ formatCurrency(analytics.averageOrderValue) }}</h4>
-        </app-unified-card>
+        <app-kpi-stat-card title="Avg Order" [value]="formatCurrency(analytics.averageOrderValue)" icon="bi-basket" theme="primary"></app-kpi-stat-card>
       </div>
     </div>
 
     <!-- Charts -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4 equal-height-cards">
       <div class="col-lg-8">
         <app-unified-card header="Sales Trend" customClass="border-0 shadow-sm h-100">
           <app-chart
@@ -79,7 +69,7 @@
     </div>
 
     <!-- Top Lists -->
-    <div class="row g-4">
+    <div class="row g-4 equal-height-cards">
       <div class="col-lg-6">
         <app-unified-card header="Top Products" customClass="border-0 shadow-sm h-100">
           <app-data-table
@@ -105,6 +95,7 @@
       </div>
     </div>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Khidmah_Inventory.Application.Common.Constants;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Workflows.Models;
@@ -12,11 +13,22 @@ public class ApproveWorkflowStepCommandHandler : IRequestHandler<ApproveWorkflow
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IOperationsBroadcast? _broadcast;
+    private readonly IWebhookDispatchService? _webhookDispatch;
+    private readonly IAutomationExecutor? _automationExecutor;
 
-    public ApproveWorkflowStepCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
+    public ApproveWorkflowStepCommandHandler(
+        IApplicationDbContext context,
+        ICurrentUserService currentUser,
+        IOperationsBroadcast? broadcast = null,
+        IWebhookDispatchService? webhookDispatch = null,
+        IAutomationExecutor? automationExecutor = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _broadcast = broadcast;
+        _webhookDispatch = webhookDispatch;
+        _automationExecutor = automationExecutor;
     }
 
     public async Task<Result<WorkflowInstanceDto>> Handle(ApproveWorkflowStepCommand request, CancellationToken cancellationToken)
@@ -82,6 +94,30 @@ public class ApproveWorkflowStepCommandHandler : IRequestHandler<ApproveWorkflow
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (_broadcast != null)
+        {
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.OrderApproved,
+                companyId.Value,
+                instance.EntityId,
+                instance.EntityType,
+                new { WorkflowInstanceId = instance.Id, Status = instance.Status, CurrentStep = instance.CurrentStep },
+                cancellationToken);
+        }
+
+        if (instance.Status == "Approved" && _webhookDispatch != null)
+        {
+            var payload = new { workflowInstanceId = instance.Id, entityId = instance.EntityId, entityType = instance.EntityType, completedAt = instance.CompletedAt };
+            await _webhookDispatch.DispatchAsync(companyId.Value, "ApprovalDone", payload, cancellationToken);
+        }
+
+        if (instance.Status == "Approved" &&
+            _automationExecutor != null &&
+            string.Equals(instance.EntityType, "PurchaseOrder", StringComparison.OrdinalIgnoreCase))
+        {
+            await _automationExecutor.ExecutePOApprovedAsync(companyId.Value, instance.EntityId, cancellationToken);
+        }
 
         var dto = new WorkflowInstanceDto
         {

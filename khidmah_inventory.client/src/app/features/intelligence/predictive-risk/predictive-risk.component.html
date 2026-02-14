@@ -1,0 +1,41 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <div class="row g-3 mb-4">
+        <app-skeleton-stat-cards [cardCount]="3" class="w-100"></app-skeleton-stat-cards>
+      </div>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-activity-feed [activityCount]="6"></app-skeleton-activity-feed>
+      </app-unified-card>
+    </ng-container>
+    <ng-container *ngIf="data">
+    <div class="row g-3 mb-4 equal-height-cards">
+      <div class="col-md-4">
+        <app-kpi-stat-card title="High risk" [value]="data.summary.high" icon="bi-exclamation-triangle" theme="danger"></app-kpi-stat-card>
+      </div>
+      <div class="col-md-4">
+        <app-kpi-stat-card title="Medium risk" [value]="data.summary.medium" icon="bi-shield-exclamation" theme="warning"></app-kpi-stat-card>
+      </div>
+      <div class="col-md-4">
+        <app-kpi-stat-card title="Low risk" [value]="data.summary.low" icon="bi-shield-check" theme="primary"></app-kpi-stat-card>
+      </div>
+    </div>
+
+    <app-unified-card header="Warnings" customClass="border-0 shadow-sm">
+      <div class="list-group list-group-flush">
+        <div *ngFor="let r of data.risks" class="list-group-item d-flex align-items-start">
+          <i class="bi me-2 mt-1 text-{{ severityClass(r.severity) }} {{ typeIcon(r.type) }}"></i>
+          <div class="flex-grow-1">
+            <strong>{{ r.title }}</strong>
+            <p class="mb-1 small text-muted">{{ r.description }}</p>
+            <div *ngIf="r.suggestedAction" class="small"><strong>Suggested:</strong> {{ r.suggestedAction }}</div>
+          </div>
+          <span class="badge bg-{{ severityClass(r.severity) }}">{{ r.severity }}</span>
+          <a *ngIf="r.link" [routerLink]="r.link" class="btn btn-sm btn-outline-primary ms-2">View</a>
+        </div>
+      </div>
+      <div *ngIf="data.risks.length === 0" class="text-center text-muted py-4">No active risks.</div>
+    </app-unified-card>
+    </ng-container>
+  </app-content-loader>
+</div>

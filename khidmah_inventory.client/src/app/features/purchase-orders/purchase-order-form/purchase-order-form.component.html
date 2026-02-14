@@ -1,10 +1,16 @@
 <div class="po-form-container container-fluid py-4">
-  <div *ngIf="loading" class="d-flex justify-content-center align-items-center py-5">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!loading" class="form-content max-width-1000 mx-auto">
-    <div class="d-flex justify-content-start mb-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-detail-header [actionCount]="2" class="mb-4"></app-skeleton-detail-header>
+      <app-unified-card header="" customClass="border-0 shadow-sm mb-4">
+        <app-skeleton-form [fieldCount]="6" [showLabels]="true" [showActions]="false"></app-skeleton-form>
+      </app-unified-card>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="4" [columns]="5" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <div *ngIf="!loading" class="form-content max-width-1000 mx-auto" data-onboarding="purchase-order-form-shell">
+    <div class="d-flex justify-content-between align-items-center mb-4" data-onboarding="purchase-order-form-header-actions">
       <app-unified-button
         variant="secondary"
         [outlined]="true"
@@ -14,9 +20,16 @@
         iconLibrary="bi">
         Back to Purchase Orders
       </app-unified-button>
+      <div class="d-flex gap-2">
+        <app-unified-button *ngIf="purchaseOrder?.id" variant="secondary" [outlined]="true" size="sm" (clicked)="convertToGrn()" icon="bi-box-arrow-in-down" iconLibrary="bi">Convert PO -> GRN</app-unified-button>
+        <app-unified-button *ngIf="purchaseOrder?.id" variant="secondary" [outlined]="true" size="sm" (clicked)="downloadPurchaseOrder()" icon="bi-file-earmark-pdf" iconLibrary="bi">PO PDF</app-unified-button>
+        <app-unified-button variant="secondary" [outlined]="true" size="sm" (clicked)="cloneAsNew()" icon="bi-files" iconLibrary="bi">Clone</app-unified-button>
+        <app-unified-button *ngIf="purchaseOrder?.id" variant="secondary" [outlined]="true" size="sm" (clicked)="activityPanelOpen = true" icon="bi-chat-left-text" iconLibrary="bi">Activity & comments</app-unified-button>
+      </div>
     </div>
+    <app-activity-feed-panel *ngIf="purchaseOrder?.id" [entityType]="'PurchaseOrder'" [entityId]="purchaseOrder!.id" [(open)]="activityPanelOpen" title="PO activity"></app-activity-feed-panel>
 
-    <app-unified-card header="Purchase Order Details" customClass="border-0 shadow-sm">
+    <app-unified-card header="Purchase Order Details" customClass="border-0 shadow-sm" data-onboarding="purchase-order-form-details">
       <div class="row g-3">
         <!-- Header Info -->
         <div class="col-md-6">
@@ -25,6 +38,7 @@
             type="select"
             [options]="supplierOptions"
             [(ngModel)]="formData.supplierId"
+            (ngModelChange)="queueAutosave()"
             [required]="true">
           </app-form-field>
         </div>
@@ -33,6 +47,7 @@
             label="Order Date"
             type="date"
             [(ngModel)]="formData.orderDate"
+            (ngModelChange)="queueAutosave()"
             [required]="true">
           </app-form-field>
         </div>
@@ -40,8 +55,25 @@
           <app-form-field
             label="Expected Delivery"
             type="date"
-            [(ngModel)]="formData.expectedDeliveryDate">
+            [(ngModel)]="formData.expectedDeliveryDate"
+            (ngModelChange)="queueAutosave()">
           </app-form-field>
+        </div>
+        <div class="col-md-3">
+          <app-form-field
+            label="Workflow State"
+            type="select"
+            [options]="workflowStateOptions"
+            [(ngModel)]="formData.workflowStatus"
+            (ngModelChange)="queueAutosave()">
+          </app-form-field>
+        </div>
+        <div class="col-md-9">
+          <label class="form-label">Barcode input</label>
+          <div class="input-group">
+            <input class="form-control" placeholder="Scan barcode / SKU and press Enter" [(ngModel)]="barcodeInput" (keyup.enter)="onBarcodeEnter()" />
+            <button class="btn btn-outline-secondary" type="button" (click)="onBarcodeEnter()">Add</button>
+          </div>
         </div>
 
         <div class="col-12">
@@ -49,26 +81,110 @@
             label="Notes"
             type="textarea"
             [(ngModel)]="formData.notes"
+            (ngModelChange)="queueAutosave()"
             [rows]="2">
           </app-form-field>
         </div>
 
-        <div class="col-12 mt-4">
-             <div class="alert alert-info">
-                 <app-icon name="info-circle" class="me-2"></app-icon>
-                 Line items management to be implemented.
-             </div>
+        <div class="col-12">
+          <app-form-field
+            label="Terms & Conditions"
+            type="textarea"
+            [(ngModel)]="formData.termsAndConditions"
+            (ngModelChange)="queueAutosave()"
+            [rows]="2">
+          </app-form-field>
+        </div>
+
+        <div class="col-12 mt-2">
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <button class="btn btn-sm btn-outline-primary" type="button" (click)="addLine()" [disabled]="isEditLocked">Add Line (Alt+N)</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" (click)="applyBulkPaste()" [disabled]="isEditLocked || !bulkPasteText.trim()">Apply Bulk Paste</button>
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="clearLines()" [disabled]="isEditLocked">Clear Lines</button>
+          </div>
+          <textarea
+            class="form-control form-control-sm mb-2"
+            rows="2"
+            [(ngModel)]="bulkPasteText"
+            [disabled]="isEditLocked"
+            placeholder="Bulk paste: sku/barcode,qty,price,discount%,tax% (one line per item)">
+          </textarea>
+          <div class="table-responsive border rounded">
+            <table class="table table-sm align-middle mb-0 order-lines-table">
+              <thead class="table-light">
+                <tr>
+                  <th style="min-width: 180px;">Product</th>
+                  <th>SKU</th>
+                  <th>Current Stock</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Disc %</th>
+                  <th>Tax %</th>
+                  <th class="text-end">Subtotal</th>
+                  <th class="text-end">Tax</th>
+                  <th class="text-end">Total</th>
+                  <th style="min-width: 120px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let line of lines; let i = index">
+                  <td>
+                    <select class="form-select form-select-sm" [disabled]="isEditLocked" [(ngModel)]="line.productId" (ngModelChange)="onProductSelected(i, $event)">
+                      <option value="">Select product</option>
+                      <option *ngFor="let p of products" [value]="p.id">{{ p.name }} ({{ p.sku }})</option>
+                    </select>
+                  </td>
+                  <td><small>{{ line.sku || '-' }}</small></td>
+                  <td>{{ line.availableStock != null ? line.availableStock : '-' }}</td>
+                  <td><input [id]="'qty-' + line.uid" type="number" class="form-control form-control-sm" [disabled]="isEditLocked" [(ngModel)]="line.quantity" (ngModelChange)="onLineValueChange(line)" min="0.01" step="0.01" /></td>
+                  <td><input type="number" class="form-control form-control-sm" [disabled]="isEditLocked" [(ngModel)]="line.unitPrice" (ngModelChange)="onLineValueChange(line)" min="0" step="0.01" /></td>
+                  <td><input type="number" class="form-control form-control-sm" [disabled]="isEditLocked" [(ngModel)]="line.discountPercent" (ngModelChange)="onLineValueChange(line)" min="0" max="100" step="0.01" /></td>
+                  <td><input type="number" class="form-control form-control-sm" [disabled]="isEditLocked" [(ngModel)]="line.taxPercent" (ngModelChange)="onLineValueChange(line)" min="0" max="100" step="0.01" /></td>
+                  <td class="text-end">{{ line.subTotal | number:'1.2-2' }}</td>
+                  <td class="text-end">{{ line.taxAmount | number:'1.2-2' }}</td>
+                  <td class="text-end fw-semibold">{{ line.lineTotal | number:'1.2-2' }}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button class="btn btn-sm btn-outline-secondary" type="button" [disabled]="isEditLocked" (click)="duplicateLine(i)">Dup</button>
+                      <button class="btn btn-sm btn-outline-danger" type="button" [disabled]="isEditLocked" (click)="removeLine(i)">Del</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>
+      <div class="timeline-panel mt-4">
+        <h6 class="mb-2">Order Timeline</h6>
+        <div class="small text-muted" *ngIf="!timeline.length">No timeline events yet.</div>
+        <div *ngFor="let event of timeline" class="timeline-item">
+          <div class="fw-medium">{{ event.action }}</div>
+          <div class="small text-muted">{{ event.detail }} - {{ event.by }} - {{ event.at | date:'short' }}</div>
+        </div>
+      </div>
 
-      <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+      <div class="sticky-totals mt-4 pt-3 border-top" data-onboarding="purchase-order-form-save-actions">
+        <div class="totals-grid">
+          <div><small class="text-muted">Subtotal</small><div class="fw-semibold">{{ totals.subTotal | number:'1.2-2' }}</div></div>
+          <div><small class="text-muted">Discount</small><div class="fw-semibold text-danger">- {{ totals.discount | number:'1.2-2' }}</div></div>
+          <div><small class="text-muted">Tax</small><div class="fw-semibold">{{ totals.tax | number:'1.2-2' }}</div></div>
+          <div><small class="text-muted">Grand Total</small><div class="fw-bold fs-5">{{ totals.grandTotal | number:'1.2-2' }}</div></div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end flex-wrap gap-2 mt-3">
         <app-unified-button
           variant="secondary"
           [outlined]="true"
           (clicked)="router.navigate(['/purchase-orders'])">
           Cancel
         </app-unified-button>
+        <app-unified-button variant="secondary" [outlined]="true" (clicked)="save('Draft')" [loading]="saving">Save Draft (Ctrl+S)</app-unified-button>
+        <app-unified-button variant="secondary" [outlined]="true" (clicked)="transitionTo('Submitted')" [loading]="saving" [disabled]="isEditLocked">Submit</app-unified-button>
+        <app-unified-button variant="secondary" [outlined]="true" (clicked)="transitionTo('Approved')" [loading]="saving" [disabled]="isEditLocked">Approve</app-unified-button>
+        <app-unified-button variant="secondary" [outlined]="true" (clicked)="transitionTo('Rejected')" [loading]="saving" [disabled]="isEditLocked">Reject</app-unified-button>
+        <app-unified-button variant="secondary" [outlined]="true" (clicked)="transitionTo('Posted')" [loading]="saving" [disabled]="isEditLocked">Post</app-unified-button>
 
         <app-unified-button
           variant="primary"
@@ -82,6 +198,7 @@
       </div>
     </app-unified-card>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

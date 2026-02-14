@@ -1,0 +1,10 @@
+{
+"SpaProxyServer": {
+"ServerUrl": "https://localhost:4200",
+"RedirectUrl": "",
+"LaunchCommand": "npm start",
+"WorkingDirectory": "D:\\Khidmah_Inventory\\Khidmah_Inventory.API\\..\\khidmah_inventory.client",
+"MaxTimeoutInSeconds": "120",
+"KeepRunning": "false"
+}
+}

@@ -1,0 +1,25 @@
+<app-content-loader [loading]="loading">
+  <form (ngSubmit)="submit()" class="d-flex flex-column gap-3">
+    <div class="form-group">
+      <label class="form-label">Code</label>
+      <input type="text" class="form-control" [(ngModel)]="code" name="code" maxlength="10" placeholder="e.g. USD" [readonly]="!!currencyId" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-control" [(ngModel)]="name" name="name" maxlength="100" placeholder="US Dollar" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Symbol</label>
+      <input type="text" class="form-control" [(ngModel)]="symbol" name="symbol" maxlength="10" placeholder="$" />
+    </div>
+    <div class="form-check">
+      <input type="checkbox" class="form-check-input" id="isBase" [(ngModel)]="isBase" name="isBase" />
+      <label class="form-check-label" for="isBase">Base currency (for reporting)</label>
+    </div>
+    <p class="text-danger small mb-0" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary" [disabled]="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
+      <button type="button" class="btn btn-outline-secondary" (click)="cancel.emit()">Cancel</button>
+    </div>
+  </form>
+</app-content-loader>

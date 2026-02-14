@@ -1,0 +1,88 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-stat-cards [cardCount]="6" class="mb-4"></app-skeleton-stat-cards>
+    </ng-container>
+    <div *ngIf="data" class="kpi-content">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <label class="small text-muted mb-0">From</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateFrom" />
+        <label class="small text-muted mb-0">To</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateTo" />
+        <button class="btn btn-sm btn-primary" (click)="load()">Refresh</button>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.revenueToday.label"
+            [value]="formatKpiValue(data.revenueToday)"
+            icon="bi-currency-dollar"
+            [theme]="themeForKpi(data.revenueToday, true)"
+            [trendPercent]="trendPercent(data.revenueToday)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.profitToday.label"
+            [value]="formatKpiValue(data.profitToday)"
+            icon="bi-graph-up"
+            [theme]="themeForKpi(data.profitToday, true)"
+            [trendPercent]="trendPercent(data.profitToday)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.lowStockCount.label"
+            [value]="formatKpiValue(data.lowStockCount)"
+            icon="bi-exclamation-triangle"
+            [theme]="themeForKpi(data.lowStockCount, false)"
+            [trendPercent]="trendPercent(data.lowStockCount)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.pendingApprovals.label"
+            [value]="formatKpiValue(data.pendingApprovals)"
+            icon="bi-hourglass-split"
+            theme="warning"
+            [trendPercent]="trendPercent(data.pendingApprovals)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <app-kpi-stat-card
+            [title]="data.deadInventoryCount.label"
+            [value]="formatKpiValue(data.deadInventoryCount)"
+            icon="bi-box-seam"
+            [theme]="themeForKpi(data.deadInventoryCount, false)"
+            [trendPercent]="trendPercent(data.deadInventoryCount)">
+          </app-kpi-stat-card>
+        </div>
+      </div>
+
+      <app-unified-card header="Top products by revenue" customClass="border-0 shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th class="text-end">Revenue</th>
+                <th class="text-end">Qty sold</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of data.topProducts">
+                <td>{{ p.name }}</td>
+                <td>{{ p.sku || '–' }}</td>
+                <td class="text-end">{{ formatCurrency(p.revenue) }}</td>
+                <td class="text-end">{{ p.quantitySold | number:'1.0-0' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p *ngIf="data.topProducts.length === 0" class="text-muted small mb-0">No sales in the selected period.</p>
+      </app-unified-card>
+    </div>
+  </app-content-loader>
+</div>

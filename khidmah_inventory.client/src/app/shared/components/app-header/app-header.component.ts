@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ThemeService } from '../../../core/services/theme.service';
 import { HeaderService } from '../../../core/services/header.service';
+import { AppearanceSettingsService } from '../../../core/services/appearance-settings.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -21,11 +22,14 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
 
   displayTitle: string = 'Application';
   displayDescription: string = '';
+  isDarkMode: boolean = false;
   private headerSubscription?: Subscription;
+  private appearanceSubscription?: Subscription;
 
   constructor(
     public themeService: ThemeService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private appearanceSettings: AppearanceSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -41,16 +45,35 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       this.displayTitle = currentInfo.title;
       this.displayDescription = currentInfo.description || '';
     }
+
+    // Track theme mode for mode button icon
+    this.updateDarkModeState();
+    this.appearanceSubscription = this.appearanceSettings.settings$.subscribe(() => {
+      this.updateDarkModeState();
+    });
   }
 
   ngOnDestroy(): void {
     if (this.headerSubscription) {
       this.headerSubscription.unsubscribe();
     }
+    this.appearanceSubscription?.unsubscribe();
+  }
+
+  private updateDarkModeState(): void {
+    const theme = document.documentElement.getAttribute('data-theme');
+    this.isDarkMode = theme === 'dark';
   }
 
   onMenuToggle(): void {
     this.menuToggle.emit();
+  }
+
+  onThemeModeToggle(): void {
+    const settings = this.appearanceSettings.getSettings();
+    const next = settings.themeMode === 'dark' ? 'light' : 'dark';
+    this.appearanceSettings.updateSettings({ themeMode: next }, true);
+    this.updateDarkModeState();
   }
 }
 

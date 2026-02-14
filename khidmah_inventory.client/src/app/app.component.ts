@@ -5,6 +5,11 @@ import { LayoutService } from './core/services/layout.service';
 import { AppearanceSettingsService } from './core/services/appearance-settings.service';
 import { NavigationService, NavigationItem } from './core/services/navigation.service';
 import { RouteHeaderService } from './core/services/route-header.service';
+import { ToastNotificationService } from './core/services/toast-notification.service';
+import { SignalRService } from './core/services/signalr.service';
+import { AuthService } from './core/services/auth.service';
+import { SearchOverlayService } from './core/services/search-overlay.service';
+import { OnboardingService } from './core/services/onboarding.service';
 import { MenuItem } from './shared/components/sidebar/sidebar.component';
 import { Subscription, filter, take } from 'rxjs';
 
@@ -18,9 +23,14 @@ export class AppComponent implements OnInit, OnDestroy {
   mobileMenuOpen: boolean = false;
   isAuthPage: boolean = false;
   menuItems: MenuItem[] = [];
+  globalToastShow = false;
+  globalToastMessage = '';
+  globalToastType: 'success' | 'error' | 'warning' | 'info' = 'info';
   private routerSubscription?: Subscription;
   private menuItemsSubscription?: Subscription;
   private appearanceSettingsSubscription?: Subscription;
+  private toastSubscription?: Subscription;
+  private userSubscription?: Subscription;
 
   get isAuthRoute(): boolean {
     return this.isAuthPage;
@@ -57,11 +67,26 @@ export class AppComponent implements OnInit, OnDestroy {
     public router: Router,
     private navigationService: NavigationService,
     private routeHeaderService: RouteHeaderService,
-    private appearanceSettingsService: AppearanceSettingsService
+    private appearanceSettingsService: AppearanceSettingsService,
+    private toastNotification: ToastNotificationService,
+    private signalRService: SignalRService,
+    private authService: AuthService,
+    private searchOverlayService: SearchOverlayService,
+    private onboardingService: OnboardingService
   ) {}
+
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKeyDown(event: KeyboardEvent): void {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+      event.preventDefault();
+      if (!this.isAuthRoute) this.searchOverlayService.open();
+    }
+  }
+
 
   ngOnInit() {
     this.checkScreenSize();
+    this.onboardingService.initialize();
     // Initialize theme and layout (these are BehaviorSubjects, so we just need to trigger initial load)
     // Use take(1) to automatically unsubscribe after first emission
     this.themeService.theme$.pipe(take(1)).subscribe();
@@ -81,6 +106,21 @@ export class AppComponent implements OnInit, OnDestroy {
     // Check initial route
     this.checkAuthRoute();
 
+    // Start SignalR when already logged in
+    if (this.authService.isAuthenticated()) {
+      this.signalRService.startConnection().catch(() => {});
+    }
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      if (!user) this.signalRService.stopConnection().catch(() => {});
+    });
+
+    // Global toast for real-time notifications
+    this.toastSubscription = this.toastNotification.getToast().subscribe(t => {
+      this.globalToastMessage = t.message;
+      this.globalToastType = t.type;
+      this.globalToastShow = true;
+    });
+
     // Subscribe to route changes
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -93,6 +133,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.routerSubscription?.unsubscribe();
     this.menuItemsSubscription?.unsubscribe();
     this.appearanceSettingsSubscription?.unsubscribe();
+    this.toastSubscription?.unsubscribe();
+    this.userSubscription?.unsubscribe();
+    this.onboardingService.dispose();
+  }
+
+  onGlobalToastClose(): void {
+    this.globalToastShow = false;
   }
 
   private loadMenuItems(): void {

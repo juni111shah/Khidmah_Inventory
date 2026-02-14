@@ -41,6 +41,7 @@ export interface CreatePurchaseOrderRequest {
   expectedDeliveryDate?: string;
   notes?: string;
   termsAndConditions?: string;
+  status?: string;
   items: CreatePurchaseOrderItemRequest[];
 }
 
@@ -51,6 +52,16 @@ export interface CreatePurchaseOrderItemRequest {
   discountPercent?: number;
   taxPercent?: number;
   notes?: string;
+}
+
+export interface UpdatePurchaseOrderRequest {
+  supplierId: string;
+  orderDate: string;
+  expectedDeliveryDate?: string;
+  notes?: string;
+  termsAndConditions?: string;
+  status?: string;
+  items: CreatePurchaseOrderItemRequest[];
 }
 
 export interface GetPurchaseOrdersListQuery {

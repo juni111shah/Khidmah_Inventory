@@ -1,0 +1,85 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a routerLink="/reorder/list" class="btn btn-outline-primary btn-sm ms-auto">
+      <i class="bi bi-list-ul me-1"></i> View full list
+    </a>
+  </div>
+
+  <app-toast *ngIf="showToast" [message]="toastMessage" [type]="toastType" (closed)="showToast = false"></app-toast>
+
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-stat-cards [cardCount]="4" class="mb-4"></app-skeleton-stat-cards>
+      <div class="row g-4 mb-4">
+        <div class="col-lg-6"><app-skeleton-chart [chartHeight]="220" [showSubtitle]="false"></app-skeleton-chart></div>
+        <div class="col-lg-6"><app-skeleton-chart [chartHeight]="220" [showSubtitle]="false"></app-skeleton-chart></div>
+      </div>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="8" [columns]="8" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <ng-container *ngIf="!loading">
+    <!-- KPI stat cards -->
+    <div class="row g-3 mb-4 equal-height-cards">
+      <div class="col-md-3">
+        <app-kpi-stat-card title="Critical (low stock)" [value]="criticalCount" icon="bi-exclamation-triangle-fill" theme="danger"></app-kpi-stat-card>
+      </div>
+      <div class="col-md-3">
+        <app-kpi-stat-card title="High priority" [value]="highCount" icon="bi-clock-history" theme="warning"></app-kpi-stat-card>
+      </div>
+      <div class="col-md-3">
+        <app-kpi-stat-card title="Total items to reorder" [value]="suggestions.length" icon="bi-box-seam" theme="primary"></app-kpi-stat-card>
+      </div>
+      <div class="col-md-3">
+        <app-unified-card customClass="h-100 border-0 shadow-sm">
+          <div class="d-flex align-items-center">
+            <select class="form-select form-select-sm" [value]="selectedWarehouseId ?? ''" (change)="selectedWarehouseId = $any($event.target).value || null; onWarehouseChange()">
+              <option value="">All warehouses</option>
+              <option *ngFor="let w of warehouses" [value]="w.id">{{ w.name }}</option>
+            </select>
+          </div>
+          <div class="text-muted small mt-2">Filter by warehouse</div>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4 equal-height-cards">
+      <div class="col-lg-6">
+        <app-unified-card header="Items by priority" customClass="border-0 shadow-sm h-100">
+          <app-stat-card
+            title=""
+            [barData]="itemsByPriority"
+            [showFullStats]="false">
+          </app-stat-card>
+        </app-unified-card>
+      </div>
+      <div class="col-lg-6">
+        <app-unified-card header="Estimated days remaining (top 10)" customClass="border-0 shadow-sm h-100">
+          <app-stat-card
+            title=""
+            [barData]="daysRemainingData"
+            [showFullStats]="false"
+            [horizontalBars]="true"
+            [chartHeight]="260">
+          </app-stat-card>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <!-- Critical / High list preview -->
+    <app-unified-card header="Items about to run out" customClass="border-0 shadow-sm">
+      <app-data-table
+        [columns]="tableColumns"
+        [data]="previewSuggestions"
+        [loading]="false"
+        [config]="tableConfig"
+        [actions]="tableActions">
+      </app-data-table>
+      <div *ngIf="suggestions.length > 10" class="mt-2">
+        <a routerLink="/reorder/list" class="btn btn-link btn-sm">View all {{ suggestions.length }} items</a>
+      </div>
+    </app-unified-card>
+    </ng-container>
+  </app-content-loader>
+</div>

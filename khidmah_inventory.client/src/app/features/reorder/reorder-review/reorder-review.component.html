@@ -1,0 +1,58 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a routerLink="/reorder/list" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Back to list</a>
+  </div>
+
+  <app-toast *ngIf="showToast" [message]="toastMessage" [type]="toastType" (close)="showToast = false"></app-toast>
+
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-detail-header [actionCount]="0" class="mb-4"></app-skeleton-detail-header>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-form [fieldCount]="6" [showLabels]="true" [showActions]="false"></app-skeleton-form>
+        <div class="mt-4"><app-skeleton-list [itemCount]="3" [showAvatar]="false" layout="list"></app-skeleton-list></div>
+      </app-unified-card>
+    </ng-container>
+    <app-unified-card *ngIf="!loading && suggestion" header="Suggestion details" customClass="border-0 shadow-sm">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <strong>Product</strong><br>{{ suggestion!.productName }} ({{ suggestion!.productSKU }})
+      </div>
+      <div class="col-md-6">
+        <strong>Warehouse</strong><br>{{ suggestion!.warehouseName }}
+      </div>
+      <div class="col-md-2">
+        <strong>Current stock</strong><br>{{ suggestion!.currentStock }}
+      </div>
+      <div class="col-md-2">
+        <strong>Reorder point</strong><br>{{ suggestion!.reorderPoint ?? '-' }}
+      </div>
+      <div class="col-md-2">
+        <strong>Suggested qty</strong><br>{{ suggestion!.suggestedQuantity }}
+      </div>
+      <div class="col-md-2">
+        <strong>Days remaining</strong><br>{{ suggestion!.daysOfStockRemaining }}
+      </div>
+      <div class="col-md-2">
+        <span class="badge bg-{{ getPriorityClass(suggestion!.priority) }}">{{ suggestion!.priority }}</span>
+      </div>
+    </div>
+    <div class="mt-4" *ngIf="suggestion!.supplierSuggestions?.length">
+      <strong>Supplier suggestions</strong>
+      <ul class="list-group list-group-flush mt-2">
+        <li *ngFor="let sup of suggestion!.supplierSuggestions" class="list-group-item d-flex justify-content-between">
+          <span>{{ sup.supplierName }}</span>
+          <span>Score: {{ sup.score }} | Price: {{ sup.recommendedPrice ?? sup.lastPurchasePrice ?? '-' }}</span>
+        </li>
+      </ul>
+    </div>
+    <div class="mt-4">
+      <button class="btn btn-primary" (click)="goToGeneratePO()">
+        <i class="bi bi-cart-plus me-1"></i> Generate purchase order
+      </button>
+    </div>
+  </app-unified-card>
+  </app-content-loader>
+
+  <div *ngIf="!loading && !suggestion" class="alert alert-warning">No suggestion found. <a routerLink="/reorder/list">Back to list</a></div>
+</div>

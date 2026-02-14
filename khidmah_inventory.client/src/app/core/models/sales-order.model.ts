@@ -41,6 +41,7 @@ export interface CreateSalesOrderRequest {
   expectedDeliveryDate?: string;
   notes?: string;
   termsAndConditions?: string;
+  status?: string;
   items: CreateSalesOrderItemRequest[];
 }
 
@@ -51,6 +52,16 @@ export interface CreateSalesOrderItemRequest {
   discountPercent?: number;
   taxPercent?: number;
   notes?: string;
+}
+
+export interface UpdateSalesOrderRequest {
+  customerId: string;
+  orderDate: string;
+  expectedDeliveryDate?: string;
+  notes?: string;
+  termsAndConditions?: string;
+  status?: string;
+  items: CreateSalesOrderItemRequest[];
 }
 
 export interface GetSalesOrdersListQuery {

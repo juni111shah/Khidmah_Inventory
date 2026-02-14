@@ -62,6 +62,7 @@ export const ApiValidationCodes = {
     ViewById: 'COMPANIES_VIEW_BY_ID',
     Add: 'COMPANIES_ADD',
     Update: 'COMPANIES_UPDATE',
+    UpdateStatus: 'COMPANIES_UPDATE_STATUS',
     UploadLogo: 'COMPANIES_UPLOAD_LOGO'
   },
   SalesOrders: {
@@ -88,6 +89,36 @@ export const ApiValidationCodes = {
     Custom: 'REPORTS_CUSTOM',
     CustomExecute: 'REPORTS_CUSTOM_EXECUTE'
   },
+  Kpi: {
+    Executive: 'KPI_EXECUTIVE',
+    Sales: 'KPI_SALES',
+    Inventory: 'KPI_INVENTORY',
+    Customers: 'KPI_CUSTOMERS'
+  },
+  Currency: {
+    List: 'CURRENCY_LIST',
+    GetById: 'CURRENCY_GET_BY_ID',
+    Create: 'CURRENCY_CREATE',
+    Update: 'CURRENCY_UPDATE',
+    Delete: 'CURRENCY_DELETE'
+  },
+  ExchangeRates: {
+    List: 'EXCHANGE_RATES_LIST',
+    Create: 'EXCHANGE_RATES_CREATE'
+  },
+  Finance: {
+    AccountsList: 'FINANCE_ACCOUNTS_LIST',
+    AccountsTree: 'FINANCE_ACCOUNTS_TREE',
+    AccountById: 'FINANCE_ACCOUNTS_READ',
+    AccountsCreate: 'FINANCE_ACCOUNTS_CREATE',
+    AccountsUpdate: 'FINANCE_ACCOUNTS_UPDATE',
+    AccountsDelete: 'FINANCE_ACCOUNTS_DELETE',
+    ImportChart: 'FINANCE_IMPORT_CHART',
+    Journals: 'FINANCE_JOURNALS',
+    StatementsPl: 'FINANCE_STATEMENTS_PL',
+    StatementsBalanceSheet: 'FINANCE_STATEMENTS_BALANCE',
+    StatementsCashFlow: 'FINANCE_STATEMENTS_CASHFLOW'
+  },
   Warehouses: {
     ViewAll: 'WAREHOUSES_VIEW_ALL',
     ViewById: 'WAREHOUSES_VIEW_BY_ID',
@@ -95,6 +126,11 @@ export const ApiValidationCodes = {
     Update: 'WAREHOUSES_UPDATE',
     Delete: 'WAREHOUSES_DELETE',
     UpdateStatus: 'WAREHOUSES_UPDATE_STATUS'
+  },
+  HandsFree: {
+    Tasks: 'HANDSFREE_TASKS',
+    Complete: 'HANDSFREE_COMPLETE',
+    ValidateBarcode: 'HANDSFREE_VALIDATE_BARCODE'
   },
   Inventory: {
     StockTransaction: 'INVENTORY_STOCK_TRANSACTION',
@@ -181,5 +217,26 @@ export const ApiValidationCodes = {
     Session: 'POS_SESSION',
     StartSession: 'POS_START_SESSION',
     EndSession: 'POS_END_SESSION'
+  },
+  Intelligence: {
+    Product: 'INTELLIGENCE_PRODUCT',
+    Dashboard: 'INTELLIGENCE_DASHBOARD'
+  },
+  Platform: {
+    ApiKeysList: 'PLATFORM_API_KEYS_LIST',
+    ApiKeysCreate: 'PLATFORM_API_KEYS_CREATE',
+    ApiKeysRevoke: 'PLATFORM_API_KEYS_REVOKE',
+    ApiKeysUsage: 'PLATFORM_API_KEYS_USAGE',
+    WebhooksList: 'PLATFORM_WEBHOOKS_LIST',
+    WebhooksCreate: 'PLATFORM_WEBHOOKS_CREATE',
+    WebhooksUpdate: 'PLATFORM_WEBHOOKS_UPDATE',
+    WebhooksDelete: 'PLATFORM_WEBHOOKS_DELETE',
+    WebhooksLogs: 'PLATFORM_WEBHOOKS_LOGS',
+    IntegrationsList: 'PLATFORM_INTEGRATIONS_LIST',
+    IntegrationsToggle: 'PLATFORM_INTEGRATIONS_TOGGLE',
+    ScheduledReportsList: 'PLATFORM_SCHEDULED_REPORTS_LIST',
+    ScheduledReportsCreate: 'PLATFORM_SCHEDULED_REPORTS_CREATE',
+    ScheduledReportsUpdate: 'PLATFORM_SCHEDULED_REPORTS_UPDATE',
+    ScheduledReportsDelete: 'PLATFORM_SCHEDULED_REPORTS_DELETE'
   }
 };

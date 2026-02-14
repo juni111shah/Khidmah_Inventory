@@ -166,7 +166,7 @@ export const DEFAULT_UI_COMPONENT_SETTINGS: UIComponentSettings = {
   dangerColor: '#F44336',
   infoColor: '#2196F3',
 
-  fontFamily: 'Roboto, sans-serif',
+  fontFamily: "'Bricolage Grotesque', sans-serif",
   fontSize: '14px',
   fontWeight: '400',
   lineHeight: '1.5',

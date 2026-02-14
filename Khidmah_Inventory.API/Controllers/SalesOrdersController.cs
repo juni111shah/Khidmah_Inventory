@@ -5,6 +5,7 @@ using Khidmah_Inventory.API.Attributes;
 using Khidmah_Inventory.API.Constants;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.SalesOrders.Commands.CreateSalesOrder;
+using Khidmah_Inventory.Application.Features.SalesOrders.Commands.UpdateSalesOrder;
 using Khidmah_Inventory.Application.Features.SalesOrders.Queries.GetSalesOrdersList;
 using Khidmah_Inventory.Application.Features.SalesOrders.Queries.GetSalesOrder;
 
@@ -40,6 +41,15 @@ public class SalesOrdersController : BaseController
     [AuthorizeResource(AuthorizePermissions.SalesOrdersPermissions.Controller, AuthorizePermissions.SalesOrdersPermissions.Actions.Add)]
     public async Task<IActionResult> Create([FromBody] CreateSalesOrderCommand command)
     {
+        return await ExecuteRequest(command);
+    }
+
+    [HttpPut(ApiRoutes.SalesOrders.Update)]
+    [ValidateApiCode(ApiValidationCodes.SalesOrdersModuleCode.Update)]
+    [AuthorizeResource(AuthorizePermissions.SalesOrdersPermissions.Controller, AuthorizePermissions.SalesOrdersPermissions.Actions.Update)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSalesOrderCommand command)
+    {
+        command.Id = id;
         return await ExecuteRequest(command);
     }
 }

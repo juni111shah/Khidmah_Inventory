@@ -1,4 +1,4 @@
-<div class="sidebar-overlay" *ngIf="!collapsed" (click)="toggleSidebar()"></div>
+<div class="sidebar-overlay" *ngIf="!collapsed" (click)="toggleSidebar()" @overlayFade></div>
 <aside class="sidebar" #sidebarElement [class.collapsed]="collapsed" [class.mobile-open]="mobileMenuOpen">
   <div class="sidebar-header">
     <div class="sidebar-logo">
@@ -25,6 +25,9 @@
         <a
           *appHasPermission="item.permission || ''"
           class="nav-link"
+          [attr.data-onboarding]="getOnboardingKey(item.label)"
+          [attr.data-help-title]="item.label"
+          [attr.data-help]="'Navigate to ' + item.label + ' page.'"
           [routerLink]="item.route && (!item.children || !collapsed || isTopNavigationLayout()) ? item.route : null"
           [routerLinkActive]="item.route && (!item.children || !collapsed || isTopNavigationLayout()) ? 'active' : ''"
           (click)="onItemClick(item, $event)"
@@ -57,6 +60,9 @@
             <a
               *appHasPermission="child.permission || ''"
               class="submenu-link"
+              [attr.data-onboarding]="getOnboardingKey(child.label)"
+              [attr.data-help-title]="child.label"
+              [attr.data-help]="'Navigate to ' + child.label + ' page.'"
               [class.active]="isActive(child)"
               (click)="onItemClick(child); $event.preventDefault()"
               [routerLink]="child.route || null">
@@ -80,6 +86,9 @@
             <a
               *appHasPermission="child.permission || ''"
               class="submenu-link"
+              [attr.data-onboarding]="getOnboardingKey(child.label)"
+              [attr.data-help-title]="child.label"
+              [attr.data-help]="'Navigate to ' + child.label + ' page.'"
               [class.active]="isActive(child)"
               (click)="onItemClick(child); $event.preventDefault()"
               [routerLink]="child.route || null">
@@ -97,6 +106,9 @@
             <a
               *appHasPermission="child.permission || ''"
               class="submenu-link"
+              [attr.data-onboarding]="getOnboardingKey(child.label)"
+              [attr.data-help-title]="child.label"
+              [attr.data-help]="'Navigate to ' + child.label + ' page.'"
               [class.active]="isActive(child)"
               (click)="onItemClick(child); $event.preventDefault()"
               [routerLink]="child.route || null">

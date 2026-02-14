@@ -1,9 +1,21 @@
 <div class="warehouse-form-container container-fluid py-4">
-  <div *ngIf="loading" class="d-flex justify-content-center align-items-center py-5">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!loading" class="form-content max-width-1000 mx-auto">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-detail-header [actionCount]="0" class="mb-4"></app-skeleton-detail-header>
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <app-unified-card header="" customClass="mb-4 border-0 shadow-sm">
+            <app-skeleton-form [fieldCount]="4" [showLabels]="true" [showActions]="false"></app-skeleton-form>
+          </app-unified-card>
+        </div>
+        <div class="col-lg-5">
+          <app-unified-card header="" customClass="border-0 shadow-sm">
+            <app-skeleton-side-panel [lineCount]="5" [showBlock]="true"></app-skeleton-side-panel>
+          </app-unified-card>
+        </div>
+      </div>
+    </ng-container>
+    <div *ngIf="!loading" class="form-content max-width-1000 mx-auto">
     <div class="d-flex justify-content-start mb-4">
       <app-unified-button
         variant="secondary"
@@ -91,6 +103,7 @@
       </app-unified-button>
     </div>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

@@ -1,0 +1,48 @@
+<div class="saved-views-dropdown position-relative" (clickOutside)="close()">
+  <app-unified-button
+    variant="secondary"
+    [outlined]="true"
+    (clicked)="onToggle()"
+    icon="bi-bookmark">
+    Views
+    <span *ngIf="views.length > 0" class="ms-1 small">({{ views.length }})</span>
+  </app-unified-button>
+
+  <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" [class.show]="isOpen" style="min-width: 260px; z-index: 1050;">
+    <div class="dropdown-header d-flex align-items-center justify-content-between">
+      <span class="fw-semibold">Saved views</span>
+    </div>
+
+    <div class="list-group list-group-flush">
+      <button *ngFor="let view of views" type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2 py-2"
+              (click)="onLoad(view)">
+        <span class="flex-grow-1 text-start">
+          <span *ngIf="editingViewId !== view.id">{{ view.name }}</span>
+          <span *ngIf="editingViewId === view.id" (click)="$event.stopPropagation()">
+            <input class="form-control form-control-sm" [(ngModel)]="editingName" (keyup.enter)="confirmRename()" (keyup.escape)="cancelRename()">
+            <button type="button" class="btn btn-sm btn-primary mt-1" (click)="confirmRename()">Save</button>
+            <button type="button" class="btn btn-sm btn-link" (click)="cancelRename()">Cancel</button>
+          </span>
+        </span>
+        <span *ngIf="view.isDefault" class="badge bg-primary">Default</span>
+        <div class="btn-group btn-group-sm" (click)="$event.stopPropagation()" *ngIf="editingViewId !== view.id">
+          <button type="button" class="btn btn-link text-muted p-0" (click)="setDefault(view)" title="Set as default"><i class="bi bi-star"></i></button>
+          <button type="button" class="btn btn-link text-muted p-0" (click)="startRename(view)" title="Rename"><i class="bi bi-pencil"></i></button>
+          <button type="button" class="btn btn-link text-danger p-0" (click)="deleteView(view, $event)" title="Delete"><i class="bi bi-trash"></i></button>
+        </div>
+      </button>
+    </div>
+
+    <div class="p-2 border-top mt-2">
+      <div *ngIf="!showSaveInput">
+        <button type="button" class="btn btn-sm btn-outline-primary w-100" (click)="showSaveInput = true">
+          <i class="bi bi-plus-lg me-1"></i> Save current view
+        </button>
+      </div>
+      <div *ngIf="showSaveInput" class="d-flex gap-1">
+        <input class="form-control form-control-sm" [(ngModel)]="saveName" placeholder="View name" (keyup.enter)="saveCurrent()">
+        <app-unified-button variant="primary" (clicked)="saveCurrent()" [disabled]="!canSave">Save</app-unified-button>
+      </div>
+    </div>
+  </div>
+</div>

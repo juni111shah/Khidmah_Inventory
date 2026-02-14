@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductApiService } from '../../../core/services/product-api.service';
 import { CategoryApiService } from '../../../core/services/category-api.service';
 import { Product, GetProductsListQuery } from '../../../core/models/product.model';
@@ -20,6 +22,18 @@ import { FilterFieldComponent } from '../../../shared/components/filter-field/fi
 import { FilterPanelComponent, FilterPanelConfig, FilterPanelField } from '../../../shared/components/filter-panel/filter-panel.component';
 import { ExportComponent } from '../../../shared/components/export/export.component';
 import { HeaderService } from '../../../core/services/header.service';
+import { TableStateService } from '../../../core/services/table-state.service';
+import { SavedViewsService } from '../../../core/services/saved-views.service';
+import { SignalRService } from '../../../core/services/signalr.service';
+import { RealtimeSyncService } from '../../../core/services/realtime-sync.service';
+import { ProductStore } from '../../../core/stores/product.store';
+import { FilterBuilderComponent } from '../../../shared/components/filter-builder/filter-builder.component';
+import { FilterBuilderColumn, TableState, SortColumn } from '../../../core/models/table-state.model';
+import { SavedViewsDropdownComponent } from '../../../shared/components/saved-views-dropdown/saved-views-dropdown.component';
+import { FilterDto } from '../../../core/models/user.model';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonListingHeaderComponent } from '../../../shared/components/skeleton-listing-header/skeleton-listing-header.component';
+import { SkeletonTableComponent } from '../../../shared/components/skeleton-table/skeleton-table.component';
 
 @Component({
   selector: 'app-products-list',
@@ -37,11 +51,17 @@ import { HeaderService } from '../../../core/services/header.service';
     ListingContainerComponent,
     FilterFieldComponent,
     FilterPanelComponent,
-    ExportComponent
+    ExportComponent,
+    FilterBuilderComponent,
+    SavedViewsDropdownComponent,
+    ContentLoaderComponent,
+    SkeletonListingHeaderComponent,
+    SkeletonTableComponent
   ],
   templateUrl: './products-list.component.html'
 })
-export class ProductsListComponent implements OnInit {
+export class ProductsListComponent implements OnInit, OnDestroy {
+  readonly tableId = 'products';
   products: Product[] = [];
   categories: Category[] = [];
   loading = false;
@@ -49,6 +69,12 @@ export class ProductsListComponent implements OnInit {
   selectedCategoryId: string | null = null;
   selectedBrandId: string | null = null;
   isActiveFilter: any = '';
+
+  private searchSubject = new Subject<string>();
+  private realtimeRefreshSubject = new Subject<void>();
+  private subs = new Subscription();
+  showFilterBuilder = false;
+  private touchedAtById = new Map<string, string>();
 
   pagedResult: any = null;
   filterRequest: FilterRequest = {
@@ -192,7 +218,8 @@ export class ProductsListComponent implements OnInit {
     pageSizeOptions: [5, 10, 25, 50, 100],
     searchPlaceholder: 'Search products...',
     emptyMessage: 'No products found',
-    loadingMessage: 'Loading products...'
+    loadingMessage: 'Loading products...',
+    rowClass: (row: Product) => this.getRealtimeRowClass(row.id)
   };
 
   showToast = false;
@@ -205,6 +232,28 @@ export class ProductsListComponent implements OnInit {
 
   showColumnToggle = false;
   showFilterPanel = false;
+
+  filterBuilderColumns: FilterBuilderColumn[] = [
+    { key: 'Name', label: 'Name', type: 'text' },
+    { key: 'Sku', label: 'SKU', type: 'text' },
+    { key: 'CategoryName', label: 'Category', type: 'text' },
+    { key: 'BrandName', label: 'Brand', type: 'text' },
+    { key: 'PurchasePrice', label: 'Purchase Price', type: 'number' },
+    { key: 'SalePrice', label: 'Sale Price', type: 'number' },
+    { key: 'IsActive', label: 'Status', type: 'boolean', options: [{ label: 'Active', value: true }, { label: 'Inactive', value: false }] },
+    { key: 'CreatedAt', label: 'Created', type: 'date' }
+  ];
+
+  get currentTableState(): { filterRequest: FilterRequest; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] } {
+    const sortColumns = this.filterRequest.pagination?.sortBy
+      ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }]
+      : [];
+    return {
+      filterRequest: this.filterRequest,
+      sortColumns,
+      visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key)
+    };
+  }
 
   // Filter panel configuration
   filterPanelConfig: FilterPanelConfig = {
@@ -221,7 +270,12 @@ export class ProductsListComponent implements OnInit {
     private categoryApiService: CategoryApiService,
     public router: Router,
     public permissionService: PermissionService,
-    private headerService: HeaderService
+    private headerService: HeaderService,
+    private tableState: TableStateService,
+    private savedViews: SavedViewsService,
+    private signalR: SignalRService,
+    private realtimeSync: RealtimeSyncService,
+    private productStore: ProductStore
   ) {}
 
   ngOnInit(): void {
@@ -230,8 +284,60 @@ export class ProductsListComponent implements OnInit {
       description: 'Inventory product catalog'
     });
     this.initializeFilterPanel();
+    this.restoreTableState();
     this.loadProducts();
     this.loadCategories();
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(term => {
+      this.searchTerm = term;
+      if (this.filterRequest.search) this.filterRequest.search.term = term;
+      if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+      this.persistTableState();
+      this.loadProducts();
+    });
+    this.subs.add(this.signalR.getProductUpdated().subscribe(() => this.loadProducts()));
+    this.subs.add(this.realtimeSync.watchEntityType('Product').subscribe(() => this.realtimeRefreshSubject.next()));
+    this.subs.add(this.realtimeRefreshSubject.pipe(debounceTime(220)).subscribe(() => this.loadProducts()));
+    this.subs.add(this.productStore.touchedAt$.subscribe(map => { this.touchedAtById = map; }));
+  }
+
+  ngOnDestroy(): void {
+    this.subs.unsubscribe();
+  }
+
+  private restoreTableState(): void {
+    const state = this.tableState.getState(this.tableId);
+    if (!state) return;
+    if (state.filterRequest?.pagination) {
+      this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination };
+    }
+    if (state.filterRequest?.search?.term != null) {
+      if (!this.filterRequest.search) this.filterRequest.search = { term: '', searchFields: ['name', 'sku', 'barcode', 'description'], mode: SearchMode.Contains, isCaseSensitive: false };
+      this.filterRequest.search.term = state.filterRequest.search.term;
+      this.searchTerm = state.filterRequest.search.term;
+      if (state.filterRequest.search.searchFields?.length) this.filterRequest.search.searchFields = state.filterRequest.search.searchFields;
+    }
+    if (state.filterRequest?.filters?.length) {
+      this.filterRequest.filters = [...state.filterRequest.filters];
+    }
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) {
+      this.columns.forEach(col => {
+        col.visible = state.visibleColumnKeys!.includes(col.key);
+      });
+    }
+  }
+
+  private persistTableState(): void {
+    this.tableState.patchState(this.tableId, {
+      filterRequest: this.filterRequest,
+      sortColumns: this.filterRequest.pagination?.sortBy
+        ? [{ column: this.filterRequest.pagination.sortBy, direction: this.filterRequest.pagination.sortOrder === 'descending' ? 'desc' : 'asc' }]
+        : [],
+      visibleColumnKeys: this.columns.filter(c => c.visible !== false).map(c => c.key)
+    });
   }
 
   private initializeFilterPanel(): void {
@@ -325,14 +431,15 @@ export class ProductsListComponent implements OnInit {
     };
   }
 
-  onSearch(term: string): void {
-    this.searchTerm = term;
-    if (this.filterRequest.search) {
-      this.filterRequest.search.term = term;
-    }
-    if (this.filterRequest.pagination) {
-      this.filterRequest.pagination.pageNo = 1;
-    }
+  onSearchTermChange(term: string): void {
+    this.searchSubject.next(term ?? '');
+  }
+
+  onSearchImmediate(term: string): void {
+    this.searchTerm = term ?? '';
+    if (this.filterRequest.search) this.filterRequest.search.term = term ?? '';
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
     this.loadProducts();
   }
 
@@ -423,6 +530,7 @@ export class ProductsListComponent implements OnInit {
 
   onColumnToggle(column: DataTableColumn<Product>): void {
     column.visible = column.visible === false ? true : false;
+    this.persistTableState();
   }
 
   addProduct(): void {
@@ -438,7 +546,7 @@ export class ProductsListComponent implements OnInit {
       isActive: (this.isActiveFilter === '' || this.isActiveFilter === null) ? undefined : (this.isActiveFilter === 'true' || this.isActiveFilter === true)
     };
 
-    this.productApiService.getProducts(filterRequest).subscribe({
+    this.productStore.fetch(filterRequest).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.pagedResult = response.data;
@@ -478,16 +586,14 @@ export class ProductsListComponent implements OnInit {
   }
 
   onFilterChange(filterRequest?: FilterRequest): void {
-    if (filterRequest) {
-      this.filterRequest = filterRequest;
-    }
+    if (filterRequest) this.filterRequest = filterRequest;
+    this.persistTableState();
     this.loadProducts();
   }
 
   onPageChange(pageNo: number): void {
-    if (this.filterRequest.pagination) {
-      this.filterRequest.pagination.pageNo = pageNo;
-    }
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = pageNo;
+    this.persistTableState();
     this.loadProducts();
   }
 
@@ -496,6 +602,51 @@ export class ProductsListComponent implements OnInit {
       this.filterRequest.pagination.sortBy = sort.column;
       this.filterRequest.pagination.sortOrder = sort.direction === 'asc' ? 'ascending' : 'descending';
     }
+    this.persistTableState();
+    this.loadProducts();
+  }
+
+  onSavedViewLoad(state: Partial<{ filterRequest: FilterRequest; sortColumns: { column: string; direction: string }[]; visibleColumnKeys: string[] }>): void {
+    if (state.filterRequest) {
+      this.filterRequest = { ...this.filterRequest, ...state.filterRequest };
+      if (state.filterRequest.pagination) {
+        this.filterRequest.pagination = { ...this.filterRequest.pagination, ...state.filterRequest.pagination };
+      }
+      if (state.filterRequest.search) {
+        this.filterRequest.search = { ...this.filterRequest.search, ...state.filterRequest.search };
+        this.searchTerm = this.filterRequest.search.term ?? '';
+      }
+      if (state.filterRequest.filters) this.filterRequest.filters = [...state.filterRequest.filters];
+    }
+    if (state.sortColumns?.length && this.filterRequest.pagination) {
+      this.filterRequest.pagination!.sortBy = state.sortColumns[0].column;
+      this.filterRequest.pagination!.sortOrder = state.sortColumns[0].direction === 'asc' ? 'ascending' : 'descending';
+    }
+    if (state.visibleColumnKeys?.length) {
+      this.columns.forEach(col => { col.visible = state.visibleColumnKeys!.includes(col.key); });
+    }
+    const patch: Partial<TableState> = {
+      filterRequest: state.filterRequest,
+      visibleColumnKeys: state.visibleColumnKeys
+    };
+    if (state.sortColumns?.length) {
+      patch.sortColumns = state.sortColumns.map(s => ({ column: s.column, direction: (s.direction === 'desc' ? 'desc' : 'asc') as SortColumn['direction'] }));
+    }
+    this.tableState.patchState(this.tableId, patch);
+    this.loadProducts();
+  }
+
+  onFilterBuilderApply(filters: FilterDto[]): void {
+    this.filterRequest.filters = filters;
+    if (this.filterRequest.pagination) this.filterRequest.pagination.pageNo = 1;
+    this.persistTableState();
+    this.loadProducts();
+    this.showFilterBuilder = false;
+  }
+
+  onFilterBuilderClear(): void {
+    this.filterRequest.filters = [];
+    this.persistTableState();
     this.loadProducts();
   }
 
@@ -577,5 +728,12 @@ export class ProductsListComponent implements OnInit {
     setTimeout(() => {
       this.showToast = false;
     }, 3000);
+  }
+
+  private getRealtimeRowClass(rowId: string): string {
+    const touchedAt = this.touchedAtById.get(rowId);
+    if (!touchedAt) return '';
+    const ageMs = Date.now() - new Date(touchedAt).getTime();
+    return ageMs <= 8000 ? 'row-realtime-updated' : '';
   }
 }

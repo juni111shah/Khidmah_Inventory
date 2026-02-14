@@ -2,16 +2,21 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DashboardApiService } from '../../core/services/dashboard-api.service';
+import { IntelligenceApiService } from '../../core/services/intelligence-api.service';
 import { SignalRService } from '../../core/services/signalr.service';
 import { Dashboard } from '../../core/models/dashboard.model';
+import { DashboardIntelligence, Prediction, Risk, Opportunity } from '../../core/models/intelligence.model';
 import { ToastComponent } from '../../shared/components/toast/toast.component';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { ChartComponent, ChartData } from '../../shared/components/chart/chart.component';
+import { CHART_COLORS, CHART_PRIMARY, getChartColors } from '../../shared/constants/chart-colors';
 import { StatCardComponent, StatBarData, TimeFrame } from '../../shared/components/stat-card/stat-card.component';
-import { SparklineChartComponent } from '../../shared/components/sparkline-chart/sparkline-chart.component';
+import { KpiStatCardComponent } from '../../shared/components/kpi-stat-card/kpi-stat-card.component';
 import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { UnifiedCardComponent } from '../../shared/components/unified-card/unified-card.component';
 import { HeaderService } from '../../core/services/header.service';
 import { NgApexchartsModule } from 'ng-apexcharts';
@@ -20,6 +25,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/user.model';
 import { ThemeService } from '../../core/services/theme.service';
 import { ThemeConfig } from '../../core/models/theme.model';
+import { ContentLoaderComponent } from '../../shared/components/content-loader/content-loader.component';
+import { SkeletonLoaderComponent } from '../../shared/components/skeleton-loader/skeleton-loader.component';
+import { SkeletonStatCardsComponent } from '../../shared/components/skeleton-stat-cards/skeleton-stat-cards.component';
+import { SkeletonChartComponent } from '../../shared/components/skeleton-chart/skeleton-chart.component';
+import { SkeletonListComponent } from '../../shared/components/skeleton-list/skeleton-list.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,10 +42,15 @@ import { ThemeConfig } from '../../core/models/theme.model';
     HasPermissionDirective,
     ChartComponent,
     StatCardComponent,
-    SparklineChartComponent,
+    KpiStatCardComponent,
     UnifiedCardComponent,
     NgApexchartsModule,
-    RouterModule
+    RouterModule,
+    ContentLoaderComponent,
+    SkeletonLoaderComponent,
+    SkeletonStatCardsComponent,
+    SkeletonChartComponent,
+    SkeletonListComponent
   ],
   templateUrl: './dashboard.component.html',
   styles: [`
@@ -80,7 +95,9 @@ import { ThemeConfig } from '../../core/models/theme.model';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   dashboard: Dashboard | null = null;
+  dashboardIntelligence: DashboardIntelligence | null = null;
   loading = false;
+  loadingIntelligence = false;
   showToast = false;
   toastMessage = '';
   toastType: 'success' | 'error' | 'warning' | 'info' = 'success';
@@ -104,6 +121,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pendingSOTrend: number[] = [];
 
   private subscriptions = new Subscription();
+  private dashboardRefresh$ = new Subject<void>();
 
   user: User | null = null;
   greeting: string = '';
@@ -115,10 +133,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { label: 'Customer', icon: 'bi-person-add', route: '/customers/new', color: 'info', permission: 'Customers:Create' }
   ];
 
+  /** Used by skeleton UI */
+  skeletonQuickActionCount = [1, 2, 3, 4];
+
   private themeConfig: ThemeConfig;
 
   constructor(
     private dashboardApiService: DashboardApiService,
+    private intelligenceApi: IntelligenceApiService,
     private signalRService: SignalRService,
     public router: Router,
     private headerService: HeaderService,
@@ -149,7 +171,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.updateWarehouseChart();
     this.updateUnifiedStockChart();
     this.loadDashboard();
+    this.loadDashboardIntelligence();
     this.setupRealTimeUpdates();
+    this.subscriptions.add(
+      this.dashboardRefresh$.pipe(debounceTime(250)).subscribe(() => this.loadDashboard())
+    );
+  }
+
+  loadDashboardIntelligence(): void {
+    this.loadingIntelligence = true;
+    this.intelligenceApi.getDashboardIntelligence(7).subscribe({
+      next: (r) => {
+        if (r.success && r.data) this.dashboardIntelligence = r.data;
+        this.loadingIntelligence = false;
+      },
+      error: () => { this.loadingIntelligence = false; }
+    });
+  }
+
+  /** Content for "Analyze → Predict → Act" card: use API data when present, otherwise fallback from dashboard summary so the card is always set. */
+  get analyzePredictActContent(): DashboardIntelligence {
+    if (this.dashboardIntelligence &&
+        (this.dashboardIntelligence.predictions?.length || this.dashboardIntelligence.risks?.length ||
+         this.dashboardIntelligence.opportunities?.length || this.dashboardIntelligence.anomalies?.length)) {
+      return this.dashboardIntelligence;
+    }
+    const lowStock = this.dashboard?.summary?.lowStockItems ?? 0;
+    const predictions: Prediction[] = [
+      { label: 'Sales', value: '0', trend: 'Stable', period: '7d' },
+      { label: 'Low stock items', value: String(lowStock), trend: 'Stable', period: '7d' }
+    ];
+    const risks: Risk[] = lowStock > 0
+      ? [{ title: 'Low stock', description: `${lowStock} product(s) at or below minimum level.`, severity: 'High', actionRoute: '/inventory/stock-levels' }]
+      : [];
+    const opportunities: Opportunity[] = [
+      { title: 'Reorder suggestions', description: 'Generate PO from reorder suggestions.', actionRoute: '/reorder' }
+    ];
+    return { predictions, anomalies: [], risks, opportunities };
   }
 
   ngOnDestroy(): void {
@@ -159,15 +217,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private setupRealTimeUpdates(): void {
     this.signalRService.onDashboardUpdate(this.onDashboardUpdate);
+    // Operations hub: refresh dashboard when stock, sales, or orders change
+    this.subscriptions.add(this.signalRService.getStockChanged().subscribe(() => this.refreshDashboardFromEvent()));
+    this.subscriptions.add(this.signalRService.getSaleCompleted().subscribe(() => this.refreshDashboardFromEvent()));
+    this.subscriptions.add(this.signalRService.getOrderCreated().subscribe(() => this.refreshDashboardFromEvent()));
+    this.subscriptions.add(this.signalRService.getOrderApproved().subscribe(() => this.refreshDashboardFromEvent()));
+    this.subscriptions.add(this.signalRService.getPurchaseCreated().subscribe(() => this.refreshDashboardFromEvent()));
+    this.subscriptions.add(this.signalRService.getProductUpdated().subscribe(() => this.refreshDashboardFromEvent()));
+    this.subscriptions.add(this.signalRService.getDashboardUpdated().subscribe(() => this.refreshDashboardFromEvent()));
   }
 
-  private onDashboardUpdate = (data: Dashboard): void => {
-    this.dashboard = data;
+  private refreshDashboardFromEvent(): void {
+    this.dashboardRefresh$.next();
+  }
+
+  private onDashboardUpdate = (data: unknown): void => {
+    const d = data as Dashboard;
+    this.dashboard = d;
     this.updateCharts();
     this.updateInventoryChart();
-          this.updateWarehouseChart();
-          this.updateUnifiedStockChart();
-          this.showToastMessage('info', 'Dashboard updated in real-time');
+    this.updateWarehouseChart();
+    this.updateUnifiedStockChart();
+    this.showToastMessage('info', 'Dashboard updated in real-time');
   };
 
   loadDashboard(): void {
@@ -236,8 +307,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Sales ($)',
             data: filteredData.map(d => Number(d.sales) || 0),
-            backgroundColor: '#6366f1',
-            borderColor: '#6366f1',
+            backgroundColor: CHART_PRIMARY,
+            borderColor: CHART_PRIMARY,
             borderWidth: 2,
             fill: true,
             tension: 0.4
@@ -245,8 +316,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Purchases ($)',
             data: filteredData.map(d => Number(d.purchases) || 0),
-            backgroundColor: '#f43f5e',
-            borderColor: '#f43f5e',
+            backgroundColor: CHART_COLORS[4],
+            borderColor: CHART_COLORS[4],
             borderWidth: 2,
             fill: true,
             tension: 0.4
@@ -327,8 +398,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         {
           label: 'Stock Value by Category',
           data: [25000, 18000, 15000],
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-          borderColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+          backgroundColor: getChartColors(3),
+          borderColor: getChartColors(3),
           borderWidth: 2,
           fill: false
         }
@@ -351,14 +422,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Stock Value by Category',
             data: data,
-            backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-              '#9966FF', '#FF9F40', '#8AC249', '#EA80FC'
-            ].slice(0, categories.length),
-            borderColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-              '#9966FF', '#FF9F40', '#8AC249', '#EA80FC'
-            ].slice(0, categories.length),
+            backgroundColor: getChartColors(categories.length),
+            borderColor: getChartColors(categories.length),
             borderWidth: 2,
             fill: false
           }
@@ -387,14 +452,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Stock Value by Category',
             data: filteredData.map(d => Number(d.stockValue) || 0),
-            backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-              '#9966FF', '#FF9F40', '#8AC249', '#EA80FC'
-            ],
-            borderColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-              '#9966FF', '#FF9F40', '#8AC249', '#EA80FC'
-            ],
+            backgroundColor: getChartColors(filteredData.length),
+            borderColor: getChartColors(filteredData.length),
             borderWidth: 2,
             fill: false
           }
@@ -421,8 +480,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         {
           label: 'Stock Distribution',
           data: [45, 25, 20],
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-          borderColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+          backgroundColor: getChartColors(3),
+          borderColor: getChartColors(3),
           borderWidth: 2,
           fill: false
         }
@@ -448,12 +507,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           {
             label: 'Stock Value Distribution',
             data: data,
-            backgroundColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
-            ].slice(0, labels.length),
-            borderColor: [
-              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
-            ].slice(0, labels.length),
+            backgroundColor: getChartColors(labels.length),
+            borderColor: getChartColors(labels.length),
             borderWidth: 2,
             fill: false
           }
@@ -489,8 +544,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           datasets: [{
             label: 'Stock Value ($)',
             data: [45000, 25000, 20000, 10000],
-            backgroundColor: '#0d6efd',
-            borderColor: '#0d6efd',
+            backgroundColor: '#0d9488',
+            borderColor: '#0d9488',
             borderWidth: 0
           }]
         };
@@ -508,8 +563,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           datasets: [{
             label: 'Stock Value ($)',
             data: data,
-            backgroundColor: '#0d6efd',
-            borderColor: '#0d6efd',
+            backgroundColor: '#0d9488',
+            borderColor: '#0d9488',
             borderWidth: 0
           }]
         };
@@ -529,8 +584,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           datasets: [{
             label: 'Stock Value ($)',
             data: data,
-            backgroundColor: '#0d6efd',
-            borderColor: '#0d6efd',
+            backgroundColor: '#0d9488',
+            borderColor: '#0d9488',
             borderWidth: 0
           }]
         };
@@ -546,8 +601,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           datasets: [{
             label: 'Stock Value ($)',
             data: filteredData.map(d => Number(d.stockValue) || 0),
-            backgroundColor: '#0d6efd',
-            borderColor: '#0d6efd',
+            backgroundColor: '#0d9488',
+            borderColor: '#0d9488',
             borderWidth: 0
           }]
         };
@@ -584,7 +639,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Initialize chart options with theme settings
     this.chartOptions = {
       chart: {
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Bricolage Grotesque', sans-serif",
         toolbar: { show: false },
         background: 'transparent',
         animations: {
@@ -631,10 +686,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         type: 'gradient',
         gradient: {
           shadeIntensity: 1,
-          opacityFrom: 0.6,
-          opacityTo: 0.1,
-          stops: [0, 90, 100],
-          gradientToColors: ['#818cf8']
+          opacityFrom: 0.55,
+          opacityTo: 0.08,
+          stops: [0, 50, 100]
         }
       },
       legend: {
@@ -656,7 +710,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.barChartOptions = {
       chart: {
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Bricolage Grotesque', sans-serif",
         toolbar: { show: false },
         background: 'transparent',
         animations: {
@@ -673,7 +727,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           distributed: false
         }
       },
-      colors: [theme.dangerColor],
+      colors: ['#0d9488'], // Teal – clear and user-friendly
       dataLabels: {
         enabled: false
       },
@@ -707,12 +761,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
         gradient: {
           shade: 'light',
           type: 'vertical',
-          shadeIntensity: 0.5,
-          gradientToColors: ['#fb7185'],
-          inverseColors: true,
-          opacityFrom: 1,
-          opacityTo: 0.7,
-          stops: [0, 100]
+          shadeIntensity: 0.6,
+          opacityFrom: 0.85,
+          opacityTo: 0.4,
+          stops: [0, 50, 100]
         }
       },
       legend: {
@@ -761,7 +813,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   chartOptions: any = {
     chart: {
-      fontFamily: "'Inter', sans-serif",
+      fontFamily: "'Bricolage Grotesque', sans-serif",
       toolbar: { show: false },
       background: 'transparent',
       animations: { enabled: true, easing: 'easeinout', speed: 800 }
@@ -804,10 +856,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       type: 'gradient',
       gradient: {
         shadeIntensity: 1,
-        opacityFrom: 0.6,
-        opacityTo: 0.1,
-        stops: [0, 90, 100],
-        gradientToColors: ['#818cf8'] // Fade Indigo to Blue-ish
+        opacityFrom: 0.55,
+        opacityTo: 0.08,
+        stops: [0, 50, 100]
       }
     },
     legend: {
@@ -860,7 +911,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   barChartOptions: any = {
     chart: {
-      fontFamily: "'Inter', sans-serif",
+      fontFamily: "'Bricolage Grotesque', sans-serif",
       toolbar: { show: false },
       background: 'transparent',
       animations: { enabled: true, easing: 'easeinout', speed: 800 }
@@ -907,12 +958,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       gradient: {
         shade: 'light',
         type: 'vertical',
-        shadeIntensity: 0.5,
-        gradientToColors: ['#fb7185'], // Lighter pink
-        inverseColors: true,
-        opacityFrom: 1,
-        opacityTo: 0.7,
-        stops: [0, 100]
+        shadeIntensity: 0.6,
+        opacityFrom: 0.85,
+        opacityTo: 0.4,
+        stops: [0, 50, 100]
       }
     },
     legend: {
@@ -1004,7 +1053,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   onFullStatsClick(): void {
-    console.log('Full stats clicked');
+    this.router.navigate(['/analytics/sales']);
   }
 
   onMenuClick(): void {

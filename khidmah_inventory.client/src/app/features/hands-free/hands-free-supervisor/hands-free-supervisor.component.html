@@ -1,0 +1,28 @@
+<div class="supervisor-container">
+  <h1 class="title">Hands-free supervisor</h1>
+  <p class="subtitle">Who is picking, progress, speed, errors</p>
+
+  <div class="placeholder-card" *ngIf="loading">Loading active sessions...</div>
+
+  <div class="placeholder-card" *ngIf="!loading && workers.length === 0">
+    <p>No active hands-free sessions right now.</p>
+    <p class="hint">Workers appear here after they complete hands-free picks.</p>
+  </div>
+
+  <div class="sessions-grid" *ngIf="!loading && workers.length > 0">
+    <div class="session-card" *ngFor="let w of workers">
+      <div class="row">
+        <strong>{{ w.userName }}</strong>
+        <span>{{ progress(w) }}%</span>
+      </div>
+      <div class="meta">Warehouse: {{ w.warehouseName || '-' }}</div>
+      <div class="meta">Started: {{ w.startedAt | date: 'short' }}</div>
+      <div class="meta">Last activity: {{ (w.lastActivityAt || w.startedAt) | date: 'short' }}</div>
+      <div class="meta">Completed: {{ w.completedTasks }} / {{ w.totalTasks }}</div>
+      <div class="meta">Errors: {{ w.errors }}</div>
+      <div class="progress">
+        <div class="bar" [style.width.%]="progress(w)"></div>
+      </div>
+    </div>
+  </div>
+</div>

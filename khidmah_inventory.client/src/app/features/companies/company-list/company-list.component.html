@@ -1,0 +1,42 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a routerLink="/companies/new" class="btn btn-primary btn-sm ms-auto"><i class="bi bi-plus-lg me-1"></i> Add company</a>
+  </div>
+
+  <app-toast *ngIf="showToast" [message]="toastMessage" [type]="toastType" (close)="showToast = false"></app-toast>
+
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-stat-cards [cardCount]="3" class="mb-4"></app-skeleton-stat-cards>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="8" [columns]="4" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <div *ngIf="!loading" class="row g-3 mb-4 equal-height-cards">
+    <div class="col-md-4">
+      <app-kpi-stat-card title="Total Companies" [value]="companies.length" icon="bi-building" theme="primary"></app-kpi-stat-card>
+    </div>
+    <div class="col-md-4">
+      <app-kpi-stat-card title="Active Companies" [value]="activeCount" icon="bi-check-circle" theme="success"></app-kpi-stat-card>
+    </div>
+    <div class="col-md-4">
+      <app-kpi-stat-card title="Inactive Companies" [value]="inactiveCount" icon="bi-x-circle" theme="warning"></app-kpi-stat-card>
+    </div>
+  </div>
+
+  <app-unified-card *ngIf="!loading" customClass="border-0 shadow-sm">
+    <app-data-table
+      [columns]="columns"
+      [data]="pagedResult?.items ?? []"
+      [loading]="loading"
+      [config]="config"
+      [actions]="actions"
+      [pagedResult]="pagedResult"
+      [filterRequest]="filterRequest"
+      (filterChange)="onFilterChange($event)"
+      (pageChange)="onPageChange($event)"
+      (sortChange)="onSortChange($event)">
+    </app-data-table>
+  </app-unified-card>
+  </app-content-loader>
+</div>

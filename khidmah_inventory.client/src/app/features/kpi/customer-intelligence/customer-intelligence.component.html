@@ -1,0 +1,46 @@
+<div class="container-fluid py-4">
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-stat-cards [cardCount]="3" class="mb-4"></app-skeleton-stat-cards>
+    </ng-container>
+    <div *ngIf="data" class="kpi-content">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <label class="small text-muted mb-0">From</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateFrom" />
+        <label class="small text-muted mb-0">To</label>
+        <input type="date" class="form-control form-control-sm" style="width: auto;" [(ngModel)]="dateTo" />
+        <button class="btn btn-sm btn-primary" (click)="load()">Refresh</button>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <app-kpi-stat-card
+            [title]="data.customerCount.label"
+            [value]="formatKpiValue(data.customerCount)"
+            icon="bi-people"
+            [theme]="themeForKpi(data.customerCount, true)"
+            [trendPercent]="trendPercent(data.customerCount)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-12 col-md-4">
+          <app-kpi-stat-card
+            [title]="data.repeatRatePercent.label"
+            [value]="formatKpiValue(data.repeatRatePercent)"
+            icon="bi-arrow-repeat"
+            theme="info"
+            [trendPercent]="trendPercent(data.repeatRatePercent)">
+          </app-kpi-stat-card>
+        </div>
+        <div class="col-12 col-md-4">
+          <app-kpi-stat-card
+            [title]="data.averageLifetimeValue.label"
+            [value]="formatKpiValue(data.averageLifetimeValue)"
+            icon="bi-currency-dollar"
+            [theme]="themeForKpi(data.averageLifetimeValue, true)"
+            [trendPercent]="trendPercent(data.averageLifetimeValue)">
+          </app-kpi-stat-card>
+        </div>
+      </div>
+    </div>
+  </app-content-loader>
+</div>

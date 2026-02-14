@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { SignalRService } from '../../../core/services/signalr.service';
 import { ToastComponent } from '../../../shared/components/toast/toast.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { IconComponent } from '../../../shared/components/icon/icon.component';
@@ -38,6 +39,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
+    private signalRService: SignalRService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -70,8 +72,9 @@ export class LoginComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.showToastMessage('success', 'Login successful!');
+          this.signalRService.startConnection().catch(() => {});
           setTimeout(() => {
-            this.router.navigate([this.returnUrl]);
+            this.router.navigate(['/briefing'], { queryParams: { returnUrl: this.returnUrl } });
           }, 500);
         } else {
           this.showToastMessage('error', response.message || 'Login failed');

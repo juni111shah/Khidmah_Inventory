@@ -4,6 +4,7 @@ import { AnalyticsApiService } from '../../../core/services/analytics-api.servic
 import { SignalRService } from '../../../core/services/signalr.service';
 import { SalesAnalytics, TimeRangeType, AnalyticsRequest, AnalyticsType, ProductAnalytics, CustomerAnalytics } from '../../../core/models/analytics.model';
 import { ChartComponent, ChartData, ChartDataset } from '../../../shared/components/chart/chart.component';
+import { CHART_COLORS, CHART_PRIMARY, getChartColors } from '../../../shared/constants/chart-colors';
 import { TimeRangeFilterComponent } from '../../../shared/components/time-range-filter/time-range-filter.component';
 import { ToastComponent } from '../../../shared/components/toast/toast.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
@@ -11,7 +12,13 @@ import { DataTableComponent } from '../../../shared/components/data-table/data-t
 import { DataTableColumn, DataTableConfig } from '../../../shared/models/data-table.model';
 import { Subscription } from 'rxjs';
 import { UnifiedCardComponent } from '../../../shared/components/unified-card/unified-card.component';
+import { KpiStatCardComponent } from '../../../shared/components/kpi-stat-card/kpi-stat-card.component';
 import { HeaderService } from '../../../core/services/header.service';
+import { ContentLoaderComponent } from '../../../shared/components/content-loader/content-loader.component';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
+import { SkeletonStatCardsComponent } from '../../../shared/components/skeleton-stat-cards/skeleton-stat-cards.component';
+import { SkeletonChartComponent } from '../../../shared/components/skeleton-chart/skeleton-chart.component';
+import { SkeletonTableComponent } from '../../../shared/components/skeleton-table/skeleton-table.component';
 
 @Component({
   selector: 'app-sales-analytics',
@@ -23,7 +30,13 @@ import { HeaderService } from '../../../core/services/header.service';
     ToastComponent,
     LoadingSpinnerComponent,
     DataTableComponent,
-    UnifiedCardComponent
+    UnifiedCardComponent,
+    KpiStatCardComponent,
+    ContentLoaderComponent,
+    SkeletonLoaderComponent,
+    SkeletonStatCardsComponent,
+    SkeletonChartComponent,
+    SkeletonTableComponent
   ],
   templateUrl: './sales-analytics.component.html'
 })
@@ -218,8 +231,8 @@ export class SalesAnalyticsComponent implements OnInit, OnDestroy {
         {
           label: 'Sales',
           data: this.analytics.timeSeriesData.map(d => d.value),
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgba(54, 162, 235, 1)',
+          backgroundColor: CHART_PRIMARY,
+          borderColor: CHART_PRIMARY,
           borderWidth: 2,
           fill: true,
           tension: 0.4
@@ -234,22 +247,8 @@ export class SalesAnalyticsComponent implements OnInit, OnDestroy {
         {
           label: 'Sales by Category',
           data: this.analytics.categoryBreakdown.map(c => c.totalSales),
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.2)',
-            'rgba(54, 162, 235, 0.2)',
-            'rgba(255, 206, 86, 0.2)',
-            'rgba(75, 192, 192, 0.2)',
-            'rgba(153, 102, 255, 0.2)',
-            'rgba(255, 159, 64, 0.2)'
-          ],
-          borderColor: [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)'
-          ],
+          backgroundColor: getChartColors(this.analytics.categoryBreakdown.length),
+          borderColor: getChartColors(this.analytics.categoryBreakdown.length),
           borderWidth: 2
         }
       ]

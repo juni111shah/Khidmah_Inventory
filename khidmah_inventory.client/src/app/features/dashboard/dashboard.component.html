@@ -1,178 +1,226 @@
 <div class="dashboard-container container-fluid py-4">
-  <div *ngIf="loading" class="d-flex justify-content-center align-items-center py-5">
-    <app-loading-spinner></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!loading && dashboard" class="dashboard-content">
-
-    <!-- Futuristic Hero Section -->
-    <div class="dashboard-hero mb-4 p-4 rounded-4 shadow-lg position-relative overflow-hidden">
-      <div class="hero-bg-overlay"></div>
-      <div class="position-relative z-1 d-flex flex-wrap justify-content-between align-items-center gap-4">
-        <div class="hero-text">
-          <h1 class="display-6 fw-bold mb-1 text-white">{{ greeting }}, {{ user?.firstName || 'User' }}!</h1>
-          <p class="text-white text-opacity-75 mb-0">Here's what's happening with your inventory today.</p>
-        </div>
-        <div class="hero-actions d-flex gap-3">
-          <ng-container *ngFor="let action of quickActions">
-            <div *appHasPermission="action.permission"
-                 class="quick-action-pill p-1 pe-3 rounded-pill d-flex align-items-center gap-2 cursor-pointer transition-all"
-                 [routerLink]="action.route">
-              <div class="action-icon-circle rounded-circle d-flex align-items-center justify-content-center" [ngClass]="'bg-' + action.color">
-                <i class="bi" [ngClass]="action.icon"></i>
-              </div>
-              <span class="fw-bold text-white small">{{ action.label }}</span>
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <!-- Quick actions -->
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <app-skeleton-loader *ngFor="let i of skeletonQuickActionCount" [width]="'100px'" [height]="'36px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader>
+      </div>
+      <!-- Stat cards: match real layout (col-6 col-md-3) -->
+      <app-skeleton-stat-cards [cardCount]="4" class="mb-4"></app-skeleton-stat-cards>
+      <!-- Analyze → Predict → Act: one card, 3 columns -->
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <div class="rounded-3 border-0 shadow-sm p-4 bg-white">
+            <app-skeleton-loader [width]="'200px'" [height]="'14px'" shape="rounded" [animation]="'shimmer'" class="mb-3"></app-skeleton-loader>
+            <div class="row g-3">
+              <div class="col-md-4"><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'80%'" [height]="'32px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
+              <div class="col-md-4"><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'70%'" [height]="'32px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
+              <div class="col-md-4"><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'60%'" [height]="'32px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
             </div>
-          </ng-container>
+          </div>
         </div>
+      </div>
+      <!-- Decision support teaser: icon + title + description + button -->
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <div class="rounded-3 border-0 shadow-sm p-4 bg-white d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <app-skeleton-loader [width]="'48px'" [height]="'48px'" shape="circle" [animation]="'shimmer'"></app-skeleton-loader>
+              <div>
+                <app-skeleton-loader [width]="'220px'" [height]="'18px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader>
+                <app-skeleton-loader [width]="'280px'" [height]="'14px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader>
+              </div>
+            </div>
+            <app-skeleton-loader [width]="'80px'" [height]="'32px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader>
+          </div>
+        </div>
+      </div>
+      <!-- Charts row 1 -->
+      <div class="row g-3 mb-3">
+        <div class="col-lg-7"><app-skeleton-chart [chartHeight]="280" class="h-100"></app-skeleton-chart></div>
+        <div class="col-lg-5"><app-skeleton-chart [chartHeight]="280" [showSubtitle]="true"></app-skeleton-chart></div>
+      </div>
+      <!-- Chart row 2 -->
+      <div class="row g-4 mb-4">
+        <div class="col-12"><app-skeleton-chart [titleWidth]="'220px'" [chartHeight]="350"></app-skeleton-chart></div>
+      </div>
+      <!-- Three list cards -->
+      <div class="row g-4">
+        <div class="col-lg-4"><app-unified-card header="" customClass="h-100 border-0 shadow-sm"><app-skeleton-list [itemCount]="4" [showAvatar]="true"></app-skeleton-list></app-unified-card></div>
+        <div class="col-lg-4"><app-unified-card header="" customClass="h-100 border-0 shadow-sm"><app-skeleton-list [itemCount]="4" [showAvatar]="true"></app-skeleton-list></app-unified-card></div>
+        <div class="col-lg-4"><app-unified-card header="" customClass="h-100 border-0 shadow-sm"><app-skeleton-list [itemCount]="4" [showAvatar]="true"></app-skeleton-list></app-unified-card></div>
+      </div>
+    </ng-container>
+    <div *ngIf="dashboard" class="dashboard-content">
+    <!-- Quick actions: compact bar (no greeting card) -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <ng-container *ngFor="let action of quickActions">
+        <a *appHasPermission="action.permission"
+           [routerLink]="action.route"
+           class="btn btn-sm btn-outline-primary rounded-pill d-inline-flex align-items-center gap-2">
+          <i class="bi" [ngClass]="action.icon"></i>
+          <span>{{ action.label }}</span>
+        </a>
+      </ng-container>
+    </div>
+
+    <!-- Summary Cards Grid (reusable KPI stat cards) -->
+    <div class="row g-3 mb-4 equal-height-cards">
+      <div class="col-6 col-md-3">
+        <app-kpi-stat-card
+          title="Products"
+          [value]="formatNumber(dashboard.summary.totalProducts)"
+          icon="bi-box-seam"
+          theme="primary"
+          [trendData]="totalProductsTrend"
+          [trendPercent]="(getChangePercentage(totalProductsTrend) >= 0 ? '+' : '') + (Math.abs(getChangePercentage(totalProductsTrend)) | number:'1.0-0') + '%'">
+        </app-kpi-stat-card>
+      </div>
+      <div class="col-6 col-md-3">
+        <app-kpi-stat-card
+          title="Warehouses"
+          [value]="formatNumber(dashboard.summary.totalWarehouses)"
+          icon="bi-building"
+          theme="info"
+          [trendData]="warehousesTrend"
+          [trendPercent]="'+' + (Math.abs(getChangePercentage(warehousesTrend)) | number:'1.0-0') + '%'">
+        </app-kpi-stat-card>
+      </div>
+      <div class="col-6 col-md-3">
+        <app-kpi-stat-card
+          title="Stock Value"
+          [value]="formatCurrencyValue(dashboard.summary.totalStockValue)"
+          icon="bi-currency-dollar"
+          theme="success"
+          [trendData]="stockValueTrend"
+          [trendPercent]="(getChangePercentage(stockValueTrend) >= 0 ? '+' : '') + (Math.abs(getChangePercentage(stockValueTrend)) | number:'1.0-0') + '%'">
+        </app-kpi-stat-card>
+      </div>
+      <div class="col-6 col-md-3">
+        <app-kpi-stat-card
+          title="Low Stock"
+          [value]="formatNumber(dashboard.summary.lowStockItems)"
+          icon="bi-exclamation-triangle"
+          theme="danger"
+          [trendData]="lowStockTrend"
+          [trendPercent]="(getChangePercentage(lowStockTrend) < 0 ? '+' : '-') + (Math.abs(getChangePercentage(lowStockTrend)) | number:'1.0-0') + '%'">
+        </app-kpi-stat-card>
       </div>
     </div>
 
-    <!-- Enhanced Summary Cards Grid - Super Compact & Modern -->
+    <!-- Intelligence: Predictions, Anomalies, Risks, Opportunities (content from API or fallback from dashboard summary) -->
+    <div class="row g-3 mb-4" *ngIf="dashboard && !loadingIntelligence">
+      <div class="col-12">
+        <app-unified-card header="Analyze → Predict → Act" customClass="border-0 shadow-sm">
+          <div class="row g-3">
+            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.predictions?.length">
+              <h6 class="small text-uppercase text-muted mb-2">Predictions</h6>
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let p of analyzePredictActContent.predictions" class="d-flex justify-content-between align-items-center p-2 rounded bg-light">
+                  <span class="small">{{ p.label }}</span>
+                  <strong>{{ p.value }}</strong>
+                  <span class="badge" [ngClass]="p.trend === 'Up' ? 'bg-success' : p.trend === 'Down' ? 'bg-danger' : 'bg-secondary'">{{ p.trend }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.anomalies?.length">
+              <h6 class="small text-uppercase text-muted mb-2">Anomalies</h6>
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let a of analyzePredictActContent.anomalies" class="p-2 rounded border-start border-3 border-warning">
+                  <div class="small fw-bold">{{ a.metric }}</div>
+                  <div class="small text-muted">{{ a.description }}</div>
+                  <a *ngIf="a.drillDownRoute" [routerLink]="a.drillDownRoute" class="small">Drill down</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.risks?.length">
+              <h6 class="small text-uppercase text-muted mb-2">Risks</h6>
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let r of analyzePredictActContent.risks" class="p-2 rounded border-start border-3" [ngClass]="r.severity === 'High' ? 'border-danger' : 'border-warning'">
+                  <div class="small fw-bold">{{ r.title }}</div>
+                  <div class="small text-muted">{{ r.description }}</div>
+                  <a *ngIf="r.actionRoute" [routerLink]="r.actionRoute" class="btn btn-sm btn-outline-primary mt-1">Act</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.opportunities?.length">
+              <h6 class="small text-uppercase text-muted mb-2">Opportunities</h6>
+              <div class="d-flex flex-column gap-2">
+                <div *ngFor="let o of analyzePredictActContent.opportunities" class="p-2 rounded bg-success bg-opacity-10">
+                  <div class="small fw-bold">{{ o.title }}</div>
+                  <div class="small text-muted">{{ o.description }}</div>
+                  <a *ngIf="o.actionRoute" [routerLink]="o.actionRoute" class="btn btn-sm btn-success mt-1">View</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </app-unified-card>
+      </div>
+    </div>
+
+    <!-- Decision support teaser -->
     <div class="row g-3 mb-4">
-      <!-- Total Products -->
-      <div class="col-6 col-md-3">
-        <app-unified-card [hoverable]="true" customClass="modern-stat-card border-0 shadow-sm">
-          <div class="stat-card-content">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div class="stat-icon-wrapper bg-primary-light text-primary">
-                <i class="bi bi-box-seam"></i>
+      <div class="col-12">
+        <app-unified-card [hoverable]="true" customClass="border-0 shadow-sm">
+          <a routerLink="/intelligence/decisions" class="text-decoration-none text-dark d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                <i class="bi bi-lightbulb text-primary fs-4"></i>
               </div>
-              <div class="trend-badge" [class.trend-up]="getChangePercentage(totalProductsTrend) >= 0" [class.trend-down]="getChangePercentage(totalProductsTrend) < 0">
-                {{ Math.abs(getChangePercentage(totalProductsTrend)) | number:'1.0-0' }}%
-              </div>
-            </div>
-            <div class="stat-body">
-              <h6 class="text-muted smaller fw-bold text-uppercase mb-0">Products</h6>
-              <h3 class="fw-bold mb-0">{{ formatNumber(dashboard.summary.totalProducts) }}</h3>
-            </div>
-          </div>
-          <div class="stat-bg-chart">
-            <app-sparkline-chart [data]="totalProductsTrend" color="var(--primary-color)" [height]="50" [width]="280" [showBars]="false"></app-sparkline-chart>
-          </div>
-        </app-unified-card>
-      </div>
-
-      <!-- Warehouses -->
-      <div class="col-6 col-md-3">
-        <app-unified-card [hoverable]="true" customClass="modern-stat-card border-0 shadow-sm">
-          <div class="stat-card-content">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div class="stat-icon-wrapper bg-info-light text-info">
-                <i class="bi bi-building"></i>
-              </div>
-              <div class="trend-badge trend-up">
-                 +{{ Math.abs(getChangePercentage(warehousesTrend)) | number:'1.0-0' }}%
+              <div>
+                <h6 class="mb-0">Decision support &amp; optimization</h6>
+                <p class="mb-0 small text-muted">Actionable intelligence, what-if simulator, business health score</p>
               </div>
             </div>
-            <div class="stat-body">
-              <h6 class="text-muted smaller fw-bold text-uppercase mb-0">Warehouses</h6>
-              <h3 class="fw-bold mb-0">{{ formatNumber(dashboard.summary.totalWarehouses) }}</h3>
-            </div>
-          </div>
-          <div class="stat-bg-chart">
-            <app-sparkline-chart [data]="warehousesTrend" color="var(--info-color)" [height]="50" [width]="280" [showBars]="false"></app-sparkline-chart>
-          </div>
-        </app-unified-card>
-      </div>
-
-      <!-- Stock Value -->
-      <div class="col-6 col-md-3">
-        <app-unified-card [hoverable]="true" customClass="modern-stat-card border-0 shadow-sm">
-          <div class="stat-card-content">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div class="stat-icon-wrapper bg-success-light text-success">
-                <i class="bi bi-currency-dollar"></i>
-              </div>
-              <div class="trend-badge" [class.trend-up]="getChangePercentage(stockValueTrend) >= 0" [class.trend-down]="getChangePercentage(stockValueTrend) < 0">
-                {{ Math.abs(getChangePercentage(stockValueTrend)) | number:'1.0-0' }}%
-              </div>
-            </div>
-            <div class="stat-body">
-              <h6 class="text-muted smaller fw-bold text-uppercase mb-0">Stock Value</h6>
-              <h3 class="fw-bold mb-0 text-truncate">{{ formatCurrencyValue(dashboard.summary.totalStockValue) }}</h3>
-            </div>
-          </div>
-          <div class="stat-bg-chart">
-            <app-sparkline-chart [data]="stockValueTrend" color="var(--success-color)" [height]="50" [width]="280" [showBars]="false"></app-sparkline-chart>
-          </div>
-        </app-unified-card>
-      </div>
-
-      <!-- Low Stock -->
-      <div class="col-6 col-md-3">
-        <app-unified-card [hoverable]="true" customClass="modern-stat-card border-0 shadow-sm">
-          <div class="stat-card-content">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div class="stat-icon-wrapper bg-danger-light text-danger">
-                <i class="bi bi-exclamation-triangle"></i>
-              </div>
-              <div class="trend-badge" [class.trend-up]="getChangePercentage(lowStockTrend) < 0" [class.trend-down]="getChangePercentage(lowStockTrend) >= 0">
-                {{ Math.abs(getChangePercentage(lowStockTrend)) | number:'1.0-0' }}%
-              </div>
-            </div>
-            <div class="stat-body">
-              <h6 class="text-muted smaller fw-bold text-uppercase mb-0">Low Stock</h6>
-              <h3 class="fw-bold mb-0">{{ formatNumber(dashboard.summary.lowStockItems) }}</h3>
-            </div>
-          </div>
-          <div class="stat-bg-chart">
-            <app-sparkline-chart [data]="lowStockTrend" color="var(--danger-color)" [height]="50" [width]="280" [showBars]="false"></app-sparkline-chart>
-          </div>
+            <span class="btn btn-sm btn-outline-primary">View</span>
+          </a>
         </app-unified-card>
       </div>
     </div>
 
     <!-- Charts Row 1 - Sales Performance & Stock Analysis -->
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-3 equal-height-cards dashboard-chart-cards">
       <!-- Stats Card -->
       <div class="col-lg-7">
         <app-stat-card
           title="Sales Performance"
-          icon="bi-graph-up-arrow"
-          iconColor="#6366f1"
-          source="Real-time"
           [range]="getStatCardRange() + ' units'"
           [period]="getStatCardPeriod()"
           [barData]="statCardData"
+          [chartHeight]="280"
           [selectedTimeFrame]="selectedTimeFrame"
-          (timeFrameChange)="onTimeFrameChange($event)"
-          (fullStatsClick)="onFullStatsClick()"
-          (menuClick)="onMenuClick()">
+          [showFullStats]="false"
+          (timeFrameChange)="onTimeFrameChange($event)">
         </app-stat-card>
       </div>
 
       <!-- Unified Stock Analysis Chart -->
       <div class="col-lg-5">
         <app-unified-card customClass="h-100 border-0 shadow-sm futuristic-card overflow-hidden">
-          <div class="stat-card-header p-4 pb-0">
-            <div class="header-left">
-              <div class="title-row d-flex align-items-center mb-1">
-                <h3 class="stat-title mb-0 me-2">Stock Analysis</h3>
-                <div class="pulse-indicator pulse-blue"></div>
+          <!-- Row 1: Title + buttons. Row 2: Subtitle only -->
+          <div class="dashboard-chart-card-header">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+              <h3 class="stat-title mb-0">Stock Analysis</h3>
+              <div class="futuristic-tabs d-flex p-1 rounded-pill stock-analysis-tabs">
+                <button
+                  class="flex-grow-1 border-0 rounded-pill transition-all py-2 px-3 small fw-bold"
+                  [class.active]="selectedStockTab === 'warehouse'"
+                  (click)="onStockTabChange('warehouse')">
+                  Warehouses
+                </button>
+                <button
+                  class="flex-grow-1 border-0 rounded-pill transition-all py-2 px-3 small fw-bold"
+                  [class.active]="selectedStockTab === 'category'"
+                  (click)="onStockTabChange('category')">
+                  Categories
+                </button>
               </div>
-              <p class="stat-source mb-0">Live inventory metrics</p>
             </div>
+            <p class="text-muted small mb-0">By warehouse or category</p>
           </div>
 
-          <!-- Futuristic Tabs -->
-          <div class="p-4 pt-2">
-            <div class="futuristic-tabs d-flex p-1 rounded-pill mb-4">
-              <button
-                class="flex-grow-1 border-0 rounded-pill transition-all py-2 small fw-bold"
-                [class.active]="selectedStockTab === 'warehouse'"
-                (click)="onStockTabChange('warehouse')">
-                Warehouses
-              </button>
-              <button
-                class="flex-grow-1 border-0 rounded-pill transition-all py-2 small fw-bold"
-                [class.active]="selectedStockTab === 'category'"
-                (click)="onStockTabChange('category')">
-                Categories
-              </button>
-            </div>
-
-            <!-- Chart Container -->
+          <!-- Chart Container -->
+          <div class="dashboard-chart-card-body">
             <div class="chart-container" style="height: 280px;">
               <app-chart
                 *ngIf="unifiedStockChartData && unifiedStockChartData.datasets && unifiedStockChartData.datasets.length > 0"
@@ -181,9 +229,9 @@
                 [options]="barChartOptions"
                 [height]="280"
               ></app-chart>
-              <div *ngIf="!unifiedStockChartData || !unifiedStockChartData.datasets || unifiedStockChartData.datasets.length === 0" class="text-center py-5 text-muted">
-                <i class="bi bi-bar-chart fs-1 d-block mb-3 opacity-25"></i>
-                <p>Analyzing stock data...</p>
+              <div *ngIf="!unifiedStockChartData || !unifiedStockChartData.datasets || unifiedStockChartData.datasets.length === 0" class="text-center py-4 text-muted">
+                <i class="bi bi-bar-chart fs-1 d-block mb-2 opacity-25"></i>
+                <p class="mb-0 small">Analyzing stock data...</p>
               </div>
             </div>
           </div>
@@ -228,7 +276,7 @@
     </div>
 
     <!-- Dynamic Activity & Lists -->
-    <div class="row g-4">
+    <div class="row g-4 equal-height-cards">
       <!-- High Performance Products -->
       <div class="col-lg-4">
         <app-unified-card header="Top Selling" customClass="h-100 border-0 shadow-sm futuristic-card">
@@ -305,6 +353,7 @@
       </div>
     </div>
   </div>
+  </app-content-loader>
 
   <app-toast
     *ngIf="showToast"

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Khidmah_Inventory.Application.Common.Constants;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Features.Pos.Dtos;
@@ -29,11 +30,13 @@ public class CreatePosSaleCommandHandler : IRequestHandler<CreatePosSaleCommand,
 {
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
+    private readonly IOperationsBroadcast? _broadcast;
 
-    public CreatePosSaleCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
+    public CreatePosSaleCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser, IOperationsBroadcast? broadcast = null)
     {
         _context = context;
         _currentUser = currentUser;
+        _broadcast = broadcast;
     }
 
     public async Task<Result<PosSaleDto>> Handle(CreatePosSaleCommand request, CancellationToken cancellationToken)
@@ -87,6 +90,24 @@ public class CreatePosSaleCommandHandler : IRequestHandler<CreatePosSaleCommand,
 
         _context.SalesOrders.Add(salesOrder);
         await _context.SaveChangesAsync(cancellationToken);
+
+        if (_broadcast != null)
+        {
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.SaleCompleted,
+                companyId.Value,
+                salesOrder.Id,
+                "SalesOrder",
+                new { OrderNumber = salesOrder.OrderNumber, TotalAmount = salesOrder.TotalAmount, IsPos = true },
+                cancellationToken);
+            await _broadcast.BroadcastAsync(
+                OperationsEventNames.StockChanged,
+                companyId.Value,
+                null,
+                "Warehouse",
+                new { WarehouseId = request.WarehouseId, Message = "POS sale completed" },
+                cancellationToken);
+        }
 
         return Result<PosSaleDto>.Success(new PosSaleDto
         {

@@ -25,6 +25,21 @@ body.custom-scrollbar {
     }
 }
 
+/* Dark theme scrollbar */
+html[data-theme="dark"] body.custom-scrollbar {
+    &::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-color, #475569);
+
+        &:hover {
+            background: var(--scrollbar-color, #64748b);
+        }
+    }
+}
+
 /* ============ GLASS EFFECT ============ */
 body.glass-effect-enabled {
 
@@ -37,6 +52,13 @@ body.glass-effect-enabled {
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
     }
+}
+
+html[data-theme="dark"] body.glass-effect-enabled .card.glass,
+html[data-theme="dark"] body.glass-effect-enabled .modal-content.glass,
+html[data-theme="dark"] body.glass-effect-enabled .dropdown-menu.glass {
+    background: color-mix(in srgb, var(--surface-color) 85%, transparent) !important;
+    border-color: var(--border-color) !important;
 }
 
 /* ============ BUTTON STYLES ============ */
@@ -117,18 +139,12 @@ body[data-card-style="glass"] .card {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Card Hover Effects */
-body[data-card-hover-effect="lift"] .card:hover {
-    transform: var(--hover-transform, translateY(-3px));
-    box-shadow: var(--card-hover-shadow, 0 8px 20px rgba(0, 0, 0, 0.12));
-}
-
-body[data-card-hover-effect="glow"] .card:hover {
-    box-shadow: 0 0 30px rgba(var(--primary-color), 0.3);
-}
-
+/* Card Hover Effects - disabled app-wide */
+body[data-card-hover-effect="lift"] .card:hover,
+body[data-card-hover-effect="glow"] .card:hover,
 body[data-card-hover-effect="scale"] .card:hover {
-    transform: scale(1.02);
+    transform: none;
+    box-shadow: inherit;
 }
 
 /* ============ FORM FIELD STYLES ============ */
@@ -247,6 +263,10 @@ body[data-table-style="striped"] .table {
     }
 }
 
+html[data-theme="dark"] body[data-table-style="striped"] .table tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
 body[data-table-style="bordered"] .table {
     border: 1px solid var(--border-color);
 
@@ -293,6 +313,8 @@ body[data-table-row-hover-effect="shadow"] .table tbody tr:hover {
 
 /* ============ MODAL STYLES ============ */
 .modal-content {
+    background-color: var(--surface-color) !important;
+    border: 1px solid var(--border-color);
     border-radius: var(--modal-border-radius, 16px) !important;
     box-shadow: var(--modal-shadow, 0 20px 60px rgba(0, 0, 0, 0.3));
 }
@@ -312,6 +334,8 @@ body[data-modal-backdrop="blur"] .modal-backdrop {
 
 /* ============ DROPDOWN STYLES ============ */
 .dropdown-menu {
+    background-color: var(--surface-color) !important;
+    border: 1px solid var(--border-color);
     border-radius: var(--dropdown-border-radius, 12px) !important;
     box-shadow: var(--dropdown-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
 }

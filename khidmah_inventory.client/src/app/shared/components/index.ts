@@ -44,6 +44,10 @@ export { UnifiedFileUploadComponent } from './unified-file-upload/unified-file-u
 export { ImageUploadComponent } from './image-upload/image-upload.component';
 export type { ImageUploadType } from './image-upload/image-upload.component';
 
+// KPI / Stats
+export { KpiStatCardComponent } from './kpi-stat-card/kpi-stat-card.component';
+export type { KpiStatCardTheme } from './kpi-stat-card/kpi-stat-card.component';
+
 // Layout Components
 export { UnifiedCardComponent } from './unified-card/unified-card.component';
 export type { CardVariant, CardElevation } from './unified-card/unified-card.component';
@@ -63,3 +67,16 @@ export { PaginationComponent } from './pagination/pagination.component';
 export { ExportComponent } from './export/export.component';
 export type { ExportFormat, ExportOptions } from '../../core/services/export.service';
 
+// Skeleton loading system
+export { SkeletonLoaderComponent } from './skeleton-loader/skeleton-loader.component';
+export { SkeletonTableComponent } from './skeleton-table/skeleton-table.component';
+export { SkeletonFormComponent } from './skeleton-form/skeleton-form.component';
+export { SkeletonFieldComponent } from './skeleton-field/skeleton-field.component';
+export { SkeletonDetailHeaderComponent } from './skeleton-detail-header/skeleton-detail-header.component';
+export { SkeletonStatCardsComponent } from './skeleton-stat-cards/skeleton-stat-cards.component';
+export { SkeletonChartComponent } from './skeleton-chart/skeleton-chart.component';
+export { SkeletonListComponent } from './skeleton-list/skeleton-list.component';
+export { SkeletonSidePanelComponent } from './skeleton-side-panel/skeleton-side-panel.component';
+export { SkeletonActivityFeedComponent } from './skeleton-activity-feed/skeleton-activity-feed.component';
+export { SkeletonListingHeaderComponent } from './skeleton-listing-header/skeleton-listing-header.component';
+export { ContentLoaderComponent } from './content-loader/content-loader.component';

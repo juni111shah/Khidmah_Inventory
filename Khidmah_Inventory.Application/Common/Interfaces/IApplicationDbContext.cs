@@ -29,6 +29,14 @@ public interface IApplicationDbContext
     DbSet<WarehouseZone> WarehouseZones { get; }
     DbSet<Bin> Bins { get; }
 
+    // Autonomous: digital warehouse map
+    DbSet<WarehouseMap> WarehouseMaps { get; }
+    DbSet<MapZone> MapZones { get; }
+    DbSet<MapAisle> MapAisles { get; }
+    DbSet<MapRack> MapRacks { get; }
+    DbSet<MapBin> MapBins { get; }
+    DbSet<WorkTask> WorkTasks { get; }
+
     // Inventory
     DbSet<StockTransaction> StockTransactions { get; }
     DbSet<StockLevel> StockLevels { get; }
@@ -52,6 +60,9 @@ public interface IApplicationDbContext
     // Collaboration
     DbSet<ActivityLog> ActivityLogs { get; }
     DbSet<Comment> Comments { get; }
+    DbSet<Notification> Notifications { get; }
+    DbSet<AutomationRule> AutomationRules { get; }
+    DbSet<AutomationRuleHistory> AutomationRuleHistories { get; }
 
     // Workflows
     DbSet<Workflow> Workflows { get; }
@@ -60,6 +71,22 @@ public interface IApplicationDbContext
 
     // Reports
     DbSet<CustomReport> CustomReports { get; }
+
+    // Finance / Accounting
+    DbSet<Account> Accounts { get; }
+    DbSet<JournalEntry> JournalEntries { get; }
+    DbSet<JournalLine> JournalLines { get; }
+    DbSet<Budget> Budgets { get; }
+    DbSet<Currency> Currencies { get; }
+    DbSet<ExchangeRate> ExchangeRates { get; }
+
+    // Platform
+    DbSet<ApiKey> ApiKeys { get; }
+    DbSet<ApiKeyUsageLog> ApiKeyUsageLogs { get; }
+    DbSet<Webhook> Webhooks { get; }
+    DbSet<WebhookDeliveryLog> WebhookDeliveryLogs { get; }
+    DbSet<CompanyIntegration> CompanyIntegrations { get; }
+    DbSet<ScheduledReport> ScheduledReports { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { SignalRService } from '../../../core/services/signalr.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { IconComponent } from '../icon/icon.component';
 import { HasPermissionDirective } from '../../directives/has-permission.directive';
@@ -20,6 +21,7 @@ export class UserMenuComponent implements OnInit {
   constructor(
     public authService: AuthService,
     public permissionService: PermissionService,
+    private signalRService: SignalRService,
     private router: Router
   ) {}
 
@@ -50,6 +52,7 @@ export class UserMenuComponent implements OnInit {
   }
 
   logout(): void {
+    this.signalRService.stopConnection().catch(() => {});
     this.authService.logout().subscribe({
       next: () => {
         this.closeMenu();

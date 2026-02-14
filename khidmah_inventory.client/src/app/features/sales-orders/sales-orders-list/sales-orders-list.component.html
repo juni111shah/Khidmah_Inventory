@@ -1,28 +1,39 @@
-<app-listing-container
-  [searchPlaceholder]="config.searchPlaceholder || 'Search sales orders...'"
-  [searchTerm]="searchTerm"
-  [totalColumnsCount]="columns.length"
-  [visibleColumnsCount]="visibleColumnsCount"
-  [columns]="columns"
-  [showColumnDropdown]="showColumnToggle"
-  [showFilters]="true"
-  [showFilterPanel]="showFilterPanel"
-  [filterCount]="filterRequest.filters?.length || 0"
-  [hasActiveFilters]="(filterRequest.filters?.length || 0) > 0 || statusFilter !== null || !!searchTerm"
-  (search)="onSearch($event)"
-  (filterClicked)="onFilterToggle()"
-  (toggleColumns)="onColumnsToggle()"
-  (closeColumns)="showColumnToggle = false"
-  (columnToggle)="onColumnToggle($event)">
-  
-  <div listing-actions class="d-flex gap-2">
-    <app-unified-button variant="primary" (clicked)="addSalesOrder()" *appHasPermission="'SalesOrders:Create'">
+<app-content-loader [loading]="loading">
+  <ng-container skeleton>
+    <div class="listing-container py-4">
+      <div class="listing-card card border-0 shadow-sm p-4">
+        <app-skeleton-listing-header [buttonCount]="2"></app-skeleton-listing-header>
+        <app-skeleton-table [rows]="10" [columns]="6" [showHeader]="true"></app-skeleton-table>
+      </div>
+    </div>
+  </ng-container>
+  <app-listing-container
+    data-onboarding="sales-orders-list-shell"
+    [searchPlaceholder]="config.searchPlaceholder || 'Search sales orders...'"
+    [searchTerm]="searchTerm"
+    [totalColumnsCount]="columns.length"
+    [visibleColumnsCount]="visibleColumnsCount"
+    [columns]="columns"
+    [showColumnDropdown]="showColumnToggle"
+    [showFilters]="true"
+    [showFilterPanel]="showFilterPanel"
+    [filterCount]="filterRequest.filters?.length || 0"
+    [hasActiveFilters]="(filterRequest.filters?.length || 0) > 0 || statusFilter !== null || !!searchTerm"
+    (searchTermChange)="searchTerm = $event; onSearchTermChange($event)"
+    (search)="onSearchImmediate($event)"
+    (filterClicked)="onFilterToggle()"
+    (toggleColumns)="onColumnsToggle()"
+    (closeColumns)="showColumnToggle = false"
+    (columnToggle)="onColumnToggle($event)">
+    <div listing-actions class="d-flex gap-2 align-items-center" data-onboarding="sales-orders-list-actions">
+    <app-saved-views-dropdown [tableId]="tableId" [currentState]="currentTableState" (loadView)="onSavedViewLoad($event)"></app-saved-views-dropdown>
+    <app-unified-button variant="primary" (clicked)="addSalesOrder()" *appHasPermission="'SalesOrders:Create'" data-onboarding="sales-orders-list-create">
       <app-icon name="plus-circle" size="sm" customClass="me-2"></app-icon>
       New Sales Order
     </app-unified-button>
   </div>
 
-  <div listing-export>
+  <div listing-export data-onboarding="sales-orders-list-export">
     <app-export
       [data]="salesOrders"
       [columns]="columns"
@@ -33,17 +44,17 @@
     </app-export>
   </div>
 
-  <div filter-panel>
-    <app-filter-panel
-      [config]="filterPanelConfig"
-      [filterValues]="filterPanelValues"
-      (filterApplied)="onFilterApplied($event)"
-      (filterReset)="onFilterReset()"
-      (filterClose)="onFilterClose()">
-    </app-filter-panel>
+  <div filter-panel data-onboarding="sales-orders-list-filters">
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item"><a class="nav-link" [class.active]="!showFilterBuilder" (click)="showFilterBuilder = false" role="button">Quick filters</a></li>
+      <li class="nav-item"><a class="nav-link" [class.active]="showFilterBuilder" (click)="showFilterBuilder = true" role="button">Filter builder</a></li>
+    </ul>
+    <app-filter-panel *ngIf="!showFilterBuilder" [config]="filterPanelConfig" [filterValues]="filterPanelValues" (filterApplied)="onFilterApplied($event)" (filterReset)="onFilterReset()" (filterClose)="onFilterClose()"></app-filter-panel>
+    <app-filter-builder *ngIf="showFilterBuilder" [columns]="filterBuilderColumns" [initialFilters]="filterRequest.filters || []" (apply)="onFilterBuilderApply($event)" (clear)="onFilterBuilderClear()"></app-filter-builder>
   </div>
 
   <app-data-table
+    data-onboarding="sales-orders-list-table"
     [columns]="columns"
     [data]="salesOrders"
     [loading]="loading"
@@ -55,7 +66,8 @@
     (pageChange)="onPageChange($event)"
     (sortChange)="onSortChange($event)">
   </app-data-table>
-</app-listing-container>
+  </app-listing-container>
+</app-content-loader>
 
 <app-toast
   *ngIf="showToast"

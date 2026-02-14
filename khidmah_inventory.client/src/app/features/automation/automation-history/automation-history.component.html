@@ -1,0 +1,27 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a routerLink="/automation" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Back</a>
+  </div>
+
+  <app-content-loader [loading]="loading">
+    <ng-container skeleton>
+      <app-skeleton-detail-header [actionCount]="0" class="mb-4"></app-skeleton-detail-header>
+      <app-unified-card header="" customClass="border-0 shadow-sm">
+        <app-skeleton-table [rows]="8" [columns]="4" [showHeader]="true"></app-skeleton-table>
+      </app-unified-card>
+    </ng-container>
+    <app-unified-card *ngIf="!loading" customClass="border-0 shadow-sm">
+      <app-data-table
+        [columns]="columns"
+        [data]="pagedResult?.items ?? []"
+        [loading]="loading"
+        [config]="config"
+        [pagedResult]="pagedResult"
+        [filterRequest]="filterRequest"
+        (filterChange)="onFilterChange($event)"
+        (pageChange)="onPageChange($event)"
+        (sortChange)="onSortChange($event)">
+      </app-data-table>
+    </app-unified-card>
+  </app-content-loader>
+</div>
