@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Khidmah_Inventory.Application.Common.Interfaces;
 using Khidmah_Inventory.Application.Common.Models;
 using Khidmah_Inventory.Application.Common.Services;
@@ -241,7 +242,7 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         }
 
         var parsedIntent = await _intentParser.ParseAsync(input, cancellationToken);
-        if (string.Equals(parsedIntent.Action, "Greeting", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(parsedIntent.Action, "Greeting", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(state.CurrentTask))
         {
             return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
             {
@@ -250,8 +251,14 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
                 SessionState = state
             });
         }
+        else if (string.Equals(parsedIntent.Action, "Greeting", StringComparison.OrdinalIgnoreCase))
+        {
+            // Ignore greeting chatter while an operation is in progress.
+            input = string.Empty;
+            inputLower = string.Empty;
+        }
 
-        if (string.Equals(parsedIntent.Action, "Thanks", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(parsedIntent.Action, "Thanks", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(state.CurrentTask))
         {
             return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
             {
@@ -259,6 +266,11 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
                 Reply = "You're welcome. Tell me the next task when you're ready.",
                 SessionState = state
             });
+        }
+        else if (string.Equals(parsedIntent.Action, "Thanks", StringComparison.OrdinalIgnoreCase))
+        {
+            input = string.Empty;
+            inputLower = string.Empty;
         }
 
         if (string.Equals(parsedIntent.Action, "Help", StringComparison.OrdinalIgnoreCase))
@@ -271,16 +283,16 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
             return Ask(state, "Which report do you want: Sales Report, Purchase Report, Inventory Report, Profit & Loss Report, or Balance Sheet?");
 
         if (string.Equals(parsedIntent.Action, "CustomerList", StringComparison.OrdinalIgnoreCase))
-            return await ReplyWithEntityList(state, "Customers", _context.Customers.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
+            return await ReplyWithEntityListFromInput(state, "Customers", input, _context.Customers.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
 
         if (string.Equals(parsedIntent.Action, "SupplierList", StringComparison.OrdinalIgnoreCase))
-            return await ReplyWithEntityList(state, "Suppliers", _context.Suppliers.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
+            return await ReplyWithEntityListFromInput(state, "Suppliers", input, _context.Suppliers.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
 
         if (string.Equals(parsedIntent.Action, "ProductList", StringComparison.OrdinalIgnoreCase))
-            return await ReplyWithEntityList(state, "Products", _context.Products.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
+            return await ReplyWithEntityListFromInput(state, "Products", input, _context.Products.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
 
         if (string.Equals(parsedIntent.Action, "WarehouseList", StringComparison.OrdinalIgnoreCase))
-            return await ReplyWithEntityList(state, "Warehouses", _context.Warehouses.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
+            return await ReplyWithEntityListFromInput(state, "Warehouses", input, _context.Warehouses.AsNoTracking().Where(x => x.CompanyId == companyId.Value && !x.IsDeleted).Select(x => x.Name), cancellationToken);
 
         if (string.Equals(parsedIntent.Action, "ExportProducts", StringComparison.OrdinalIgnoreCase))
             return await ExecuteExportProducts(companyId.Value, input, state, cancellationToken);
@@ -288,7 +300,11 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         if (string.Equals(parsedIntent.Action, "ExportCustomers", StringComparison.OrdinalIgnoreCase))
             return await ExecuteExportCustomers(companyId.Value, input, state, cancellationToken);
 
-        if (string.Equals(parsedIntent.Action, "ProductCrudHelp", StringComparison.OrdinalIgnoreCase))
+        var suppressCrudHelpIntent = !string.IsNullOrWhiteSpace(state.CurrentTask)
+            && IsCrudHelpAction(parsedIntent.Action)
+            && !LooksLikeExplicitCrudHelpRequest(inputLower);
+
+        if (string.Equals(parsedIntent.Action, "ProductCrudHelp", StringComparison.OrdinalIgnoreCase) && !suppressCrudHelpIntent)
         {
             return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
             {
@@ -298,7 +314,7 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
             });
         }
 
-        if (string.Equals(parsedIntent.Action, "CustomerCrudHelp", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(parsedIntent.Action, "CustomerCrudHelp", StringComparison.OrdinalIgnoreCase) && !suppressCrudHelpIntent)
         {
             return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
             {
@@ -308,7 +324,7 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
             });
         }
 
-        if (string.Equals(parsedIntent.Action, "SupplierCrudHelp", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(parsedIntent.Action, "SupplierCrudHelp", StringComparison.OrdinalIgnoreCase) && !suppressCrudHelpIntent)
         {
             return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
             {
@@ -318,7 +334,7 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
             });
         }
 
-        if (string.Equals(parsedIntent.Action, "WarehouseCrudHelp", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(parsedIntent.Action, "WarehouseCrudHelp", StringComparison.OrdinalIgnoreCase) && !suppressCrudHelpIntent)
         {
             return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
             {
@@ -374,6 +390,23 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
                 return Ask(state, $"Did you mean {inferredLabel}? Please reply Yes or No.");
             }
         }
+        else if (!string.IsNullOrWhiteSpace(state.CurrentTask) &&
+                 string.IsNullOrWhiteSpace(requestedTask) &&
+                 !string.IsNullOrWhiteSpace(input) &&
+                 LooksLikeExplicitTaskSwitch(input) &&
+                 TryInferTaskFromInput(input, out var switchTask, out var _))
+        {
+            if (!string.Equals(state.CurrentTask, switchTask, StringComparison.OrdinalIgnoreCase))
+            {
+                // Fast task-switch: user asks another task while in-progress.
+                state.CurrentTask = switchTask;
+                state.Fields.Clear();
+                state.StepIndex = 0;
+                state.AwaitingConfirmation = false;
+                state.LastQuestion = null;
+                state.LastAssistantMessage = null;
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(state.CurrentTask))
         {
@@ -383,6 +416,15 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         var doneCommand = inputLower == "done" || request.Confirmed ||
             (state.AwaitingConfirmation && IsAffirmativeInput(inputLower));
         var skipOptional = inputLower == "next";
+        if (!doneCommand && !skipOptional && !string.Equals(inputLower, "cancel", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryCaptureTaskFieldsFromInput(state.CurrentTask, state, inputForTask))
+            {
+                // Parsed one-shot payload; prevent handlers from treating the full sentence as one field value.
+                inputForTask = string.Empty;
+            }
+        }
+
         var routeResult = state.CurrentTask switch
         {
             "SalesOrder" => await HandleSalesOrder(companyId.Value, state, inputForTask, doneCommand, skipOptional, cancellationToken),
@@ -456,6 +498,462 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         _ => null
     };
 
+    private static bool IsCrudHelpAction(string? action)
+    {
+        return string.Equals(action, "ProductCrudHelp", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(action, "CustomerCrudHelp", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(action, "SupplierCrudHelp", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(action, "WarehouseCrudHelp", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryExtractSalesOrderFieldsFromInput(CopilotConversationState state, string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        var consumed = false;
+
+        // Example: "for 2 cotton t shirt to YZ from warehouse Main".
+        var compact = Regex.Match(
+            input,
+            @"\bfor\s+(?<qty>\d+(?:\.\d+)?)\s+(?<product>.+?)\s+to\s+(?<customer>.+?)(?:\s+from\s+(?:warehouse\s+)?(?<warehouse>.+))?$",
+            RegexOptions.IgnoreCase);
+        if (compact.Success)
+        {
+            TryAssignField(state, "quantity", compact.Groups["qty"].Value);
+            TryAssignField(state, "productName", compact.Groups["product"].Value);
+            TryAssignField(state, "customerName", compact.Groups["customer"].Value);
+            TryAssignField(state, "warehouseName", compact.Groups["warehouse"].Value);
+            consumed = true;
+        }
+
+        consumed |= TryAssignFromPattern(state, input, "customerName",
+            @"\b(?:customer|client|to)\s+(?<value>.+?)(?=\s+(?:product|item|qty|quantity|warehouse|from\s+warehouse|payment|terms|$))");
+        consumed |= TryAssignFromPattern(state, input, "productName",
+            @"\b(?:product|item)\s+(?<value>.+?)(?=\s+(?:qty|quantity|warehouse|from\s+warehouse|customer|client|to|payment|terms|$))");
+        consumed |= TryAssignFromPattern(state, input, "warehouseName",
+            @"\b(?:from\s+warehouse|warehouse|store)\s+(?<value>.+?)(?=\s+(?:payment|terms|qty|quantity|customer|client|to|product|item|$))");
+        consumed |= TryAssignFromPattern(state, input, "paymentTerms",
+            @"\b(?:payment\s+terms?|terms?)\s+(?<value>.+)$");
+
+        var qtyMatch = Regex.Match(input, @"\b(?:qty|quantity)\s*(?<value>\d+(?:\.\d+)?)\b", RegexOptions.IgnoreCase);
+        if (qtyMatch.Success)
+        {
+            TryAssignField(state, "quantity", qtyMatch.Groups["value"].Value);
+            consumed = true;
+        }
+
+        return consumed;
+    }
+
+    private static bool TryExtractPurchaseOrderFieldsFromInput(CopilotConversationState state, string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        var consumed = false;
+
+        // Example: "for 10 usb cable from supplier A".
+        var compact = Regex.Match(
+            input,
+            @"\bfor\s+(?<qty>\d+(?:\.\d+)?)\s+(?<product>.+?)\s+from\s+(?<supplier>.+)$",
+            RegexOptions.IgnoreCase);
+        if (compact.Success)
+        {
+            TryAssignField(state, "quantity", compact.Groups["qty"].Value);
+            TryAssignField(state, "productName", compact.Groups["product"].Value);
+            TryAssignField(state, "supplierName", compact.Groups["supplier"].Value);
+            consumed = true;
+        }
+
+        consumed |= TryAssignFromPattern(state, input, "supplierName",
+            @"\b(?:supplier|vendor|from)\s+(?<value>.+?)(?=\s+(?:product|item|qty|quantity|delivery|expected|date|$))");
+        consumed |= TryAssignFromPattern(state, input, "productName",
+            @"\b(?:product|item)\s+(?<value>.+?)(?=\s+(?:qty|quantity|supplier|vendor|from|delivery|expected|date|$))");
+        consumed |= TryAssignFromPattern(state, input, "expectedDeliveryDate",
+            @"\b(?:expected\s+delivery\s+date|delivery\s+date|expected)\s+(?<value>.+)$");
+
+        var qtyMatch = Regex.Match(input, @"\b(?:qty|quantity)\s*(?<value>\d+(?:\.\d+)?)\b", RegexOptions.IgnoreCase);
+        if (qtyMatch.Success)
+        {
+            TryAssignField(state, "quantity", qtyMatch.Groups["value"].Value);
+            consumed = true;
+        }
+
+        return consumed;
+    }
+
+    private static bool TryAssignFromPattern(CopilotConversationState state, string input, string key, string pattern)
+    {
+        var match = Regex.Match(input, pattern, RegexOptions.IgnoreCase);
+        if (!match.Success) return false;
+        return TryAssignField(state, key, match.Groups["value"].Value);
+    }
+
+    private static bool TryAssignField(CopilotConversationState state, string key, string? value)
+    {
+        var cleaned = CleanExtractedValue(value);
+        if (string.IsNullOrWhiteSpace(cleaned)) return false;
+        state.Fields[key] = cleaned;
+        return true;
+    }
+
+    private static string CleanExtractedValue(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        return Regex.Replace(value.Trim(), @"\s+", " ");
+    }
+
+    private static bool TryCaptureTaskFieldsFromInput(string? currentTask, CopilotConversationState state, string input)
+    {
+        if (string.IsNullOrWhiteSpace(currentTask) || string.IsNullOrWhiteSpace(input)) return false;
+
+        return currentTask switch
+        {
+            "SalesOrder" => TryExtractSalesOrderFieldsFromInput(state, input),
+            "PurchaseOrder" => TryExtractPurchaseOrderFieldsFromInput(state, input),
+            "InventoryUpdate" => TryExtractInventoryUpdateFieldsFromInput(state, input),
+            "PriceUpdate" => TryExtractPriceUpdateFieldsFromInput(state, input),
+            "StockQuery" => TryExtractStockQueryFieldsFromInput(state, input),
+            "CustomerCreate" => TryExtractCustomerCreateFieldsFromInput(state, input),
+            "CustomerUpdate" => TryExtractCustomerUpdateFieldsFromInput(state, input),
+            "CustomerDelete" => TryExtractCustomerDeleteFieldsFromInput(state, input),
+            "SupplierCreate" => TryExtractSupplierCreateFieldsFromInput(state, input),
+            "SupplierUpdate" => TryExtractSupplierUpdateFieldsFromInput(state, input),
+            "SupplierDelete" => TryExtractSupplierDeleteFieldsFromInput(state, input),
+            "WarehouseCreate" => TryExtractWarehouseCreateFieldsFromInput(state, input),
+            "WarehouseUpdate" => TryExtractWarehouseUpdateFieldsFromInput(state, input),
+            "WarehouseDelete" => TryExtractWarehouseDeleteFieldsFromInput(state, input),
+            "ProductCreate" => TryExtractProductCreateFieldsFromInput(state, input),
+            "ProductUpdate" => TryExtractProductUpdateFieldsFromInput(state, input),
+            "ProductDelete" => TryExtractProductDeleteFieldsFromInput(state, input),
+            "InvoiceDocument" => TryExtractInvoiceFieldsFromInput(state, input),
+            "PurchaseOrderDocument" => TryExtractPurchaseOrderDocumentFieldsFromInput(state, input),
+            "SalesReport" or "PurchaseReport" or "InventoryReport" or "ProfitLossReport" => TryExtractReportFieldsFromInput(state, input),
+            "BalanceSheetReport" => TryExtractBalanceSheetFieldsFromInput(state, input),
+            "SalesOrdersExport" => TryExtractSalesExportFieldsFromInput(state, input),
+            _ => false
+        };
+    }
+
+    private static bool TryExtractInventoryUpdateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "productName",
+            @"\b(?:product|item)\s+(?<value>.+?)(?=\s+(?:warehouse|store|qty|quantity|adjustment|reason|note|$))");
+        consumed |= TryAssignFromPattern(state, input, "warehouseName",
+            @"\b(?:from\s+warehouse|warehouse|store|from)\s+(?<value>.+?)(?=\s+(?:qty|quantity|adjustment|reason|note|product|item|$))");
+        consumed |= TryAssignFromPattern(state, input, "reason",
+            @"\b(?:reason|note|because)\s+(?<value>.+)$");
+
+        var qtyMatch = Regex.Match(input, @"\b(?:qty|quantity|adjustment)\s*(?<value>-?\d+(?:\.\d+)?)\b", RegexOptions.IgnoreCase);
+        if (qtyMatch.Success)
+        {
+            TryAssignField(state, "quantity", qtyMatch.Groups["value"].Value);
+            consumed = true;
+        }
+
+        return consumed;
+    }
+
+    private static bool TryExtractPriceUpdateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        if (ContainsAny(input, "purchase", "cost"))
+        {
+            state.Fields["priceType"] = "purchase";
+            consumed = true;
+        }
+        else if (ContainsAny(input, "sale", "selling"))
+        {
+            state.Fields["priceType"] = "sale";
+            consumed = true;
+        }
+
+        consumed |= TryAssignFromPattern(state, input, "productName",
+            @"\b(?:product|item)\s+(?<value>.+?)(?=\s+(?:price|new\s+price|effective|date|purchase|sale|selling|cost|$))");
+        consumed |= TryAssignFromPattern(state, input, "effectiveDate",
+            @"\b(?:effective\s+date|effective)\s+(?<value>.+)$");
+
+        var priceMatch = Regex.Match(input, @"\b(?:new\s+price|price)\s*(?<value>\d+(?:\.\d+)?)\b", RegexOptions.IgnoreCase);
+        if (priceMatch.Success)
+        {
+            TryAssignField(state, "newPrice", priceMatch.Groups["value"].Value);
+            consumed = true;
+        }
+
+        return consumed;
+    }
+
+    private static bool TryExtractStockQueryFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "productName",
+            @"\b(?:stock\s+for|product|item)\s+(?<value>.+)$");
+        return consumed;
+    }
+
+    private static bool TryExtractCustomerCreateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "customerName",
+            @"\b(?:customer(?:\s+name)?)\s+(?<value>.+?)(?=\s+(?:code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "customerCode", @"\bcode\s+(?<value>\S+)");
+        consumed |= TryAssignFromPattern(state, input, "customerContact", @"\bcontact(?:\s+person)?\s+(?<value>.+?)(?=\s+(?:phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "customerPhone", @"\b(?:phone|mobile)\s+(?<value>.+?)(?=\s+(?:email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "customerEmail", @"\bemail\s+(?<value>\S+@\S+)");
+        consumed |= TryAssignFromPattern(state, input, "customerAddress", @"\baddress\s+(?<value>.+?)(?=\s+(?:payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "customerPaymentTerms", @"\b(?:payment\s+terms?|terms?)\s+(?<value>.+?)(?=\s+(?:credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "customerCreditLimit", @"\b(?:credit\s+limit|limit)\s+(?<value>\d+(?:\.\d+)?)\b");
+        return consumed;
+    }
+
+    private static bool TryExtractCustomerUpdateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        var rename = Regex.Match(input, @"\b(?:customer|update\s+customer)\s+(?<old>.+?)\s+(?:to|->)\s+(?<new>.+?)(?=\s+(?:code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))", RegexOptions.IgnoreCase);
+        if (rename.Success)
+        {
+            consumed |= TryAssignField(state, "customerName", rename.Groups["old"].Value);
+            consumed |= TryAssignField(state, "newCustomerName", rename.Groups["new"].Value);
+        }
+
+        consumed |= TryAssignFromPattern(state, input, "customerName",
+            @"\b(?:customer(?:\s+name)?)\s+(?<value>.+?)(?=\s+(?:new\s+name|to|code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "newCustomerName",
+            @"\b(?:new\s+customer(?:\s+name)?|new\s+name)\s+(?<value>.+?)(?=\s+(?:code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateCustomerCode", @"\bcode\s+(?<value>\S+)");
+        consumed |= TryAssignFromPattern(state, input, "updateCustomerContact", @"\bcontact(?:\s+person)?\s+(?<value>.+?)(?=\s+(?:phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateCustomerPhone", @"\b(?:phone|mobile)\s+(?<value>.+?)(?=\s+(?:email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateCustomerEmail", @"\bemail\s+(?<value>\S+@\S+)");
+        consumed |= TryAssignFromPattern(state, input, "updateCustomerAddress", @"\baddress\s+(?<value>.+?)(?=\s+(?:payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateCustomerPaymentTerms", @"\b(?:payment\s+terms?|terms?)\s+(?<value>.+?)(?=\s+(?:credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateCustomerCreditLimit", @"\b(?:credit\s+limit|limit)\s+(?<value>\d+(?:\.\d+)?)\b");
+        return consumed;
+    }
+
+    private static bool TryExtractCustomerDeleteFieldsFromInput(CopilotConversationState state, string input)
+    {
+        return TryAssignFromPattern(state, input, "customerName", @"\b(?:customer(?:\s+name)?)\s+(?<value>.+)$");
+    }
+
+    private static bool TryExtractSupplierCreateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "supplierName",
+            @"\b(?:supplier(?:\s+name)?|vendor)\s+(?<value>.+?)(?=\s+(?:code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "supplierCode", @"\bcode\s+(?<value>\S+)");
+        consumed |= TryAssignFromPattern(state, input, "supplierContact", @"\bcontact(?:\s+person)?\s+(?<value>.+?)(?=\s+(?:phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "supplierPhone", @"\b(?:phone|mobile)\s+(?<value>.+?)(?=\s+(?:email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "supplierEmail", @"\bemail\s+(?<value>\S+@\S+)");
+        consumed |= TryAssignFromPattern(state, input, "supplierAddress", @"\baddress\s+(?<value>.+?)(?=\s+(?:payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "supplierPaymentTerms", @"\b(?:payment\s+terms?|terms?)\s+(?<value>.+?)(?=\s+(?:credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "supplierCreditLimit", @"\b(?:credit\s+limit|limit)\s+(?<value>\d+(?:\.\d+)?)\b");
+        return consumed;
+    }
+
+    private static bool TryExtractSupplierUpdateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        var rename = Regex.Match(input, @"\b(?:supplier|vendor|update\s+supplier)\s+(?<old>.+?)\s+(?:to|->)\s+(?<new>.+?)(?=\s+(?:code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))", RegexOptions.IgnoreCase);
+        if (rename.Success)
+        {
+            consumed |= TryAssignField(state, "supplierName", rename.Groups["old"].Value);
+            consumed |= TryAssignField(state, "newSupplierName", rename.Groups["new"].Value);
+        }
+
+        consumed |= TryAssignFromPattern(state, input, "supplierName",
+            @"\b(?:supplier(?:\s+name)?|vendor)\s+(?<value>.+?)(?=\s+(?:new\s+name|to|code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "newSupplierName",
+            @"\b(?:new\s+supplier(?:\s+name)?|new\s+name)\s+(?<value>.+?)(?=\s+(?:code|contact|phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateSupplierCode", @"\bcode\s+(?<value>\S+)");
+        consumed |= TryAssignFromPattern(state, input, "updateSupplierContact", @"\bcontact(?:\s+person)?\s+(?<value>.+?)(?=\s+(?:phone|mobile|email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateSupplierPhone", @"\b(?:phone|mobile)\s+(?<value>.+?)(?=\s+(?:email|address|payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateSupplierEmail", @"\bemail\s+(?<value>\S+@\S+)");
+        consumed |= TryAssignFromPattern(state, input, "updateSupplierAddress", @"\baddress\s+(?<value>.+?)(?=\s+(?:payment|terms|credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateSupplierPaymentTerms", @"\b(?:payment\s+terms?|terms?)\s+(?<value>.+?)(?=\s+(?:credit|limit|$))");
+        consumed |= TryAssignFromPattern(state, input, "updateSupplierCreditLimit", @"\b(?:credit\s+limit|limit)\s+(?<value>\d+(?:\.\d+)?)\b");
+        return consumed;
+    }
+
+    private static bool TryExtractSupplierDeleteFieldsFromInput(CopilotConversationState state, string input)
+    {
+        return TryAssignFromPattern(state, input, "supplierName", @"\b(?:supplier(?:\s+name)?|vendor)\s+(?<value>.+)$");
+    }
+
+    private static bool TryExtractWarehouseCreateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "warehouseName",
+            @"\b(?:warehouse(?:\s+name)?|store)\s+(?<value>.+?)(?=\s+(?:code|address|city|default|is\s+default|$))");
+        consumed |= TryAssignFromPattern(state, input, "warehouseCode", @"\bcode\s+(?<value>\S+)");
+        consumed |= TryAssignFromPattern(state, input, "warehouseAddress", @"\baddress\s+(?<value>.+?)(?=\s+(?:city|default|is\s+default|$))");
+        consumed |= TryAssignFromPattern(state, input, "warehouseCity", @"\bcity\s+(?<value>.+?)(?=\s+(?:default|is\s+default|$))");
+        if (ContainsAny(input, "default yes", "is default yes"))
+        {
+            state.Fields["warehouseIsDefault"] = "true";
+            consumed = true;
+        }
+        else if (ContainsAny(input, "default no", "is default no"))
+        {
+            state.Fields["warehouseIsDefault"] = "false";
+            consumed = true;
+        }
+        return consumed;
+    }
+
+    private static bool TryExtractWarehouseUpdateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        var rename = Regex.Match(input, @"\b(?:warehouse|store|update\s+warehouse)\s+(?<old>.+?)\s+(?:to|->)\s+(?<new>.+?)(?=\s+(?:code|address|city|default|is\s+default|$))", RegexOptions.IgnoreCase);
+        if (rename.Success)
+        {
+            consumed |= TryAssignField(state, "warehouseName", rename.Groups["old"].Value);
+            consumed |= TryAssignField(state, "newWarehouseName", rename.Groups["new"].Value);
+        }
+
+        consumed |= TryAssignFromPattern(state, input, "warehouseName",
+            @"\b(?:warehouse(?:\s+name)?|store)\s+(?<value>.+?)(?=\s+(?:new\s+name|to|code|address|city|default|is\s+default|$))");
+        consumed |= TryAssignFromPattern(state, input, "newWarehouseName",
+            @"\b(?:new\s+warehouse(?:\s+name)?|new\s+name)\s+(?<value>.+?)(?=\s+(?:code|address|city|default|is\s+default|$))");
+        consumed |= TryAssignFromPattern(state, input, "newWarehouseCode", @"\bcode\s+(?<value>\S+)");
+        consumed |= TryAssignFromPattern(state, input, "newWarehouseAddress", @"\baddress\s+(?<value>.+?)(?=\s+(?:city|default|is\s+default|$))");
+        consumed |= TryAssignFromPattern(state, input, "newWarehouseCity", @"\bcity\s+(?<value>.+?)(?=\s+(?:default|is\s+default|$))");
+        if (ContainsAny(input, "default yes", "is default yes"))
+        {
+            state.Fields["newWarehouseIsDefault"] = "true";
+            consumed = true;
+        }
+        else if (ContainsAny(input, "default no", "is default no"))
+        {
+            state.Fields["newWarehouseIsDefault"] = "false";
+            consumed = true;
+        }
+        return consumed;
+    }
+
+    private static bool TryExtractWarehouseDeleteFieldsFromInput(CopilotConversationState state, string input)
+    {
+        return TryAssignFromPattern(state, input, "warehouseName", @"\b(?:warehouse(?:\s+name)?|store)\s+(?<value>.+)$");
+    }
+
+    private static bool TryExtractProductCreateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "productName",
+            @"\b(?:product(?:\s+name)?|item)\s+(?<value>.+?)(?=\s+(?:sku|unit|purchase|cost|sale|price|category|brand|$))");
+        consumed |= TryAssignFromPattern(state, input, "sku", @"\bsku\s+(?<value>\S+)");
+        consumed |= TryAssignFromPattern(state, input, "unitName", @"\bunit(?:\s+of\s+measure)?\s+(?<value>.+?)(?=\s+(?:purchase|cost|sale|price|category|brand|$))");
+        consumed |= TryAssignFromPattern(state, input, "categoryName", @"\bcategory\s+(?<value>.+?)(?=\s+(?:brand|$))");
+        consumed |= TryAssignFromPattern(state, input, "brandName", @"\bbrand\s+(?<value>.+)$");
+
+        var purchase = Regex.Match(input, @"\b(?:purchase\s+price|cost\s+price|purchase|cost)\s*(?<value>\d+(?:\.\d+)?)\b", RegexOptions.IgnoreCase);
+        if (purchase.Success)
+        {
+            TryAssignField(state, "purchasePrice", purchase.Groups["value"].Value);
+            consumed = true;
+        }
+
+        var sale = Regex.Match(input, @"\b(?:sale\s+price|selling\s+price|sale|selling)\s*(?<value>\d+(?:\.\d+)?)\b", RegexOptions.IgnoreCase);
+        if (sale.Success)
+        {
+            TryAssignField(state, "salePrice", sale.Groups["value"].Value);
+            consumed = true;
+        }
+
+        return consumed;
+    }
+
+    private static bool TryExtractProductUpdateFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        var rename = Regex.Match(input, @"\b(?:product|item|update\s+product)\s+(?<old>.+?)\s+(?:to|->)\s+(?<new>.+)$", RegexOptions.IgnoreCase);
+        if (rename.Success)
+        {
+            consumed |= TryAssignField(state, "productName", rename.Groups["old"].Value);
+            consumed |= TryAssignField(state, "newProductName", rename.Groups["new"].Value);
+        }
+
+        consumed |= TryAssignFromPattern(state, input, "productName",
+            @"\b(?:product(?:\s+name)?|item)\s+(?<value>.+?)(?=\s+(?:new\s+name|to|$))");
+        consumed |= TryAssignFromPattern(state, input, "newProductName",
+            @"\b(?:new\s+product(?:\s+name)?|new\s+name)\s+(?<value>.+)$");
+        return consumed;
+    }
+
+    private static bool TryExtractProductDeleteFieldsFromInput(CopilotConversationState state, string input)
+    {
+        return TryAssignFromPattern(state, input, "productName", @"\b(?:product(?:\s+name)?|item)\s+(?<value>.+)$");
+    }
+
+    private static bool TryExtractInvoiceFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "salesOrderRef",
+            @"\b(?:sales\s*order|order|so)\s*(?:number|no|#)?\s*(?<value>[A-Za-z0-9\-_\/]+)");
+        return consumed;
+    }
+
+    private static bool TryExtractPurchaseOrderDocumentFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        consumed |= TryAssignFromPattern(state, input, "purchaseOrderRef",
+            @"\b(?:purchase\s*order|po|order)\s*(?:number|no|#)?\s*(?<value>[A-Za-z0-9\-_\/]+)");
+        return consumed;
+    }
+
+    private static bool TryExtractReportFieldsFromInput(CopilotConversationState state, string input)
+    {
+        return TryCaptureDateRangeFromInput(state, input);
+    }
+
+    private static bool TryExtractBalanceSheetFieldsFromInput(CopilotConversationState state, string input)
+    {
+        if (TryExtractSingleDate(input, out var asOf))
+        {
+            state.Fields["asOfDate"] = asOf.ToString("yyyy-MM-dd");
+            return true;
+        }
+        if (ContainsAny(input, "today"))
+        {
+            state.Fields["asOfDate"] = DateTime.UtcNow.Date.ToString("yyyy-MM-dd");
+            return true;
+        }
+        if (ContainsAny(input, "yesterday"))
+        {
+            state.Fields["asOfDate"] = DateTime.UtcNow.Date.AddDays(-1).ToString("yyyy-MM-dd");
+            return true;
+        }
+        return false;
+    }
+
+    private static bool TryExtractSalesExportFieldsFromInput(CopilotConversationState state, string input)
+    {
+        var consumed = false;
+        if (TryExtractDateRange(input, out var fromDate, out var toDate))
+        {
+            state.Fields["exportFromDate"] = fromDate.ToString("yyyy-MM-dd");
+            state.Fields["exportToDate"] = toDate.ToString("yyyy-MM-dd");
+            consumed = true;
+        }
+        else if (!TryGetField(state, "exportFromDate", out _) && TryExtractSingleDate(input, out var singleDate))
+        {
+            state.Fields["exportFromDate"] = singleDate.ToString("yyyy-MM-dd");
+            consumed = true;
+        }
+        return consumed;
+    }
+
+    private static bool LooksLikeExplicitCrudHelpRequest(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+
+        return text.Contains("crud", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("manage", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("list", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("create ", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("update ", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("delete ", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("help", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("options", StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task<Result<CopilotExecuteResult>> HandleSalesOrder(
         Guid companyId,
         CopilotConversationState state,
@@ -464,6 +962,12 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         bool skipOptional,
         CancellationToken cancellationToken)
     {
+        if (TryExtractSalesOrderFieldsFromInput(state, input))
+        {
+            // Do not treat a full structured sentence as single-field value.
+            input = string.Empty;
+        }
+
         // Required: Customer -> Product -> Quantity -> Warehouse ; Optional: Payment Terms
         if (!TryGetField(state, "customerName", out var customerName))
         {
@@ -648,6 +1152,12 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         bool skipOptional,
         CancellationToken cancellationToken)
     {
+        if (TryExtractPurchaseOrderFieldsFromInput(state, input))
+        {
+            // Do not treat a full structured sentence as single-field value.
+            input = string.Empty;
+        }
+
         if (!TryGetField(state, "supplierName", out var supplierName))
         {
             if (IsListRequest(input, "supplier", "vendor"))
@@ -3341,6 +3851,77 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         });
     }
 
+    private static async Task<Result<CopilotExecuteResult>> ReplyWithEntityListFromInput(
+        CopilotConversationState state,
+        string label,
+        string input,
+        IQueryable<string> query,
+        CancellationToken cancellationToken)
+    {
+        var normalizedLabel = label.Trim().ToLowerInvariant();
+        var text = (input ?? string.Empty).Trim();
+        var token = string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var lowered = text.ToLowerInvariant();
+            var markers = new[]
+            {
+                $"list {normalizedLabel}",
+                $"show {normalizedLabel}",
+                $"list {normalizedLabel.TrimEnd('s')}",
+                $"show {normalizedLabel.TrimEnd('s')}",
+                $"{normalizedLabel} list"
+            };
+
+            foreach (var marker in markers)
+            {
+                var idx = lowered.IndexOf(marker, StringComparison.Ordinal);
+                if (idx >= 0)
+                {
+                    token = text[(idx + marker.Length)..].Trim();
+                    break;
+                }
+            }
+
+            token = Regex.Replace(token, @"^(for|with|named|name)\s+", string.Empty, RegexOptions.IgnoreCase).Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            query = query.Where(x => x.Contains(token));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query.OrderBy(x => x).Take(25).ToListAsync(cancellationToken);
+        if (items.Count == 0)
+        {
+            var none = string.IsNullOrWhiteSpace(token)
+                ? $"{label}: no records found."
+                : $"{label}: no records found for '{token}'.";
+            return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
+            {
+                Success = true,
+                Reply = none,
+                SessionState = state
+            });
+        }
+
+        var prefix = string.IsNullOrWhiteSpace(token)
+            ? $"{label} ({total}):"
+            : $"{label} matching '{token}' ({total}):";
+        var numbered = items.Select((x, i) => $"{i + 1}. {x}").ToList();
+        var suffix = total > items.Count ? $" Showing first {items.Count}." : string.Empty;
+        var message = $"{prefix} {string.Join(" | ", numbered)}.{suffix}";
+
+        return Result<CopilotExecuteResult>.Success(new CopilotExecuteResult
+        {
+            Success = true,
+            Reply = message,
+            SessionState = state
+        });
+    }
+
     private static Result<CopilotExecuteResult>? HandlePendingCorrection(CopilotConversationState state, string inputLower)
     {
         if (!TryGetField(state, "pendingField", out var pendingField) || !TryGetField(state, "pendingValue", out var pendingValue))
@@ -3411,6 +3992,8 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         if (string.IsNullOrWhiteSpace(input)) return false;
 
         var normalizedInput = NormalizeForMatch(input);
+        var loweredInput = input.Trim().ToLowerInvariant();
+        if (!LooksLikeTaskIntentText(loweredInput)) return false;
         var candidates = new List<(string task, string label, string[] aliases)>
         {
             ("SalesOrder", "Sales Order", new[] { "sales order", "sell order", "create sales order" }),
@@ -3440,8 +4023,9 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
             foreach (var alias in candidate.aliases)
             {
                 var normalizedAlias = NormalizeForMatch(alias);
-                if (normalizedAlias.Contains(normalizedInput, StringComparison.OrdinalIgnoreCase) ||
-                    normalizedInput.Contains(normalizedAlias, StringComparison.OrdinalIgnoreCase))
+                var aliasLower = alias.ToLowerInvariant();
+                if (loweredInput.Contains(aliasLower, StringComparison.OrdinalIgnoreCase) ||
+                    (loweredInput.Length >= 9 && aliasLower.Contains(loweredInput, StringComparison.OrdinalIgnoreCase)))
                 {
                     task = candidate.task;
                     label = candidate.label;
@@ -3458,7 +4042,7 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
             }
         }
 
-        if (bestScore >= 0.62 && !string.IsNullOrWhiteSpace(bestTask))
+        if (bestScore >= 0.78 && !string.IsNullOrWhiteSpace(bestTask) && loweredInput.Length >= 10)
         {
             task = bestTask;
             label = bestLabel;
@@ -3466,6 +4050,21 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
         }
 
         return false;
+    }
+
+    private static bool LooksLikeTaskIntentText(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        return ContainsAny(input,
+            "create ", "add ", "new ", "update ", "edit ", "delete ", "remove ",
+            "sales order", "purchase order", "inventory update", "price update",
+            "stock query", "check stock", "report", "invoice", "export");
+    }
+
+    private static bool LooksLikeExplicitTaskSwitch(string input)
+    {
+        // Keep switching strict to avoid hijacking normal field answers like "main warehouse".
+        return LooksLikeTaskIntentText(input);
     }
 
     private static Result<CopilotExecuteResult> HelpMenu(CopilotConversationState state)
@@ -3495,6 +4094,16 @@ public class ExecuteCopilotCommandHandler : IRequestHandler<ExecuteCopilotComman
             state.Fields["pendingValue"] = suggestion;
             state.Fields["pendingLabel"] = fieldLabel;
             return Ask(state, $"{char.ToUpperInvariant(fieldLabel[0]) + fieldLabel[1..]} '{enteredValue}' not found. Did you mean '{suggestion}'? Say Yes or No.");
+        }
+
+        var examples = await namesQuery
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .OrderBy(x => x)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+        if (examples.Count > 0)
+        {
+            return Ask(state, $"{fallbackQuestion} Examples: {string.Join(", ", examples)}.");
         }
 
         return Ask(state, fallbackQuestion);

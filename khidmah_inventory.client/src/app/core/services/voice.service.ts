@@ -41,6 +41,8 @@ export class VoiceService {
   private commandSubject = new Subject<VoiceCommandResult>();
   private _isListening = false;
   private restartTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastTranscript = '';
+  private lastTranscriptAt = 0;
 
   readonly commands$: Observable<VoiceCommandResult> = this.commandSubject.asObservable();
 
@@ -66,22 +68,35 @@ export class VoiceService {
       console.warn('VoiceService: Speech recognition not supported');
       return false;
     }
-    if (this._isListening) {
-      this.stop();
-    }
+    if (this._isListening && this.recognition) return true;
     this.recognition = new SR();
     this.recognition.continuous = options?.continuous ?? true;
-    this.recognition.interimResults = options?.interimResults ?? false;
+    this.recognition.interimResults = options?.interimResults ?? true;
     this.recognition.lang = options?.lang ?? 'en-US';
-    this.recognition.maxAlternatives = 3;
+    this.recognition.maxAlternatives = 5;
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
       const result = event.results[event.resultIndex];
-      if (!result?.isFinal) {
+      if (!result?.isFinal || result.length === 0) {
         return;
       }
-      const transcript = result[0].transcript?.trim() ?? '';
-      const confidence = result[0].confidence ?? 0;
+      let best = result[0];
+      for (let i = 1; i < result.length; i++) {
+        if ((result[i].confidence ?? 0) > (best.confidence ?? 0)) {
+          best = result[i];
+        }
+      }
+      const transcript = best.transcript?.trim() ?? '';
+      const confidence = best.confidence ?? 0;
+      if (!transcript) return;
+
+      // De-duplicate noisy repeated final segments.
+      const now = Date.now();
+      const normalized = transcript.toLowerCase();
+      if (normalized === this.lastTranscript && (now - this.lastTranscriptAt) < 900) return;
+      this.lastTranscript = normalized;
+      this.lastTranscriptAt = now;
+
       const parsed = this.parseCommand(transcript, confidence);
       this.commandSubject.next(parsed);
     };
@@ -104,7 +119,7 @@ export class VoiceService {
           } catch {
             this._isListening = false;
           }
-        }, 180);
+        }, 80);
       }
     };
 
@@ -138,10 +153,13 @@ export class VoiceService {
    */
   parseCommand(transcript: string, confidence: number): VoiceCommandResult {
     const lower = transcript.toLowerCase().trim();
-    const words = lower.split(/\s+/);
+    const normalized = lower
+      .replace(/\btoo\b/g, 'two')
+      .replace(/\bto\b/g, 'two')
+      .replace(/\bfor\b/g, 'four');
 
     // "quantity five" / "quantity 5" / "five" (standalone number for quantity)
-    const quantityMatch = lower.match(/quantity\s+(?:(\d+)|(one|two|three|four|five|six|seven|eight|nine|ten))/);
+    const quantityMatch = normalized.match(/quantity\s+(?:(\d+)|(one|two|three|four|five|six|seven|eight|nine|ten))/);
     if (quantityMatch) {
       const num = quantityMatch[1] ? parseInt(quantityMatch[1], 10) : this.wordToNumber(quantityMatch[2] ?? '');
       if (!isNaN(num)) {
@@ -150,11 +168,11 @@ export class VoiceService {
     }
 
     // Standalone number (e.g. "five" as quantity)
-    const numWord = this.wordToNumber(lower);
+    const numWord = this.wordToNumber(normalized);
     if (numWord >= 0 && numWord <= 99) {
       return { command: 'quantity', numericValue: numWord, rawTranscript: transcript, confidence };
     }
-    const digitMatch = lower.match(/^(\d+)$/);
+    const digitMatch = normalized.match(/^(\d+)$/);
     if (digitMatch) {
       return { command: 'quantity', numericValue: parseInt(digitMatch[1], 10), rawTranscript: transcript, confidence };
     }
@@ -177,7 +195,7 @@ export class VoiceService {
     ];
 
     for (const [phrase, cmd] of commandPhrases) {
-      if (lower.includes(phrase) || lower === phrase) {
+      if (normalized.includes(phrase) || normalized === phrase) {
         return { command: cmd, rawTranscript: transcript, confidence };
       }
     }

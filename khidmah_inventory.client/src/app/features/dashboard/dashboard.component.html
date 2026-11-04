@@ -3,19 +3,20 @@
     <ng-container skeleton>
       <!-- Quick actions -->
       <div class="d-flex flex-wrap gap-2 mb-3">
-        <app-skeleton-loader *ngFor="let i of skeletonQuickActionCount" [width]="'100px'" [height]="'36px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader>
+        <app-skeleton-loader *ngFor="let i of skeletonQuickActionCount" [width]="'112px'" [height]="'36px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader>
       </div>
       <!-- Stat cards: match real layout (col-6 col-md-3) -->
       <app-skeleton-stat-cards [cardCount]="4" class="mb-4"></app-skeleton-stat-cards>
       <!-- Analyze → Predict → Act: one card, 3 columns -->
       <div class="row g-3 mb-4">
         <div class="col-12">
-          <div class="rounded-3 border-0 shadow-sm p-4 bg-white">
+          <div class="dashboard-skeleton-card shadow-sm p-4 bg-white">
             <app-skeleton-loader [width]="'200px'" [height]="'14px'" shape="rounded" [animation]="'shimmer'" class="mb-3"></app-skeleton-loader>
             <div class="row g-3">
-              <div class="col-md-4"><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'80%'" [height]="'32px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
-              <div class="col-md-4"><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'70%'" [height]="'32px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
-              <div class="col-md-4"><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'60%'" [height]="'32px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
+              <div class="col-md-6 col-lg-3"><app-skeleton-loader [width]="'100%'" [height]="'20px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'75%'" [height]="'18px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
+              <div class="col-md-6 col-lg-3"><app-skeleton-loader [width]="'100%'" [height]="'20px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'65%'" [height]="'18px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
+              <div class="col-md-6 col-lg-3"><app-skeleton-loader [width]="'100%'" [height]="'20px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'60%'" [height]="'18px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
+              <div class="col-md-6 col-lg-3"><app-skeleton-loader [width]="'100%'" [height]="'20px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'100%'" [height]="'48px'" shape="rounded" [animation]="'shimmer'" class="mb-2"></app-skeleton-loader><app-skeleton-loader [width]="'70%'" [height]="'18px'" shape="rounded" [animation]="'shimmer'"></app-skeleton-loader></div>
             </div>
           </div>
         </div>
@@ -23,7 +24,7 @@
       <!-- Decision support teaser: icon + title + description + button -->
       <div class="row g-3 mb-4">
         <div class="col-12">
-          <div class="rounded-3 border-0 shadow-sm p-4 bg-white d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div class="dashboard-skeleton-card shadow-sm p-4 bg-white d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div class="d-flex align-items-center gap-3">
               <app-skeleton-loader [width]="'48px'" [height]="'48px'" shape="circle" [animation]="'shimmer'"></app-skeleton-loader>
               <div>
@@ -57,7 +58,7 @@
       <ng-container *ngFor="let action of quickActions">
         <a *appHasPermission="action.permission"
            [routerLink]="action.route"
-           class="btn btn-sm btn-outline-primary rounded-pill d-inline-flex align-items-center gap-2">
+           class="dashboard-quick-action btn btn-sm btn-outline-primary rounded-pill d-inline-flex align-items-center gap-2">
           <i class="bi" [ngClass]="action.icon"></i>
           <span>{{ action.label }}</span>
         </a>
@@ -65,7 +66,7 @@
     </div>
 
     <!-- Summary Cards Grid (reusable KPI stat cards) -->
-    <div class="row g-3 mb-4 equal-height-cards">
+    <div class="row g-3 mb-4 equal-height-cards dashboard-kpi-grid">
       <div class="col-6 col-md-3">
         <app-kpi-stat-card
           title="Products"
@@ -111,42 +112,42 @@
     <!-- Intelligence: Predictions, Anomalies, Risks, Opportunities (content from API or fallback from dashboard summary) -->
     <div class="row g-3 mb-4" *ngIf="dashboard && !loadingIntelligence">
       <div class="col-12">
-        <app-unified-card header="Analyze → Predict → Act" customClass="border-0 shadow-sm">
+        <app-unified-card header="Analyze → Predict → Act" customClass="border-0 shadow-sm analyze-predict-act-card">
           <div class="row g-3">
-            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.predictions?.length">
+            <div class="col-md-6 col-lg-3 analyze-column" *ngIf="analyzePredictActContent.predictions?.length">
               <h6 class="small text-uppercase text-muted mb-2">Predictions</h6>
               <div class="d-flex flex-column gap-2">
-                <div *ngFor="let p of analyzePredictActContent.predictions" class="d-flex justify-content-between align-items-center p-2 rounded bg-light">
+                <div *ngFor="let p of analyzePredictActContent.predictions" class="analyze-section-item d-flex justify-content-between align-items-center p-2 rounded bg-light">
                   <span class="small">{{ p.label }}</span>
                   <strong>{{ p.value }}</strong>
                   <span class="badge" [ngClass]="p.trend === 'Up' ? 'bg-success' : p.trend === 'Down' ? 'bg-danger' : 'bg-secondary'">{{ p.trend }}</span>
                 </div>
               </div>
             </div>
-            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.anomalies?.length">
+            <div class="col-md-6 col-lg-3 analyze-column" *ngIf="analyzePredictActContent.anomalies?.length">
               <h6 class="small text-uppercase text-muted mb-2">Anomalies</h6>
               <div class="d-flex flex-column gap-2">
-                <div *ngFor="let a of analyzePredictActContent.anomalies" class="p-2 rounded border-start border-3 border-warning">
+                <div *ngFor="let a of analyzePredictActContent.anomalies" class="analyze-section-item p-2 rounded border-start border-3 border-warning">
                   <div class="small fw-bold">{{ a.metric }}</div>
                   <div class="small text-muted">{{ a.description }}</div>
                   <a *ngIf="a.drillDownRoute" [routerLink]="a.drillDownRoute" class="small">Drill down</a>
                 </div>
               </div>
             </div>
-            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.risks?.length">
+            <div class="col-md-6 col-lg-3 analyze-column" *ngIf="analyzePredictActContent.risks?.length">
               <h6 class="small text-uppercase text-muted mb-2">Risks</h6>
               <div class="d-flex flex-column gap-2">
-                <div *ngFor="let r of analyzePredictActContent.risks" class="p-2 rounded border-start border-3" [ngClass]="r.severity === 'High' ? 'border-danger' : 'border-warning'">
+                <div *ngFor="let r of analyzePredictActContent.risks" class="analyze-section-item p-2 rounded border-start border-3" [ngClass]="r.severity === 'High' ? 'border-danger' : 'border-warning'">
                   <div class="small fw-bold">{{ r.title }}</div>
                   <div class="small text-muted">{{ r.description }}</div>
                   <a *ngIf="r.actionRoute" [routerLink]="r.actionRoute" class="btn btn-sm btn-outline-primary mt-1">Act</a>
                 </div>
               </div>
             </div>
-            <div class="col-md-6 col-lg-3" *ngIf="analyzePredictActContent.opportunities?.length">
+            <div class="col-md-6 col-lg-3 analyze-column" *ngIf="analyzePredictActContent.opportunities?.length">
               <h6 class="small text-uppercase text-muted mb-2">Opportunities</h6>
               <div class="d-flex flex-column gap-2">
-                <div *ngFor="let o of analyzePredictActContent.opportunities" class="p-2 rounded bg-success bg-opacity-10">
+                <div *ngFor="let o of analyzePredictActContent.opportunities" class="analyze-section-item analyze-opportunity-item p-2 rounded bg-success bg-opacity-10">
                   <div class="small fw-bold">{{ o.title }}</div>
                   <div class="small text-muted">{{ o.description }}</div>
                   <a *ngIf="o.actionRoute" [routerLink]="o.actionRoute" class="btn btn-sm btn-success mt-1">View</a>

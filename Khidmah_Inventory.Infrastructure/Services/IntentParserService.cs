@@ -363,6 +363,18 @@ public class IntentParserService : IIntentParserService
             return Task.FromResult(result);
         }
 
+        // Flexible one-shot sales command without explicit "sales order" phrase.
+        // Example: "customer xy product cotton t shirt quantity 2 warehouse main".
+        if (LooksLikeLooseSalesOrder(text))
+        {
+            result.Intent = "CreateSalesOrder";
+            result.Action = "CreateSalesOrder";
+            result.RequiresConfirmation = true;
+            result.ConfirmationMessage = "Create sales order?";
+            ExtractLooseSalesOrderPayload(text, result);
+            return Task.FromResult(result);
+        }
+
         if (Match(text, "customer|customers", out _))
         {
             result.Intent = "CustomerCrudHelp";
@@ -462,6 +474,68 @@ public class IntentParserService : IIntentParserService
         }
     }
 
+    private static bool LooksLikeLooseSalesOrder(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var hasCustomer = Regex.IsMatch(text, @"\bcustomer\b|\bclient\b", RegexOptions.IgnoreCase);
+        var hasProduct = Regex.IsMatch(text, @"\bproduct\b|\bitem\b", RegexOptions.IgnoreCase);
+        var hasQtyOrWarehouse = Regex.IsMatch(text, @"\bqty\b|\bquantity\b|\bwarehouse\b|\bstore\b|\bfrom\b", RegexOptions.IgnoreCase);
+        return hasCustomer && hasProduct && hasQtyOrWarehouse;
+    }
+
+    private static void ExtractLooseSalesOrderPayload(string text, CopilotIntentResult result)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        TryAssignRegexValue(text, result, "customerName",
+            @"\b(?:customer|client)\s+(.+?)(?=\s+(?:product|item|qty|quantity|warehouse|from\s+warehouse|$))");
+        TryAssignRegexValue(text, result, "productName",
+            @"\b(?:product|item)\s+(.+?)(?=\s+(?:qty|quantity|warehouse|from\s+warehouse|customer|client|$))");
+        TryAssignRegexValue(text, result, "warehouseName",
+            @"\b(?:from\s+warehouse|warehouse|store)\s+(.+?)(?=\s+(?:qty|quantity|customer|client|product|item|$))");
+
+        var qtyMatch = Regex.Match(text, @"\b(?:qty|quantity)\s+(\d+)\b", RegexOptions.IgnoreCase);
+        if (qtyMatch.Success)
+        {
+            result.Parameters["quantity"] = int.Parse(qtyMatch.Groups[1].Value);
+            return;
+        }
+
+        var qtyWordMatch = Regex.Match(text, @"\b(?:qty|quantity)\s+(one|two|three|four|five|six|seven|eight|nine|ten)\b", RegexOptions.IgnoreCase);
+        if (qtyWordMatch.Success && TryParseWordNumber(qtyWordMatch.Groups[1].Value, out var qtyWord))
+        {
+            result.Parameters["quantity"] = qtyWord;
+        }
+    }
+
+    private static void TryAssignRegexValue(string text, CopilotIntentResult result, string key, string pattern)
+    {
+        var match = Regex.Match(text, pattern, RegexOptions.IgnoreCase);
+        if (!match.Success) return;
+        var value = match.Groups[1].Value.Trim();
+        if (!string.IsNullOrWhiteSpace(value))
+            result.Parameters[key] = value;
+    }
+
+    private static bool TryParseWordNumber(string word, out int value)
+    {
+        value = word.ToLowerInvariant() switch
+        {
+            "one" => 1,
+            "two" => 2,
+            "three" => 3,
+            "four" => 4,
+            "five" => 5,
+            "six" => 6,
+            "seven" => 7,
+            "eight" => 8,
+            "nine" => 9,
+            "ten" => 10,
+            _ => 0
+        };
+        return value > 0;
+    }
+
     private static bool Match(string text, string patterns, out string? matched)
     {
         matched = null;
@@ -550,6 +624,10 @@ public class IntentParserService : IIntentParserService
             ["costumer"] = "customer",
             ["prodcut"] = "product",
             ["prodcuts"] = "products",
+            ["curi"] = "query",
+            ["qury"] = "query",
+            ["stok"] = "stock",
+            ["stoq"] = "stock",
             ["wharehouse"] = "warehouse",
             ["warehosue"] = "warehouse",
             ["wherehouse"] = "warehouse",

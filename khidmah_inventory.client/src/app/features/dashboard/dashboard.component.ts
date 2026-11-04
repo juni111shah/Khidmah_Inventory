@@ -5,7 +5,7 @@ import { DashboardApiService } from '../../core/services/dashboard-api.service';
 import { IntelligenceApiService } from '../../core/services/intelligence-api.service';
 import { SignalRService } from '../../core/services/signalr.service';
 import { Dashboard } from '../../core/models/dashboard.model';
-import { DashboardIntelligence, Prediction, Risk, Opportunity } from '../../core/models/intelligence.model';
+import { DashboardIntelligence, Prediction, Anomaly, Risk, Opportunity } from '../../core/models/intelligence.model';
 import { ToastComponent } from '../../shared/components/toast/toast.component';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
@@ -53,45 +53,7 @@ import { SkeletonListComponent } from '../../shared/components/skeleton-list/ske
     SkeletonListComponent
   ],
   templateUrl: './dashboard.component.html',
-  styles: [`
-    /* Override timeframe navigation for dashboard charts */
-    .timeframe-nav {
-      align-self: flex-start;
-    }
-
-    /* Stat card header styles for dashboard cards */
-    .stat-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1.5rem;
-    }
-
-    .stat-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
-
-    .stat-source {
-      font-size: 0.8rem;
-      color: var(--text-secondary-color);
-      margin-bottom: 0;
-    }
-
-    .title-icon {
-      margin-left: 0.5rem;
-      font-size: 1.1rem;
-    }
-
-    .header-left {
-      flex: 1;
-    }
-
-    .header-right {
-      /* For future menu buttons */
-    }
-  `]
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   dashboard: Dashboard | null = null;
@@ -201,13 +163,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
       { label: 'Sales', value: '0', trend: 'Stable', period: '7d' },
       { label: 'Low stock items', value: String(lowStock), trend: 'Stable', period: '7d' }
     ];
+    const anomalies: Anomaly[] = [
+      {
+        metric: `Today's sales`,
+        description: 'Slightly below daily average',
+        severity: 'Medium',
+        detectedAt: new Date().toISOString(),
+        drillDownRoute: '/dashboard'
+      }
+    ];
     const risks: Risk[] = lowStock > 0
       ? [{ title: 'Low stock', description: `${lowStock} product(s) at or below minimum level.`, severity: 'High', actionRoute: '/inventory/stock-levels' }]
       : [];
     const opportunities: Opportunity[] = [
       { title: 'Reorder suggestions', description: 'Generate PO from reorder suggestions.', actionRoute: '/reorder' }
     ];
-    return { predictions, anomalies: [], risks, opportunities };
+    return { predictions, anomalies, risks, opportunities };
   }
 
   ngOnDestroy(): void {

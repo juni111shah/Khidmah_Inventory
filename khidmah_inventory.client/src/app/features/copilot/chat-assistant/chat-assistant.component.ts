@@ -54,7 +54,9 @@ export class ChatAssistantComponent implements OnInit, OnDestroy {
     { label: 'Start App Tour', command: 'start app tour' },
     { label: 'Start Page Tour', command: 'start page tour' },
     { label: 'Create Sales Order', command: 'create sales order' },
+    { label: 'One-Line Sales Order', command: 'sales order customer YZ product cotton t-shirt qty 2 warehouse Main' },
     { label: 'Create Purchase Order', command: 'create purchase order' },
+    { label: 'One-Line Purchase Order', command: 'purchase order supplier ABC product usb cable qty 10 expected delivery date 2026-02-20' },
     { label: 'Stock Query', command: 'stock query' },
     { label: 'Generate Invoice', command: 'generate invoice' },
     { label: 'Sales Report', command: 'sales report this month' },
@@ -106,14 +108,14 @@ export class ChatAssistantComponent implements OnInit, OnDestroy {
       description: 'Create orders, update inventory and prices using chat or voice'
     });
     this.contextualOptions = this.getMainOptions();
-    this.pushAssistant("Hello! I'm your Khidmah Copilot. Tell me what you want to do: Sales Order, Purchase Order, Inventory Update, Price Update, Stock Query, reports, invoices, or CRUD for Products/Customers/Suppliers.");
+    this.pushAssistant("Hello! I'm your Khidmah Copilot. Tell me what you want to do: Sales Order, Purchase Order, Inventory Update, Price Update, Stock Query, reports, invoices, or CRUD for Products/Customers/Suppliers. You can also send one-line commands, for example: 'sales order customer YZ product cotton t-shirt qty 2 warehouse Main' or 'purchase order supplier ABC product usb cable qty 10'.");
     this.voiceSub = this.voice.commands$.subscribe((cmd) => {
       if (!this.listening) return;
       if (!cmd.rawTranscript?.trim()) return;
       this.voiceTranscript$.next(cmd.rawTranscript.trim());
     });
     this.voiceDispatchSub = this.voiceTranscript$
-      .pipe(debounceTime(420), distinctUntilChanged())
+      .pipe(debounceTime(240), distinctUntilChanged())
       .subscribe((text) => {
         if (!this.listening || !text) return;
         if (this.loading) {
@@ -122,7 +124,7 @@ export class ChatAssistantComponent implements OnInit, OnDestroy {
         }
         const now = Date.now();
         const normalized = text.toLowerCase();
-        if (normalized === this.lastVoiceSentText && (now - this.lastVoiceSentAt) < 1600) {
+        if (normalized === this.lastVoiceSentText && (now - this.lastVoiceSentAt) < 900) {
           return;
         }
         this.lastVoiceSentText = normalized;
@@ -198,7 +200,7 @@ export class ChatAssistantComponent implements OnInit, OnDestroy {
       this.listening = false;
       return;
     }
-    const started = this.voice.startListening({ continuous: true, interimResults: false, lang: 'en-US' });
+    const started = this.voice.startListening({ continuous: true, interimResults: true, lang: 'en-US' });
     this.listening = started;
   }
 
@@ -222,7 +224,7 @@ export class ChatAssistantComponent implements OnInit, OnDestroy {
 
   showMainOptions(): void {
     this.contextualOptions = this.getMainOptions();
-    this.pushAssistant('Here are common options: Sales Order, Purchase Order, Inventory Update, Price Update, Stock Query, Product/Customer/Supplier CRUD, reports, and invoices.');
+    this.pushAssistant("Here are common options: Sales Order, Purchase Order, Inventory Update, Price Update, Stock Query, Product/Customer/Supplier CRUD, reports, and invoices. Tip: you can complete tasks in one prompt, like 'inventory update product cotton t-shirt warehouse Main qty -2 reason damaged' or 'sales report 2026-02-01 to 2026-02-29'.");
   }
 
   clearChat(): void {
@@ -539,7 +541,7 @@ export class ChatAssistantComponent implements OnInit, OnDestroy {
 
     this.speech.speakAsync(text, { interrupt: true }).finally(() => {
       if (this.micWasActiveBeforeAssistantSpeech) {
-        const resumed = this.voice.startListening({ continuous: true, interimResults: false, lang: 'en-US' });
+        const resumed = this.voice.startListening({ continuous: true, interimResults: true, lang: 'en-US' });
         this.listening = resumed;
       }
       this.micWasActiveBeforeAssistantSpeech = false;

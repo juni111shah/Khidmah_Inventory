@@ -1,0 +1,98 @@
+/* Override timeframe navigation for dashboard charts */
+.timeframe-nav {
+  align-self: flex-start;
+}
+
+/* Stat card header styles for dashboard cards */
+.stat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.stat-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.stat-source {
+  font-size: 0.8rem;
+  color: var(--text-secondary-color);
+  margin-bottom: 0;
+}
+
+.title-icon {
+  margin-left: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.header-left {
+  flex: 1;
+}
+
+/* Keep quick actions consistent and prevent text wrapping glitches */
+.dashboard-quick-action {
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+.dashboard-kpi-grid {
+  --bs-gutter-x: 1.75rem;
+  --bs-gutter-y: 1.5rem;
+}
+
+.dashboard-kpi-grid > [class*="col-"] {
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+}
+
+.analyze-predict-act-card {
+  border-radius: 14px;
+}
+
+.analyze-column {
+  min-height: 100%;
+}
+
+.analyze-section-item {
+  min-height: 72px;
+}
+
+.analyze-opportunity-item {
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+
+/* Make skeleton cards look close to final cards to avoid layout jumps */
+.dashboard-skeleton-card {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+}
+
+@media (max-width: 992px) {
+  .dashboard-quick-action {
+    flex: 1 1 calc(50% - 0.5rem);
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-kpi-grid {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+  }
+
+  .dashboard-kpi-grid > [class*="col-"] {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .dashboard-container {
+    padding-top: 1rem !important;
+  }
+
+  .dashboard-quick-action {
+    flex: 1 1 100%;
+  }
+}
